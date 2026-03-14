@@ -27,6 +27,8 @@ func main() {
 		payloadPath = flag.String("payload", "", "Path to raw EDR PDF suite or initialized project folder")
 		projectID   = flag.String("project", os.Getenv("GCP_PROJECT"), "GCP Project ID for Vertex AI")
 		location    = flag.String("location", "us-central1", "GCP Location for Vertex AI")
+		skipHITL    = flag.Bool("skip-hitl", false, "1337 TOGGLE: Bypass HITL validation for fully automated runs")
+		skipASTM    = flag.Bool("skip-astm", false, "1337 TOGGLE: Omit the ASTM Synthesizer Agent from the A2A network")
 	)
 	flag.Parse()
 
@@ -94,7 +96,13 @@ func main() {
 	}
 
 	// 3. Assemble SequentialAgent Pipeline (1337 A2A Network Matrix)
-	pipeline := core.NewPipeline(*projectID, *location, pAgent, gAgent, aAgent, tAgent)
+	activeAgents := []*core.Agent{pAgent, gAgent}
+	if !*skipASTM {
+		activeAgents = append(activeAgents, aAgent)
+	}
+	activeAgents = append(activeAgents, tAgent)
+
+	pipeline := core.NewPipeline(*projectID, *location, *skipHITL, activeAgents...)
 
 	// 4. Execute Flow Pipeline with human-in-the-loop validation
 	// (Simulation payload mapping)

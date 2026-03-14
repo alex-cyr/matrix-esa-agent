@@ -13,14 +13,16 @@ type Pipeline struct {
 	Memory    []*Artifact
 	ProjectID string
 	Location  string
+	SkipHITL  bool // 1337 TOGGLE: Bypass manual UI review loops (for fully automated dev/testing)
 }
 
-func NewPipeline(project, location string, agents ...*Agent) *Pipeline {
+func NewPipeline(project, location string, skipHITL bool, agents ...*Agent) *Pipeline {
 	return &Pipeline{
 		Agents:    agents,
 		Memory:    make([]*Artifact, 0),
 		ProjectID: project,
 		Location:  location,
+		SkipHITL:  skipHITL,
 	}
 }
 
@@ -41,13 +43,18 @@ func (p *Pipeline) Run(ctx context.Context, initialPayload string) error {
 
 		// Hard enforcement of Human-in-the-loop (Liability Mitigation pattern).
 		if !artifact.Approved {
-			slog.Warn("ENFORCING HITL YIELD: State paused for Validation by Matrix Engineering.",
-				"artifact_id", artifact.ID,
-				"agent", agent.Cfg.Name)
+			if p.SkipHITL {
+				slog.Warn("/// HITL MUTED /// Auto-approving unverified entity artifact due to active SkipHITL override.", "artifact_id", artifact.ID)
+				artifact.Approved = true
+			} else {
+				slog.Warn("ENFORCING HITL YIELD: State paused for Validation by Matrix Engineering.",
+					"artifact_id", artifact.ID,
+					"agent", agent.Cfg.Name)
 
-			// In production integration, the Antigravity IDE consumes this event and prompts the UI.
-			// After manual approval (inline doc comments), the webhook calls the pipeline back.
-			return fmt.Errorf("SIG_YIELD: Entity Validation Required by HW [Artifact %s]", artifact.ID)
+				// In production integration, the Antigravity IDE consumes this event and prompts the UI.
+				// After manual approval (inline doc comments), the webhook calls the pipeline back.
+				return fmt.Errorf("SIG_YIELD: Entity Validation Required by HW [Artifact %s]", artifact.ID)
+			}
 		}
 
 		// A2A transmission: Pass current verified artifact as input payload to the next agent downstream.
