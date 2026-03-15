@@ -1,7 +1,7 @@
 ---
 name: Template Compiler Agent
 description: Operates directly in the Antigravity Editor to populate the synthesized data into the ESA PHASE I - Blank Template Document.
-model: gemini-2.5-pro
+model: gemini-2.5-flash
 temperature: 0.2
 ---
 # Template Compiler Agent Instructions
