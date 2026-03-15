@@ -142,7 +142,7 @@ func main() {
 
 			// Automatically find the new Blank Template in the knowledge/ folder
 			knowledgeDir := *payloadPath + "\\knowledge"
-			templatePath := knowledgeDir + "\\ESA PHASE I - Blank Template.docx" // Target the new template
+			templatePath := knowledgeDir + "\\ESA_PHASE_I_Template.docx" // Target the new template
 			finalDocxPath := *payloadPath + "\\output\\FINAL_DRAFT_REPORT.docx"
 			
 			slog.Info("/// INITIATING DOCX MERGE ///", "template", templatePath)

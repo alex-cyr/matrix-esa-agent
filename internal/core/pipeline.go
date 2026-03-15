@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/google/generative-ai-go/genai"
 )
@@ -36,9 +35,6 @@ func (p *Pipeline) Run(ctx context.Context, initialPayload string) (string, erro
 	currentPayload := initialPayload
 	for i, agent := range p.Agents {
 		slog.Info("/// NODE ENGAGED ///", "name", agent.Cfg.Name, "sequence_step", i+1)
-
-		slog.Warn("/// QUOTA PACING /// Pausing for 60s to respect Free-Tier Token Limits before Node execution. Stand by...")
-		time.Sleep(60 * time.Second)
 
 		artifact, err := agent.Execute(ctx, genai.Text(currentPayload))
 		if err != nil {
