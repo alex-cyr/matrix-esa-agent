@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/google/generative-ai-go/genai"
 	"github.com/matrix-engineering/matrix-esa-agent/internal/core"
@@ -40,6 +41,13 @@ func ExtractEDRSuite(ctx context.Context, pAgent *core.Agent, payloadDir string)
 
 	for _, entry := range entries {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".pdf" {
+			continue
+		}
+		
+		lowerName := strings.ToLower(entry.Name())
+		// 1337 OPTIMIZATION: Heavy image PDFs exceed the 1M Token-Per-Minute limit inherently on the Free Tier and contain no tabular text.
+		if strings.Contains(lowerName, "aerial") || strings.Contains(lowerName, "topo") || strings.Contains(lowerName, "sanborn") || strings.Contains(lowerName, "wetland") || strings.Contains(lowerName, "flood") {
+			log.Printf("/// SKIPPING HEAVY IMAGE NODE ///: %s (Optimizing tokens)\n", entry.Name())
 			continue
 		}
 		
