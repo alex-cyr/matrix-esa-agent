@@ -67,8 +67,8 @@ func (p *Pipeline) Run(ctx context.Context, initialPayload string) (string, erro
 			}
 		}
 
-		// A2A transmission: Pass current verified artifact as input payload to the next agent downstream.
-		currentPayload = artifact.Content
+		// A2A transmission: Accumulate state so downstream nodes retain the full context of prior nodes and initial extraction.
+		currentPayload = currentPayload + "\n\n=== [MATRIX NODE: " + agent.Cfg.Name + "] ===\n" + artifact.Content
 		slog.Info("/// ARTIFACT VERIFIED /// A2A Network Transmission to next matrix node initiating.", "bytes_transferred", len(currentPayload))
 	}
 

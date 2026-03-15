@@ -24,17 +24,19 @@ func ExtractEDRSuite(ctx context.Context, pAgent *core.Agent, payloadDir string)
 	var parts []genai.Part
 
 	// 2. Define the strict extraction prompt based on our Logic Matrix
-	extractionPrompt := `You are the Parser Agent. I have attached the full EDR Suite (multiple PDFs).
-	Please scan the documents and extract the "MAPPED SITES SUMMARY" table or equivalent data detailing coordinates and tables.
+	extractionPrompt := `You are the Parser Agent. I have attached the full EDR Suite (multiple PDFs), including site proposals and checklists.
+	You must extract TWO main sets of data:
 	
-	You must extract the following exact columns for each site found:
+	1. PROJECT METADATA: Extract the Subject Property Address (Street, City, State, Zip), the Proposal Recipient Name(s) / Company, the Project Date, and Project Number (if any).
+	
+	2. MAPPED SITES SUMMARY: Extract the table or equivalent data detailing coordinates and regulatory databases. You must extract the following exact columns for each site found:
 	- MAP ID
 	- SITE NAME
 	- DATABASE ACRONYMS
 	- RELATIVE DIST (ft. & mi.)
 	- ELEVATION
 	
-	Return the extracted data as a structured JSON payload.`
+	Return ALL extracted data as a single structured JSON payload.`
 
 	parts = append(parts, genai.Text(extractionPrompt))
 
