@@ -73,5 +73,8 @@ func (p *Pipeline) Run(ctx context.Context, initialPayload string) (string, erro
 	}
 
 	slog.Info("/// MATRIX EXECUTION COMPLETE /// Final Payload Ready for Extraction.")
+	if len(p.Memory) > 0 {
+		return p.Memory[len(p.Memory)-1].Content, nil
+	}
 	return currentPayload, nil
 }
