@@ -21,11 +21,11 @@ func ExtractEDRSuite(ctx context.Context, pAgent *core.Agent, payloadDir string)
 		return "", fmt.Errorf("failed to read payload directory: %w", err)
 	}
 
-	var parts []genai.Part
+	var fullExtractedData string
 
 	// 2. Define the strict extraction prompt based on our Logic Matrix
-	extractionPrompt := `You are the Parser Agent. I have attached the full EDR Suite (multiple PDFs), including site proposals and checklists.
-	You must extract TWO main sets of data:
+	extractionPrompt := `You are the Parser Agent. I have attached an EDR Suite document (such as a site proposal or checklist).
+	You must extract TWO main sets of data, if present in this specific document:
 	
 	1. PROJECT METADATA: Extract the Subject Property Address (Street, City, State, Zip), the Proposal Recipient Name(s) / Company, the Project Date, and Project Number (if any).
 	
@@ -36,9 +36,7 @@ func ExtractEDRSuite(ctx context.Context, pAgent *core.Agent, payloadDir string)
 	- RELATIVE DIST (ft. & mi.)
 	- ELEVATION
 	
-	Return ALL extracted data as a single structured JSON payload.`
-
-	parts = append(parts, genai.Text(extractionPrompt))
+	Return ALL extracted data found in this specific document as a structured JSON payload. If the document does not contain this information, return an empty JSON object {}.`
 
 	for _, entry := range entries {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".pdf" {
@@ -46,28 +44,33 @@ func ExtractEDRSuite(ctx context.Context, pAgent *core.Agent, payloadDir string)
 		}
 		
 		pdfPath := filepath.Join(payloadDir, entry.Name())
-		log.Printf("/// INGESTING NODE PAYLOAD ///: %s\n", entry.Name())
+		log.Printf("/// INGESTING NODE PAYLOAD (SEQUENTIAL) ///: %s\n", entry.Name())
 		
 		pdfBytes, err := os.ReadFile(pdfPath)
 		if err != nil {
 			log.Printf("WARNING: failed to read EDR report %s: %v", entry.Name(), err)
 			continue
 		}
+		
+		var parts []genai.Part
+		parts = append(parts, genai.Text(extractionPrompt))
 		parts = append(parts, genai.Blob{MIMEType: "application/pdf", Data: pdfBytes})
+
+		log.Printf("/// NODE ENGAGED ///: Parsing Document: %s\n", entry.Name())
+		
+		response, err := pAgent.Execute(ctx, parts...)
+		if err != nil {
+			log.Printf("WARNING: parser agent failed to process document %s: %v", entry.Name(), err)
+			continue
+		}
+		
+		fullExtractedData += "\n\n=== [DOCUMENT EXTRACT: " + entry.Name() + "] ===\n" + response.Content
 	}
 
-	if len(parts) == 1 {
-		return "", fmt.Errorf("no pdf files found in payload directory")
+	if fullExtractedData == "" {
+		return "", fmt.Errorf("no data extracted from any pdf files in payload directory")
 	}
 
-	// 3. Feed the prompt and the PDF bytes into the Agent's Execute function as multimodal parts.
-	log.Println("/// NODE ENGAGED ///: Parsing Full EDR Suite...")
-	
-	response, err := pAgent.Execute(ctx, parts...)
-	if err != nil {
-		return "", fmt.Errorf("parser agent failed to process documents: %w", err)
-	}
-
-	log.Println("SIG_YIELD: Full Suite Extraction Successful.")
-	return response.Content, nil
+	log.Println("SIG_YIELD: Sequential Suite Extraction Successful.")
+	return fullExtractedData, nil
 }
