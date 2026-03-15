@@ -67,7 +67,7 @@ func (a *Agent) Execute(ctx context.Context, parts ...genai.Part) (*Artifact, er
 
 	var resp *genai.GenerateContentResponse
 	var err error
-	maxRetries := 3
+	maxRetries := 10 // Increased for heavy free-tier testing
 
 	for i := 0; i <= maxRetries; i++ {
 		resp, err = model.GenerateContent(ctx, parts...)
