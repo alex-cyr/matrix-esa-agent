@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/google/generative-ai-go/genai"
 	"github.com/matrix-engineering/matrix-esa-agent/internal/core"
@@ -25,30 +24,23 @@ func ExtractEDRSuite(ctx context.Context, pAgent *core.Agent, payloadDir string)
 	var fullExtractedData string
 
 	// 2. Define the strict extraction prompt based on our Logic Matrix
-	extractionPrompt := `You are the Parser Agent. I have attached an EDR Suite document (such as a site proposal or checklist).
-	You must extract TWO main sets of data, if present in this specific document:
+	extractionPrompt := `You are the Parser Agent. I have attached an EDR Suite document (such as a site proposal, radius map, aerial photo, sanborn map, topo map, or checklist).
+	You must extract ALL of the following sets of data, if present in this specific document:
 	
-	1. PROJECT METADATA: Extract the Subject Property Address (Street, City, State, Zip), the Proposal Recipient Name(s) / Company, the Project Date, and Project Number (if any).
+	1. PROJECT METADATA: Subject Property Address (Street, City, State, County, Zip), Acres, Parcel ID, Owner Name, Proposal Recipient Name(s)/Company, Project Date, and Project Number.
 	
-	2. MAPPED SITES SUMMARY: Extract the table or equivalent data detailing coordinates and regulatory databases. You must extract the following exact columns for each site found:
-	- MAP ID
-	- SITE NAME
-	- DATABASE ACRONYMS
-	- RELATIVE DIST (ft. & mi.)
-	- ELEVATION
+	2. MAPPED SITES SUMMARY: Extract the table or equivalent data detailing coordinates and regulatory databases (MAP ID, SITE NAME, DATABASE, RELATIVE DIST, ELEVATION, UP/DOWN GRADIENT).
+	
+	3. SITE RECONNAISSANCE & PHYSICAL SETTING: Current Use, Surrounding Uses (North/South/East/West), Topography, Flood/Wetland Info, Radon context.
+	
+	4. HISTORICAL USE: Summaries for Aerial Photos, Sanborn Maps, USGS Topo Maps, City Directories, Fire Insurance Maps, etc. (Subject Site and Surroundings).
+	
+	5. REGULATORY COUNTS: Count of sites in state/federal databases (NPL, CERCLIS, RCRA, LUST, UST, etc.) if summarized.
 	
 	Return ALL extracted data found in this specific document as a structured JSON payload. If the document does not contain this information, return an empty JSON object {}.`
 
 	for _, entry := range entries {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".pdf" {
-			continue
-		}
-		
-		lowerName := strings.ToLower(entry.Name())
-		// 1337 OPTIMIZATION: On the strict Free Tier (20 requests/day), we cannot ingest all 12 PDFs. 
-		// Proposal contains Metadata. Radius Map contains MAPPED SITES SUMMARY. Skip everything else!
-		if !strings.Contains(lowerName, "proposal") && !strings.Contains(lowerName, "radius") {
-			log.Printf("/// SKIPPING EXTRA NODE ///: %s (Whitelisting Proposal and Radius Map to save API Requests)\n", entry.Name())
 			continue
 		}
 		
