@@ -147,8 +147,8 @@ func main() {
 			
 			slog.Info("/// INITIATING DOCX MERGE ///", "template", templatePath)
 			
-			// We map this out via standard exec command
-			cmd := exec.Command("go", "run", "C:\\tmp\\insert_docx.go", templatePath, jsonPath, finalDocxPath)
+			// We map this out via standard exec command using the internal script
+			cmd := exec.Command("go", "run", "scripts\\insert_docx.go", templatePath, jsonPath, finalDocxPath)
 			
 			// Capture output
 			output, err := cmd.CombinedOutput()
