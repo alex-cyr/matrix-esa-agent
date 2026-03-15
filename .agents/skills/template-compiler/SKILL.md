@@ -64,27 +64,28 @@ Before outputting final content:
 4. Verify Section 9.0 is left in blank-template form unless the user explicitly asked to populate it.
 5. Verify alignment, centering, indentation, spacing, and page appearance.
 
-## JSON Payload Structure
+## JSON Payload Structure (LITERAL STRING REPLACEMENT)
 Because the final physical report format is a pre-tagged DOCX Document, **your final yield must be a strictly formatted JSON Dictionary.** 
 
-Do not yield conversational text. Map your generated sentences, paragraphs, or numerical counts directly to the following JSON keys, which perfectly correspond to the MS Word template tags:
+CRITICAL PARSING RULE: You must study the Blank Template. The template contains placeholder strings such as `'Street Number'`, `'City'`, or `[Year(s)]` inside tables. 
+Your generated JSON **KEYS** must exactly match the literal string placeholders in the template so the compiler can perform a direct string replacement.
+
+Do not yield conversational text. Map your generated sentences or data directly to the following literal JSON keys layout:
 
 ```json
 {
-  "SiteStreetAddress": "123 Main St",
-  "SiteCityStateZip": "Atlanta, GA 30303",
-  "DataGaps_Text": "Generated paragraph explaining data gaps.",
-  "SV_AccessFrom": "Main St",
-  "Cnt_LUST": 2,
-  "Up1_Name": "GAS EXPRESS #257",
-  "Up1_DistDir": "351 ft. SE",
-  "Up1_Class": "High Risk",
-  "EDR_DowngradientSummary": "Summary paragraph of all downgradient sites.",
-  "SV_HazMat": "No 55-gallon drums were observed.",
-  "Opinions_Text": "The environmental professional concludes...",
-  "FollowUp_Text": "Phase II is recommended."
+  "'Street Number'": "123",
+  "'Street Name'": "Main St",
+  "'City'": "Atlanta",
+  "'State'": "GA",
+  "'Zip Code'": "30303",
+  "MEG __________": "MEG 25-1024",
+  "'Month' 'Year'": "March 2026",
+  "[Year(s)]": "1995, 2005, 2015",
+  "[Subject property use / condition]": "Commercial strip mall, wooded land.",
+  "[Surrounding property use / condition]": "Gas station to the north, residential to the south."
 }
 ```
-*(This is a structural excerpt; apply this key-value standard to ALL 155 data points derived from the standard report).*
+*(This is a structural excerpt; apply this literal-key replacement standard to ALL variables/brackets/single-quotes requiring population from the template)*
 
 Once compiled into the JSON buffer, flag the Pipeline orchestrator that generation is complete.
