@@ -45,9 +45,10 @@ func ExtractEDRSuite(ctx context.Context, pAgent *core.Agent, payloadDir string)
 		}
 		
 		lowerName := strings.ToLower(entry.Name())
-		// 1337 OPTIMIZATION: Heavy image PDFs exceed the 1M Token-Per-Minute limit inherently on the Free Tier and contain no tabular text.
-		if strings.Contains(lowerName, "aerial") || strings.Contains(lowerName, "topo") || strings.Contains(lowerName, "sanborn") || strings.Contains(lowerName, "wetland") || strings.Contains(lowerName, "flood") {
-			log.Printf("/// SKIPPING HEAVY IMAGE NODE ///: %s (Optimizing tokens)\n", entry.Name())
+		// 1337 OPTIMIZATION: On the strict Free Tier (20 requests/day), we cannot ingest all 12 PDFs. 
+		// Proposal contains Metadata. Radius Map contains MAPPED SITES SUMMARY. Skip everything else!
+		if !strings.Contains(lowerName, "proposal") && !strings.Contains(lowerName, "radius") {
+			log.Printf("/// SKIPPING EXTRA NODE ///: %s (Whitelisting Proposal and Radius Map to save API Requests)\n", entry.Name())
 			continue
 		}
 		

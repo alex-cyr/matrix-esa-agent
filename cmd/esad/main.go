@@ -55,28 +55,28 @@ func main() {
 
 	parserCfg := core.AgentConfig{
 		Name:         "ParserAgent",
-		Model:        "gemini-2.0-flash",
+		Model:        "gemini-2.5-flash",
 		SystemPrompt: loadSkill(".agents/skills/parser/SKILL.md"),
 		Temperature:  0.0,
 	}
 
 	geoCfg := core.AgentConfig{
 		Name:         "GeospatialEvaluatorAgent",
-		Model:        "gemini-2.0-flash",
+		Model:        "gemini-2.5-flash",
 		SystemPrompt: loadSkill(".agents/skills/geospatial-evaluator/SKILL.md"),
 		Temperature:  0.1,
 	}
 
 	astmCfg := core.AgentConfig{
 		Name:         "ASTMSynthesizerAgent",
-		Model:        "gemini-2.0-flash", // We use flash to avoid model/quota issues
+		Model:        "gemini-2.5-flash", // We use flash to avoid model/quota issues
 		SystemPrompt: loadSkill(".agents/skills/astm-synthesizer/SKILL.md"),
 		Temperature:  0.2,
 	}
 
 	templateCfg := core.AgentConfig{
 		Name:         "TemplateCompilerAgent",
-		Model:        "gemini-2.0-flash",
+		Model:        "gemini-2.5-flash",
 		SystemPrompt: loadSkill(".agents/skills/template-compiler/SKILL.md"),
 		Temperature:  0.2,
 	}
