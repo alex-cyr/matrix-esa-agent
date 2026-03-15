@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/google/generative-ai-go/genai"
 )
@@ -35,6 +36,13 @@ func (p *Pipeline) Run(ctx context.Context, initialPayload string) (string, erro
 	currentPayload := initialPayload
 	for i, agent := range p.Agents {
 		slog.Info("/// NODE ENGAGED ///", "name", agent.Cfg.Name, "sequence_step", i+1)
+
+		if i == 0 {
+			// Optimal Pacing: The Parser just shoved 13 full PDFs into the engine. We wait exactly 1 minute here
+			// so the Free-Tier TPM (Tokens-Per-Minute) bucket resets, then we blaze through the rest of the nodes instantly.
+			slog.Warn("/// OPTIMIZED PACING /// Pausing for 60s to let the Parser's massive Token-Load clear before downstream execution...")
+			time.Sleep(60 * time.Second)
+		}
 
 		artifact, err := agent.Execute(ctx, genai.Text(currentPayload))
 		if err != nil {
