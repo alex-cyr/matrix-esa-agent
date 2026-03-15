@@ -18,11 +18,15 @@ import (
 	"flag"
 	"log/slog"
 	"os"
+	"os/exec"
 
+	"github.com/joho/godotenv"
 	"github.com/matrix-engineering/matrix-esa-agent/internal/core"
 )
 
 func main() {
+	// Load .env file if it exists
+	_ = godotenv.Load()
 	var (
 		payloadPath = flag.String("payload", "", "Path to raw EDR PDF suite or initialized project folder")
 		projectID   = flag.String("project", os.Getenv("GCP_PROJECT"), "GCP Project ID for Vertex AI")
@@ -40,33 +44,40 @@ func main() {
 	ctx := context.Background()
 
 	// 1. Initialize Matrix Agent Skill Configs (loaded from .agents/skills/...)
-	// MATRIX ENGS: For boilerplate portfolio demo, defining in-memory.
-	// 1337 Code: Always prioritize clean strict types.
+	loadSkill := func(path string) string {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			slog.Warn("Could not load skill file", "path", path)
+			return ""
+		}
+		return string(data)
+	}
+
 	parserCfg := core.AgentConfig{
 		Name:         "ParserAgent",
-		Model:        "gemini-2.5-pro",
-		SystemPrompt: "Parse raw EDR reports and extract coordinates and tabular data.",
+		Model:        "gemini-2.5-flash",
+		SystemPrompt: loadSkill(".agents/skills/parser/SKILL.md"),
 		Temperature:  0.0,
 	}
 
 	geoCfg := core.AgentConfig{
 		Name:         "GeospatialEvaluatorAgent",
 		Model:        "gemini-2.5-flash",
-		SystemPrompt: "Evaluate relative risks of extracted off-site regulatory findings.",
+		SystemPrompt: loadSkill(".agents/skills/geospatial-evaluator/SKILL.md"),
 		Temperature:  0.1,
 	}
 
 	astmCfg := core.AgentConfig{
 		Name:         "ASTMSynthesizerAgent",
-		Model:        "gemini-2.5-pro",
-		SystemPrompt: "Classify findings via ASTM E1527-21 logic as REC, HREC, or De Minimis.",
+		Model:        "gemini-2.5-flash", // We use flash to avoid model/quota issues
+		SystemPrompt: loadSkill(".agents/skills/astm-synthesizer/SKILL.md"),
 		Temperature:  0.2,
 	}
 
 	templateCfg := core.AgentConfig{
 		Name:         "TemplateCompilerAgent",
-		Model:        "gemini-2.5-pro",
-		SystemPrompt: "Write finalized data into the ESA Phase I Blank Template doc.",
+		Model:        "gemini-2.5-flash",
+		SystemPrompt: loadSkill(".agents/skills/template-compiler/SKILL.md"),
 		Temperature:  0.2,
 	}
 
@@ -96,7 +107,7 @@ func main() {
 	}
 
 	// 3. Assemble SequentialAgent Pipeline (1337 A2A Network Matrix)
-	activeAgents := []*core.Agent{pAgent, gAgent}
+	activeAgents := []*core.Agent{gAgent} // Note: pAgent logic runs separately to extract initial flow.
 	if !*skipASTM {
 		activeAgents = append(activeAgents, aAgent)
 	}
@@ -104,14 +115,51 @@ func main() {
 
 	pipeline := core.NewPipeline(*projectID, *location, *skipHITL, activeAgents...)
 
-	// 4. Execute Flow Pipeline with human-in-the-loop validation
-	// (Simulation payload mapping)
-	initialDataFlow := "load(" + *payloadPath + ")"
+	// 4. Extract Initial Payload using real pAgent execution from edr_source/
+	pdfSourceDir := *payloadPath + "\\edr_source"
+	initialDataFlow, err := ExtractEDRSuite(ctx, pAgent, pdfSourceDir)
+	if err != nil {
+		slog.Error("SYSTEM_FAULT: Parser Execution Failed", "err", err)
+		os.Exit(1)
+	}
 
-	if err := pipeline.Run(ctx, initialDataFlow); err != nil {
-		slog.Error("EXECUTION_SUSPENDED: State Yielded to Matrix Engineering", "cause", err)
-		// Yield state here requires manual Antigravity IDE UI review loop (HITL)
-		// NOTE: Teammates do not alter this exit constraint without modifying HW approval logic.
-		os.Exit(0)
+	if len(pipeline.Agents) > 0 {
+		finalPayload, err := pipeline.Run(ctx, initialDataFlow)
+		if err != nil {
+			slog.Error("EXECUTION_SUSPENDED: State Yielded to Matrix Engineering", "cause", err)
+			// Yield state here requires manual Antigravity IDE UI review loop (HITL)
+			// NOTE: Teammates do not alter this exit constraint without modifying HW approval logic.
+			os.Exit(0)
+		}
+
+		// Save the final payload to a file inside output/
+		jsonPath := *payloadPath + "\\output\\MATRIX_ESA_REPORT.json"
+		err = os.WriteFile(jsonPath, []byte(finalPayload), 0644)
+		if err != nil {
+			slog.Error("SYSTEM_FAULT: Failed to write output report to disk", "err", err)
+		} else {
+			slog.Info("/// ARTIFACT WRITTEN TO DISK ///", "path", jsonPath)
+
+			// Automatically find the first DOCX template in the knowledge/ folder
+			knowledgeDir := *payloadPath + "\\knowledge"
+			templatePath := knowledgeDir + "\\ESA_PHASE_I_Template.docx" // Default expectation
+			finalDocxPath := *payloadPath + "\\output\\FINAL_DRAFT_REPORT.docx"
+			
+			slog.Info("/// INITIATING DOCX MERGE ///", "template", templatePath)
+			
+			// We map this out via standard exec command
+			cmd := exec.Command("go", "run", "C:\\tmp\\insert_docx.go", templatePath, jsonPath, finalDocxPath)
+			
+			// Capture output
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				slog.Error("SYSTEM_FAULT: DOCX merge failed", "err", err, "output", string(output))
+			} else {
+				slog.Info("/// DOCX MERGE SUCCESSFUL ///", "output", finalDocxPath)
+			}
+		}
+
+	} else {
+		slog.Info("/// MATRIX EXECUTION COMPLETE /// Handled by Parser Only.")
 	}
 }
