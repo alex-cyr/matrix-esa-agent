@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
+
+	"github.com/google/generative-ai-go/genai"
 )
 
 // Pipeline enforces the SequentialAgent pattern.
@@ -27,16 +30,19 @@ func NewPipeline(project, location string, skipHITL bool, agents ...*Agent) *Pip
 }
 
 // Run executes the chain sequentially, pausing on unapproved artifacts.
-func (p *Pipeline) Run(ctx context.Context, initialPayload string) error {
+func (p *Pipeline) Run(ctx context.Context, initialPayload string) (string, error) {
 	slog.Info("MATRIX EXECUTABLE LOADED: Initializing SequentialAgent Pipeline")
 
 	currentPayload := initialPayload
 	for i, agent := range p.Agents {
 		slog.Info("/// NODE ENGAGED ///", "name", agent.Cfg.Name, "sequence_step", i+1)
 
-		artifact, err := agent.Execute(ctx, currentPayload)
+		slog.Warn("/// QUOTA PACING /// Pausing for 60s to respect Free-Tier Token Limits before Node execution. Stand by...")
+		time.Sleep(60 * time.Second)
+
+		artifact, err := agent.Execute(ctx, genai.Text(currentPayload))
 		if err != nil {
-			return fmt.Errorf("SYSTEM FAULT: Pipeline shattered at matrix node %s: %w", agent.Cfg.Name, err)
+			return "", fmt.Errorf("SYSTEM FAULT: Pipeline shattered at matrix node %s: %w", agent.Cfg.Name, err)
 		}
 
 		p.Memory = append(p.Memory, artifact)
@@ -53,7 +59,7 @@ func (p *Pipeline) Run(ctx context.Context, initialPayload string) error {
 
 				// In production integration, the Antigravity IDE consumes this event and prompts the UI.
 				// After manual approval (inline doc comments), the webhook calls the pipeline back.
-				return fmt.Errorf("SIG_YIELD: Entity Validation Required by HW [Artifact %s]", artifact.ID)
+				return "", fmt.Errorf("SIG_YIELD: Entity Validation Required by HW [Artifact %s]", artifact.ID)
 			}
 		}
 
@@ -63,5 +69,5 @@ func (p *Pipeline) Run(ctx context.Context, initialPayload string) error {
 	}
 
 	slog.Info("/// MATRIX EXECUTION COMPLETE /// Final Payload Ready for Extraction.")
-	return nil
+	return currentPayload, nil
 }
