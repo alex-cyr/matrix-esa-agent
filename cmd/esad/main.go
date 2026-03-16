@@ -14,15 +14,63 @@
 package main
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
+	"encoding/xml"
 	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/matrix-engineering/matrix-esa-agent/internal/core"
 )
+
+// extractDocxText reads a docx archive and extracts raw text from document.xml
+func extractDocxText(path string) (string, error) {
+	r, err := zip.OpenReader(path)
+	if err != nil {
+		return "", err
+	}
+	defer r.Close()
+
+	var docXML *zip.File
+	for _, f := range r.File {
+		if f.Name == "word/document.xml" {
+			docXML = f
+			break
+		}
+	}
+	if docXML == nil {
+		return "", fmt.Errorf("word/document.xml not found")
+	}
+
+	rc, err := docXML.Open()
+	if err != nil {
+		return "", err
+	}
+	defer rc.Close()
+
+	decoder := xml.NewDecoder(rc)
+	var text bytes.Buffer
+	for {
+		t, _ := decoder.Token()
+		if t == nil {
+			break
+		}
+		switch se := t.(type) {
+		case xml.CharData:
+			if len(se) > 0 {
+				text.Write(se)
+			}
+		}
+	}
+	return text.String(), nil
+}
 
 func main() {
 	// Load .env file if it exists
@@ -79,6 +127,34 @@ func main() {
 		Model:        "gemini-2.5-flash",
 		SystemPrompt: loadSkill(".agents/skills/template-compiler/SKILL.md"),
 		Temperature:  0.2,
+	}
+
+	// 1.5 Inject Historical Reports into Template Compiler Context
+	historicalDir := filepath.Join(*payloadPath, "historical")
+	if hFiles, err := os.ReadDir(historicalDir); err == nil {
+		for _, hFile := range hFiles {
+			ext := strings.ToLower(filepath.Ext(hFile.Name()))
+			if !hFile.IsDir() && (ext == ".txt" || ext == ".md" || ext == ".docx") {
+				var contentStr string
+				var fileErr error
+
+				filePath := filepath.Join(historicalDir, hFile.Name())
+				if ext == ".docx" {
+					contentStr, fileErr = extractDocxText(filePath)
+				} else {
+					contentBytes, err := os.ReadFile(filePath)
+					contentStr = string(contentBytes)
+					fileErr = err
+				}
+
+				if fileErr == nil {
+					templateCfg.SystemPrompt += "\n\n=== HISTORICAL REPORT BASELINE CONTEXT [" + hFile.Name() + "] ===\n" + contentStr
+					slog.Info("/// INGESTING HISTORICAL REPORT (CONTEXT) ///", "file", hFile.Name())
+				} else {
+					slog.Warn("Failed to read historical report", "file", hFile.Name(), "err", fileErr)
+				}
+			}
+		}
 	}
 
 	// 2. Instantiate Agents
@@ -144,12 +220,19 @@ func main() {
 			knowledgeDir := *payloadPath + "\\knowledge"
 			templatePath := knowledgeDir + "\\ESA_PHASE_I_Template.docx" // Target the new template
 			finalDocxPath := *payloadPath + "\\output\\FINAL_DRAFT_REPORT.docx"
-			
+
 			slog.Info("/// INITIATING DOCX MERGE ///", "template", templatePath)
-			
+
+			// Resolve the absolute path of the executable/script directory to find insert_docx.go consistently
+			execDir, err := os.Getwd()
+			if err != nil {
+				slog.Error("SYSTEM_FAULT: Could not determine working directory", "err", err)
+			}
+			scriptPath := filepath.Join(execDir, "scripts", "insert_docx.go")
+
 			// We map this out via standard exec command using the internal script
-			cmd := exec.Command("go", "run", "scripts\\insert_docx.go", templatePath, jsonPath, finalDocxPath)
-			
+			cmd := exec.Command("go", "run", scriptPath, templatePath, jsonPath, finalDocxPath)
+
 			// Capture output
 			output, err := cmd.CombinedOutput()
 			if err != nil {

@@ -74,7 +74,7 @@ func (a *Agent) Execute(ctx context.Context, parts ...genai.Part) (*Artifact, er
 		if err == nil {
 			break
 		}
-		
+
 		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "quota") || strings.Contains(err.Error(), "Quota") {
 			if i < maxRetries {
 				slog.Warn("/// API QUOTA EXCEEDED /// Sleeping for 60 seconds to bypass free-tier rate limits...", "retry_attempt", i+1)
