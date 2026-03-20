@@ -1,4 +1,0 @@
-2026/03/14 20:49:58 MATRIX EXECUTABLE LOADED: Initiating PDF Extraction for C:\dev\matrix-esa-agent-info\matrix123\Radius_20Map_20Report.pdf
-2026/03/14 20:49:58 /// NODE ENGAGED ///: Parsing EDR Radius Map...
-2026/03/14 20:49:58 ERROR SYSTEM_FAULT: Parser Execution Failed err="parser agent failed to process document: generation failed: googleapi: Error 404: models/gemini-1.5-pro-latest is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods."
-exit status 1
