@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"time"
-
-	"github.com/google/generative-ai-go/genai"
+	"cloud.google.com/go/vertexai/genai"
 )
 
 // Pipeline enforces the SequentialAgent pattern.

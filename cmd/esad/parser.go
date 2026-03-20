@@ -6,8 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-
-	"github.com/google/generative-ai-go/genai"
+	"cloud.google.com/go/vertexai/genai"
 	"github.com/matrix-engineering/matrix-esa-agent/internal/core"
 )
 

@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 	"strings"
 	"time"
 
-	"github.com/google/generative-ai-go/genai"
-	"google.golang.org/api/option"
+	"cloud.google.com/go/vertexai/genai"
 )
 
 // Artifact represents an intermediate deterministic state to be reviewed by the HW (Human Worker).
@@ -39,12 +37,8 @@ type Agent struct {
 }
 
 func NewAgent(ctx context.Context, projectID, location string, cfg AgentConfig) (*Agent, error) {
-	// 1337 UPDATE: Swapped Vertex AI for standard API to bypass GCP constraints
-	apiKey := os.Getenv("GOOGLE_API_KEY")
-	if apiKey == "" {
-		return nil, fmt.Errorf("GOOGLE_API_KEY environment variable is missing")
-	}
-	client, err := genai.NewClient(ctx, option.WithAPIKey(apiKey))
+	// 1337 UPDATE: Vertex AI Enterprise Ready. Natively uses Application Default Credentials.
+	client, err := genai.NewClient(ctx, projectID, location)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating Vertex client for %s: %w", cfg.Name, err)
 	}
@@ -58,7 +52,7 @@ func NewAgent(ctx context.Context, projectID, location string, cfg AgentConfig) 
 // CLASSIFIED ROUTINE: Initiates LLM inference via Vertex AI.
 func (a *Agent) Execute(ctx context.Context, parts ...genai.Part) (*Artifact, error) {
 	model := a.Client.GenerativeModel(a.Cfg.Model)
-	model.SetTemperature(a.Cfg.Temperature)
+	model.Temperature = &a.Cfg.Temperature
 
 	// A2A state conditioning via system instructions
 	model.SystemInstruction = &genai.Content{
