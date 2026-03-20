@@ -2,10 +2,8 @@ package main
 
 import (
 	"archive/zip"
-	"bytes"
 	"context"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"io"
 	"log/slog"
@@ -36,7 +34,7 @@ func replaceFracturedXML(xmlStr, key, val string) string {
 	return re.ReplaceAllString(xmlStr, val)
 }
 
-func mergeDocxLogic(templatePath, jsonBytes []byte, outputPath string) error {
+func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) error {
 	var replaceMap map[string]interface{}
 	if err := json.Unmarshal(jsonBytes, &replaceMap); err != nil {
 		return fmt.Errorf("json parse error: %w", err)
