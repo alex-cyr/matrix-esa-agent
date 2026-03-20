@@ -1,3 +1,9 @@
 .env
 .env.*
 *.exe
+
+# Protect Sensitive Client M&A Data
+edr_source/*
+!edr_source/.gitkeep
+output/*
+!output/.gitkeep
