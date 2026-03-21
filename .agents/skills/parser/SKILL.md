@@ -29,7 +29,7 @@ Do not summarize randomly. You must convert the raw document packages into stand
    - *Wetlands/Flood:* NWI codes (R4SBC, PF01A) and FIRMette zones (Zone X, Zone A).
    - *Vapor Intrusion:* VEC Tier 1 screening presence/absence.
 6. **Section 8.0 (Site Reconnaissance - Digital Checklist Ingestion):**
-   Scan the payload directory for the "Matrix Site Recon Checklist" (Fillable PDF). Extract the Metadata (Date, Weather, Inspector, Year Built), Adjoining Sites, and Data Gaps. For the Hazards Grid, if checked "NO", yield boolean `false`. If checked "YES", yield `true` and extract the remarks. Do NOT write paragraphs.
+   Scan the payload directory for the "Matrix Site Recon Checklist" (Fillable PDF). Extract the Metadata (Date, Weather, Inspector, Year Built), Site Access Details (Access From, Access Via, Current Use, Condition Summary, Observed Features), Adjoining Sites, and Data Gaps. For the Hazards Grid, if checked "NO", yield boolean `false`. If checked "YES", yield `true` and extract the remarks. Do NOT write paragraphs. Additionally, extract the specific Site Visit (SV) strings: Access From, Access Via, Current Use, Condition Summary, and Observed Features
 7. **Client Proposal / Engagement Letter:**
    Scan for the proposal PDF. Extract the Client Name, Client Mailing Address, and Project Number exactly as written to pass to the Template Compiler.
 
