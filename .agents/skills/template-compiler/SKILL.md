@@ -49,8 +49,7 @@ Example: Section 4.2 must retain the template's original font sizing / appearanc
 More generally, every edited paragraph must retain the same explicit run-level formatting as the corresponding template paragraph whenever possible.
 
 ### IMPORTANT SECTION 9 RULE:
-Do not populate Section 9.0 FINDINGS unless the user explicitly instructs you to do so.
-Leave Section 9.0 exactly as it appears in the "ESA PHASE I - Blank Template" unless the user specifically says otherwise.
+You MUST populate the individual contextual variables within Section 9.0 FINDINGS (such as `{{SiteFullAddress}}`, `{{SiteCounty}}`, `{{SiteAcres}}`, `{{VEC_Summary}}`, etc.) using the structured data provided by the ASTM Synthesizer Agent. Do not write a single overarching paragraph. You are strictly mapping your evaluated findings into the exact discrete JSON keys expected by the static template's fill-in-the-blank structure.
 
 ## Specific Content Rules
 1. **Incomplete Sections**: Sections that cannot be completed due to lack of information from the user shall be left blank until the user provides the relevant documents / data.
@@ -68,7 +67,7 @@ Before outputting final content:
 1. Check every edited section against the Blank Template and Static Report Template.
 2. Verify the running header is formatted exactly like the Static Report Template.
 3. Verify all edited paragraphs retained the correct template font sizes and formatting.
-4. Verify Section 9.0 is left in blank-template form unless the user explicitly asked to populate it.
+4. Verify Section 9.0 is fully complete and accurately reflects the ASTM Synthesizer Agent's rationales for RECs, HRECs, CRECs, SDGs, and De Minimis conditions.
 5. Verify alignment, centering, indentation, spacing, and page appearance.
 
 ## JSON Payload Structure (LITERAL DOUBLE-BRACKET REPLACEMENT)
@@ -231,7 +230,7 @@ Do not yield conversational text. Map your generated data directly into the foll
   "{{Down18_Name}}": "string", "{{Down18_Address}}": "string", "{{Down18_DistDir}}": "string", "{{Down18_DB}}": "string", "{{Down18_Class}}": "string",
   "{{Down19_Name}}": "string", "{{Down19_Address}}": "string", "{{Down19_DistDir}}": "string", "{{Down19_DB}}": "string", "{{Down19_Class}}": "string",
   "{{Down20_Name}}": "string", "{{Down20_Address}}": "string", "{{Down20_DistDir}}": "string", "{{Down20_DB}}": "string", "{{Down20_Class}}": "string",
-  "{{DataGaps_Text}}": "text block",
+  "{{Sec9_Item8_DataGaps}}": "string",
   "{{Opinions_Text}}": "text block",
   "{{FollowUp_Text}}": "text block",
   "{{ReportDate}}": "string"
