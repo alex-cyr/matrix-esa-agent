@@ -13,11 +13,18 @@ import (
 	"regexp"
 	"strings"
 
+	"cloud.google.com/go/storage"
+	"google.golang.org/api/iterator"
+
 	"cloud.google.com/go/vertexai/genai"
 	"github.com/matrix-engineering/matrix-esa-agent/internal/core"
 )
 
 
+type BucketRequest struct {
+	InputBucket  string `json:"input_bucket"`
+	FolderPrefix string `json:"folder_prefix"`
+}
 
 func replaceFracturedXML(xmlStr, key, val string) string {
 	var pattern strings.Builder
@@ -231,6 +238,170 @@ func analyzeHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, outDocx)
 }
 
+func analyzeBucketHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req BucketRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+
+	ctx := context.Background()
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	if projectID == "" {
+		projectID = "matrix-esa-production"
+	}
+	location := os.Getenv("VERTEX_LOCATION")
+	if location == "" {
+		location = "us-central1"
+	}
+
+	// 1. Initialize Storage Client
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		slog.Error("Failed to create storage client", "err", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	defer client.Close()
+
+	// 2. Setup Workspace
+	tempDir, err := os.MkdirTemp("", "matrix-bucket-*")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	defer os.RemoveAll(tempDir)
+
+	// 3. Download PDFs from GCS
+	bucket := client.Bucket(req.InputBucket)
+	prefix := req.FolderPrefix
+	if prefix != "" && !strings.HasSuffix(prefix, "/") {
+		prefix += "/"
+	}
+	
+	it := bucket.Objects(ctx, &storage.Query{Prefix: prefix})
+	var downloadedFiles []string
+	for {
+		attrs, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			slog.Error("Error listing bucket", "err", err)
+			http.Error(w, "Error reading bucket", http.StatusInternalServerError)
+			return
+		}
+		if strings.HasSuffix(strings.ToLower(attrs.Name), ".pdf") {
+			rc, err := bucket.Object(attrs.Name).NewReader(ctx)
+			if err != nil {
+				continue
+			}
+			localPath := filepath.Join(tempDir, filepath.Base(attrs.Name))
+			dst, err := os.Create(localPath)
+			if err == nil {
+				io.Copy(dst, rc)
+				downloadedFiles = append(downloadedFiles, localPath)
+				dst.Close()
+			}
+			rc.Close()
+		}
+	}
+
+	if len(downloadedFiles) == 0 {
+		http.Error(w, "No PDFs found in bucket folder", http.StatusBadRequest)
+		return
+	}
+
+	// 4. Initialize Agents
+	parserAgent, _ := core.NewAgent(ctx, projectID, location, core.AgentConfig{Name:"ParserAgent", Model:"gemini-2.5-flash", SystemPrompt:loadSkill(".agents/skills/parser/SKILL.md"), Temperature:0.0})
+	geoAgent, _ := core.NewAgent(ctx, projectID, location, core.AgentConfig{Name:"GeospatialEvaluatorAgent", Model:"gemini-2.5-flash", SystemPrompt:loadSkill(".agents/skills/geospatial-evaluator/SKILL.md"), Temperature:0.1})
+	srAgent, _ := core.NewAgent(ctx, projectID, location, core.AgentConfig{Name:"SiteReconSynthesizerAgent", Model:"gemini-2.5-pro", SystemPrompt:loadSkill(".agents/skills/site-recon-synthesizer/SKILL.md"), Temperature:0.2})
+	astmAgent, _ := core.NewAgent(ctx, projectID, location, core.AgentConfig{Name:"ASTMSynthesizerAgent", Model:"gemini-2.5-flash", SystemPrompt:loadSkill(".agents/skills/astm-synthesizer/SKILL.md"), Temperature:0.2})
+	templateCfg := core.AgentConfig{Name:"TemplateCompilerAgent", Model:"gemini-2.5-flash", SystemPrompt:loadSkill(".agents/skills/template-compiler/SKILL.md"), Temperature:0.2}
+
+	if hFiles, err := os.ReadDir("historical"); err == nil {
+		for _, hF := range hFiles {
+			if !hF.IsDir() {
+				c, _ := os.ReadFile(filepath.Join("historical", hF.Name()))
+				templateCfg.SystemPrompt += fmt.Sprintf("\n\n=== HISTORICAL REPORT BASELINE CONTEXT [%s] ===\n%s", hF.Name(), string(c))
+			}
+		}
+	}
+	templateAgent, _ := core.NewAgent(ctx, projectID, location, templateCfg)
+	pipeline := core.NewPipeline(projectID, location, true, geoAgent, srAgent, astmAgent, templateAgent)
+
+	// 5. Extract Data
+	slog.Info("Running Cloud Bucket Pipeline", "files", len(downloadedFiles))
+	var fullExtractedData string
+	extractionPrompt := "You are the Parser Agent... Retrieve JSON."
+	for _, localPath := range downloadedFiles {
+		pdfBytes, _ := os.ReadFile(localPath)
+		parts := []genai.Part{genai.Text(extractionPrompt), genai.Blob{MIMEType: "application/pdf", Data: pdfBytes}}
+		res, err := parserAgent.Execute(ctx, parts...)
+		if err == nil {
+			fullExtractedData += "\n\n=== [EXTRACT: " + filepath.Base(localPath) + "] ===\n" + res.Content
+		}
+	}
+
+	// 6. Run Core Pipeline
+	finalPayload, err := pipeline.Run(ctx, fullExtractedData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	startIdx := strings.Index(finalPayload, "{")
+	endIdx := strings.LastIndex(finalPayload, "}")
+	if startIdx != -1 && endIdx != -1 && endIdx > startIdx {
+		finalPayload = finalPayload[startIdx : endIdx+1]
+	}
+
+	// 7. Build Final DOCX
+	templatePath := "knowledge/ESA_PHASE_I_Template.docx"
+	outDocx := filepath.Join(tempDir, "CLOUD_FINAL_REPORT.docx")
+	err = mergeDocxLogic(templatePath, []byte(finalPayload), outDocx)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(finalPayload))
+		return
+	}
+
+	// 8. Upload Result to GCS
+	outputName := prefix + "Matrix_Cloud_Final_Report.docx"
+	wc := bucket.Object(outputName).NewWriter(ctx)
+	wc.ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+	
+	f, err := os.Open(outDocx)
+	if err != nil {
+		http.Error(w, "Failed to read generated docx", http.StatusInternalServerError)
+		return
+	}
+	defer f.Close()
+	
+	if _, err = io.Copy(wc, f); err != nil {
+		wc.Close()
+		http.Error(w, "Failed to upload to bucket", http.StatusInternalServerError)
+		return
+	}
+	if err := wc.Close(); err != nil {
+		http.Error(w, "Failed to finalize upload", http.StatusInternalServerError)
+		return
+	}
+
+	// 9. Respond Success
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "success",
+		"message": "Report generated and uploaded to bucket",
+		"file_path": fmt.Sprintf("gs://%s/%s", req.InputBucket, outputName),
+	})
+}
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -238,6 +409,7 @@ func main() {
 	}
 
 	http.HandleFunc("/api/v1/analyze", analyzeHandler)
+	http.HandleFunc("/api/v1/analyze/bucket", analyzeBucketHandler)
 
 	slog.Info("Cloud Run Web Server Started", "port", port)
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
