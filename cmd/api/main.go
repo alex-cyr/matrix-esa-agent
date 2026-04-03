@@ -372,7 +372,14 @@ func analyzeBucketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 8. Upload Result to GCS
-	outputName := prefix + "Matrix_Cloud_Final_Report.docx"
+	outputPrefix := prefix
+	if strings.HasPrefix(outputPrefix, "esa_inputs/") {
+		outputPrefix = "esa_outputs/" + strings.TrimPrefix(outputPrefix, "esa_inputs/")
+	} else if strings.HasPrefix(outputPrefix, "esa_inputs") { // edge case
+		outputPrefix = "esa_outputs" + strings.TrimPrefix(outputPrefix, "esa_inputs")
+	}
+
+	outputName := outputPrefix + "Matrix_Cloud_Final_Report.docx"
 	wc := bucket.Object(outputName).NewWriter(ctx)
 	wc.ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 	
