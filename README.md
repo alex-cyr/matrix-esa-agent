@@ -1,91 +1,66 @@
-# Matrix ESA Agent: Multi-Agentic ADK Framework for Environmental Due Diligence
+# Matrix ESA Agent: Multi-Agentic Framework for Environmental Due Diligence
+
+**Developed by:** CyR R&D Lab in technical partnership with Matrix Engineering Group, Inc.
 
 ## Overview
 The Matrix ESA Agent is an autonomous, multi-agent AI system designed to automate Phase I Environmental Site Assessments (ESAs) under the strict ASTM E1527-21 standard. 
 
-Built with Google's Agent Development Kit (ADK) and designed for serverless deployment on Google Cloud Run, this "invisible scaffolding" transforms a massive, unstructured data extraction bottleneck into a deterministic, enterprise-ready workflow.
+Built entirely in **Golang** using Google's Agent Development Kit (ADK) and Antigravity, this "invisible scaffolding" transforms a massive, unstructured data extraction bottleneck into a deterministic, enterprise-ready workflow. It is designed to be 100% "Google Maxed"—running entirely within Google Cloud Run, Vertex AI, and Google Cloud Storage (GCS) without any reliance on fragile local Windows environments, Python frontends, or external dependency bloat.
 
 ---
 
-## Enterprise Value & Architecture
-In the fast-paced world of Mergers & Acquisitions (M&A) and distressed asset accounting, financial due diligence requires speed, precision, and risk mitigation.
+## Enterprise M&A Integration Strategy
 
-- **Cost & Time Optimization:** A standard Phase I ESA takes weeks to complete. Report writing is the largest internal labor cost. By leveraging Gemini 2.5 models on Google Vertex AI, this system reduces a multi-week human bottleneck into an automated pipeline that completes in minutes.
-- **Enterprise Bucket Architecture:** Built to safely process payloads exceeding 500MB (massive historical aerial PDFs, topographical maps). It bypasses standard HTTP payload limits by natively integrating with Google Cloud Storage.
-- **B2B SaaS Integration:** Operates as a stateless premium JSON REST API, perfectly positioned as the backend logic engine for external software platforms and portals.
+This system is built as a highly scalable **B2B SaaS Backend**, explicitly structured for a 3-tier enterprise partnership and acquisition model:
 
-## Agent-to-Agent (A2A) Network
-Monolithic Large Language Models struggle with context degradation and hallucination when processing dense regulatory data. To solve this, the framework utilizes a structured `SequentialAgent` pipeline written in Golang natively integrated with Vertex AI models.
-
-1. **Parser Agent:** Ingests raw EDR PDF packages and extracts coordinates, elevations, and regulatory data tables.
-2. **Geospatial Evaluator Agent:** Analyzes relative risk of off-site regulatory findings by cross-referencing elevation gradients and migration pathways.
-3. **ASTM Synthesizer Agent:** Correlates spatial findings with strict ASTM definitions to draft legal rationales (REC, HREC, CREC).
-4. **Site Recon Synthesizer Agent:** Translates raw field checklist data into professional engineering paragraphs, enforcing exclusionary boilerplate logic.
-5. **Template Compiler Agent:** Yields a strict JSON dictionary to inject via XML directly into the firm's static "ESA PHASE I - Blank Template" document.
+1. **CyR R&D Lab (Core IP):** Engineering the proprietary Golang AI architecture, Agent-to-Agent (A2A) networking, and Vertex data flow limits.
+2. **Matrix Engineering (Domain Experts):** Providing the foundational engineering logic, the static ASTM template matrices, and rigorous Human-in-the-Loop (HITL) quality assurance testing.
+3. **Vahalo (Enterprise Distributor):** Integrating this stateless, 100% headless JSON API directly into their massive customer-facing web platform. Vahalo provides the UI/UX frontend; Matrix provides the AI engine. 
 
 ---
 
-## API Documentation for Integration Partners
+## The "Google Max" Production Workflow
+The entire pipeline bypasses standard HTTP 32MB payload limits by executing operations directly against Google Cloud Storage buckets at gigabit speeds. 
 
-The API provides an enterprise-grade `POST` endpoint designed for integration with frontend React/Next.js web applications. 
+**Zero local software is required.** An Environmental Professional can execute the entire pipeline seamlessly from a web browser:
 
-### `POST /api/v1/analyze/bucket`
+### Step 1: Secure Data Drop
+1. Log into the Google Cloud Console.
+2. Navigate to the Cloud Storage Bucket (e.g., `matrix-esa-production-vault`).
+3. Create a project folder inside `esa_inputs/` (e.g., `esa_inputs/Loganville_Medical_Property/`).
+4. **Drag and drop** massive, uncompressed EDR packages (Aerials, Topo Maps, Radius Maps) and Adobe field checklists directly into the browser.
 
-Triggers the full A2A pipeline on a specified Google Cloud Storage folder.
-
-**Request Payload (JSON):**
-```json
-{
-  "input_bucket": "matrix-esa-inputs",
-  "folder_prefix": "Property_123_Main_Street/"
-}
-```
-
-**Workflow:**
-1. The endpoint connects to the specified bucket and lists all `.pdf` blobs matching the `folder_prefix`.
-2. Blobs are securely downloaded into the serverless container's isolated memory.
-3. The ADK pipeline extracts data, analyzes historical records, and compiles the text.
-4. The API generates the physical `Matrix_Cloud_Final_Report.docx`.
-5. The document is uploaded directly back to `gs://matrix-esa-inputs/Property_123_Main_Street/`.
-
-**Success Response (200 OK):**
-```json
-{
-  "status": "success",
-  "message": "Report generated and uploaded to bucket",
-  "file_path": "gs://matrix-esa-inputs/Property_123_Main_Street/Matrix_Cloud_Final_Report.docx"
-}
-```
-
----
-
-## Deployment Instructions
-
-### Prerequisites
-- Google Cloud SDK (`gcloud` CLI) installed locally.
-- A Google Cloud Project with Billing Enabled.
-- Enabled APIs: `Cloud Run API`, `Vertex AI API`, `Cloud Build API`, `Cloud Storage API`.
-
-### CI/CD Deployment
-This repository is connected to Google Cloud Developer Connect. 
-Any push to the `vertex-api-migration` branch will automatically trigger a Cloud Build.
+### Step 2: Fire the API (Cloud Shell)
+Open the Linux **Cloud Shell** terminal at the bottom of the Google Cloud Dashboard and trigger the Vertex AI engine with a single webhook ping:
 
 ```bash
-# Push new agent prompts or code updates
-git add .
-git commit -m "feat: updated ASTM agent prompt logic"
-git push origin vertex-api-migration
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "Authorization: bearer $(gcloud auth print-identity-token)" \
+  -d '{"input_bucket": "matrix-esa-production-vault", "folder_prefix": "esa_inputs/Loganville_Medical_Property/"}' \
+  https://matrix-esa-agent-git-130435836160.europe-west1.run.app/api/v1/analyze/bucket
 ```
 
-### Local Development & Debugging
-To run the server locally while retaining Vertex AI authentication:
+### Step 3: Engine Execution & Output
+Upon receiving the command:
+1. The **Cloud Run (Golang)** server wakes up.
+2. It detects the folder and simultaneously streams all PDFs into its isolated, serverless memory.
+3. It passes the data through the highly locked-down Vertex AI `SequentialAgent` pipeline (Parser -> Geospatial -> ASTM -> TemplateCompiler).
+4. The internal `go-docx` tool unpacks Matrix's proprietary blank template (embedded directly in the GitHub container), injects the XML findings, and re-compresses the document.
+5. The API magically spawns the finished **`Matrix_Cloud_Final_Report.docx`** and drops it into `esa_outputs/Loganville_Medical_Property/`.
 
-1. Obtain a deep Application Default Credential (ADC) token:
-   ```bash
-   gcloud auth application-default login
-   ```
-2. Start the Golang server:
-   ```bash
-   go run cmd/api/main.go
-   ```
-3. Test locally via `localhost:8080`.
+---
+
+## Architecture: Agent-to-Agent (A2A) Network
+Monolithic Large Language Models struggle with context degradation when processing dense regulatory data. To solve this, the framework utilizes a 5-step microservices architecture:
+
+1. **Parser Agent:** Ingests raw EDR PDF packages and extracts exact coordinates.
+2. **Geospatial Evaluator Agent:** Analyzes the relative risk of off-site regulatory findings by cross-referencing elevation gradients.
+3. **ASTM Synthesizer Agent:** Correlates spatial findings with strict ASTM E1527-21 definitions to draft legal rationales (REC, HREC, CREC).
+4. **Site Recon Synthesizer Agent:** Translates raw field checklist data into professional engineering paragraphs, enforcing exclusionary boilerplate logic.
+5. **Template Compiler Agent:** Yields a strict JSON dictionary to inject directly into the static "ESA PHASE I - Blank Template" document.
+
+## Engineering Features
+- **Stateless Cloud Native Architecture:** Scales from zero to thousands of containers instantly.
+- **Enterprise Data Privacy:** Utilizing Vertex AI ensures that proprietary real-estate data and Client M&A secrets are NEVER used to train Google's public models.
+- **Automated Routing:** Eliminates file management overhead by intelligently mapping `esa_inputs` drops directly to `esa_outputs` folders.
