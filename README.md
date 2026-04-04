@@ -1,6 +1,6 @@
 # Matrix ESA Agent: Multi-Agentic AI Framework for Environmental Due Diligence
 
-**Developer:** alex-cyr  
+**Developer:** alex-cyr + e-alya  
 **Domain Partnership:** Built in collaboration with Master ICCs and Senior Environmental Engineers.
 
 ## Overview
