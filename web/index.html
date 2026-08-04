@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report Studio | Matrix Engineering Group, Inc.</title>
+    <title>Phase I ESA Report Studio | Matrix Engineering Group, Inc.</title>
     <style>
         :root {
             --bg: #0f1015;
@@ -36,7 +36,7 @@
         .top-navbar {
             background: #14161d;
             border-bottom: 1px solid var(--card-border);
-            padding: 12px 28px;
+            padding: 14px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -49,21 +49,21 @@
         }
 
         .brand-logo {
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             background: var(--accent);
             color: #fff;
             font-weight: 900;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
-            font-size: 16px;
+            border-radius: 6px;
+            font-size: 18px;
         }
 
         .brand-title {
-            font-size: 15px;
-            font-weight: 700;
+            font-size: 16px;
+            font-weight: 800;
             letter-spacing: 0.5px;
             color: var(--text-main);
         }
@@ -78,7 +78,7 @@
         .user-badge {
             background: #252834;
             border: 1px solid var(--border);
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             display: flex;
             align-items: center;
@@ -98,80 +98,67 @@
         }
 
         .main-container {
-            max-width: 1280px;
-            margin: 30px auto;
+            max-width: 1000px;
+            margin: 40px auto;
             padding: 0 24px;
         }
 
-        /* Dashboard Overview */
-        .dashboard-header {
-            margin-bottom: 28px;
+        /* Centered Hero Action Box */
+        .hero-action-container {
+            display: flex;
+            justify-content: center;
+            margin: 36px 0;
         }
 
-        .page-title {
-            font-size: 26px;
-            font-weight: 800;
-            margin: 0 0 6px 0;
-        }
-
-        .page-sub {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin: 0;
-        }
-
-        .action-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .action-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            padding: 20px;
+        .hero-action-card {
+            background: linear-gradient(135deg, #2a160b 0%, var(--card-bg) 100%);
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            padding: 36px 48px;
+            text-align: center;
+            max-width: 680px;
+            width: 100%;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
-        .action-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px var(--accent-glow);
+        .hero-action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 40px var(--accent-glow);
+            border-color: var(--accent-hover);
         }
 
-        .action-card.primary {
-            background: linear-gradient(135deg, #241610 0%, var(--card-bg) 100%);
-            border-color: #592b0e;
+        .hero-icon {
+            font-size: 42px;
+            margin-bottom: 12px;
         }
 
-        .action-card h3 {
-            margin: 0 0 8px 0;
-            font-size: 16px;
-            font-weight: 700;
+        .hero-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--accent);
+            margin: 0 0 10px 0;
         }
 
-        .action-card.primary h3 { color: var(--accent); }
-
-        .action-card p {
-            margin: 0;
-            font-size: 13px;
+        .hero-sub {
+            font-size: 14px;
             color: var(--text-muted);
-            line-height: 1.4;
+            line-height: 1.5;
+            margin: 0;
         }
 
+        /* Table */
         .table-container {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: 8px;
+            border-radius: 10px;
             overflow: hidden;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         .table-header {
-            padding: 16px 20px;
+            padding: 18px 24px;
             border-bottom: 1px solid var(--card-border);
             display: flex;
             align-items: center;
@@ -179,9 +166,10 @@
         }
 
         .table-title {
-            font-weight: 700;
+            font-weight: 800;
             font-size: 14px;
             letter-spacing: 0.5px;
+            color: var(--text-main);
         }
 
         table {
@@ -192,16 +180,17 @@
 
         th {
             text-align: left;
-            padding: 12px 20px;
+            padding: 14px 24px;
             color: var(--text-muted);
-            font-weight: 600;
+            font-weight: 700;
             border-bottom: 1px solid var(--card-border);
-            font-size: 12px;
+            font-size: 11.5px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         td {
-            padding: 14px 20px;
+            padding: 16px 24px;
             border-bottom: 1px solid #1f222b;
         }
 
@@ -209,103 +198,15 @@
 
         tr:hover td { background: #1c1f27; }
 
-        .badge-owner {
-            background: #451a03;
-            color: #f97316;
-            padding: 2px 8px;
-            border-radius: 4px;
+        .badge-status {
+            background: #064e3b;
+            color: var(--success);
+            border: 1px solid #047857;
+            padding: 3px 10px;
+            border-radius: 12px;
             font-size: 11px;
             font-weight: 700;
         }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.75);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            width: 520px;
-            border-radius: 10px;
-            padding: 28px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: 800;
-            margin: 0 0 6px 0;
-        }
-
-        .modal-sub {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        input[type="text"], select, textarea {
-            width: 100%;
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 16px;
-            transition: border-color 0.2s;
-        }
-
-        input[type="text"]:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .btn-group {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 10px;
-        }
-
-        button {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            font-weight: 700;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13.5px;
-            transition: background 0.2s;
-        }
-
-        button:hover { background: var(--accent-hover); }
-
-        button.btn-secondary {
-            background: #252834;
-            color: var(--text-main);
-            border: 1px solid var(--border);
-        }
-
-        button.btn-secondary:hover { background: #323646; }
 
         /* Wizard Layout */
         .wizard-layout {
@@ -397,6 +298,62 @@
             font-size: 13px;
         }
 
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"], select, textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13.5px;
+            transition: background 0.2s;
+        }
+
+        button:hover { background: var(--accent-hover); }
+
+        button.btn-secondary {
+            background: #252834;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        button.btn-secondary:hover { background: #323646; }
+
         /* Question Form */
         .question-card {
             background: #14161d;
@@ -436,7 +393,6 @@
             display: none;
         }
 
-        /* Title Block Table */
         .tb-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -452,12 +408,12 @@
     <div class="top-navbar">
         <div class="brand-block">
             <div class="brand-logo">M</div>
-            <div class="brand-title">MATRIX ENGINEERING GROUP &nbsp;·&nbsp; Report Studio</div>
+            <div class="brand-title">MATRIX ENGINEERING GROUP &nbsp;·&nbsp; Phase I ESA Pipeline</div>
         </div>
         <div class="user-block">
             <div class="user-badge">
                 <div class="user-avatar" id="userAvatar">E</div>
-                <span id="userEmail">elias@matrixengineeringgroup.com</span>
+                <span id="userEmail">eric@matrixengineeringgroup.com</span>
             </div>
             <span style="color: var(--success); font-weight: bold; font-size: 12px;">● Cloud Run Connected</span>
         </div>
@@ -465,58 +421,57 @@
 
     <!-- Dashboard View -->
     <div class="main-container" id="dashboardView">
-        <div class="dashboard-header">
-            <h1 class="page-title">Report Studio</h1>
-            <p class="page-sub">Draft Phase I ESA reports, build map figure title blocks, and compile complete Appendix packages.</p>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="font-size: 30px; font-weight: 800; margin: 0 0 8px 0;">Phase I ESA Report Studio</h1>
+            <p style="color: var(--text-muted); font-size: 15px; margin: 0;">AI-assisted report generator, pre-screening HITL intake, and Appendix compiler for Environmental Professionals.</p>
         </div>
 
-        <div class="action-cards">
-            <div class="action-card primary" onclick="openNewProjectModal()">
-                <h3>+ Start a new project</h3>
-                <p>A project like "McGinnis Ferry Self-Storage" — begins with its first report or map, everything lives under it.</p>
-            </div>
-            <div class="action-card" onclick="startNewReportDirect()">
-                <h3>New report</h3>
-                <p>AI-assisted draft from your source files (Proposal, EDR, Maps, Photos).</p>
-            </div>
-            <div class="action-card" onclick="alert('Borehole Location Map Studio initialized.')">
-                <h3>New map</h3>
-                <p>Site location map with figure title blocks and parcel overlays.</p>
+        <!-- Centered Single Action Box -->
+        <div class="hero-action-container">
+            <div class="hero-action-card" onclick="startNewReportDirect()">
+                <div class="hero-icon">📄</div>
+                <div class="hero-title">+ Generate New Phase I ESA Report & Appendix</div>
+                <div class="hero-sub">Upload source documents (Proposal, EDR, Maps, Photos, Questionnaire), run pre-screening verification, and compile the final draft report with formatted Appendices.</div>
             </div>
         </div>
 
+        <!-- Previous Reports Table -->
         <div class="table-container">
             <div class="table-header">
-                <div class="table-title">PROJECTS</div>
-                <div style="font-size: 12px; color: var(--text-muted);">All reports →</div>
+                <div class="table-title">PREVIOUS ESA REPORTS & APPENDIX PACKAGES</div>
+                <div style="font-size: 12px; color: var(--text-muted);">Stored in GCS esa_outputs/</div>
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th>NAME</th>
-                        <th>REPORTS</th>
-                        <th>MAPS</th>
-                        <th>OWNER</th>
-                        <th>SHARING</th>
-                        <th>MODIFIED</th>
+                        <th>REPORT / PROJECT NAME</th>
+                        <th>REPORT TYPE</th>
+                        <th>STATUS</th>
+                        <th>AUTHOR / OWNER</th>
+                        <th>DATE GENERATED</th>
                     </tr>
                 </thead>
-                <tbody id="projectsTableBody">
+                <tbody id="reportsTableBody">
                     <tr>
-                        <td style="font-weight: 700; color: #fff;">Beavers_Road_Property <span class="badge-owner">OWNER</span></td>
-                        <td>1</td>
-                        <td>1</td>
-                        <td>me</td>
-                        <td style="color: var(--text-muted);">Private</td>
+                        <td style="font-weight: 700; color: #fff;">Beavers_Road_Property_ESA_Report.docx</td>
+                        <td>Phase I ESA (ASTM E1527-21)</td>
+                        <td><span class="badge-status">COMPLETED</span></td>
+                        <td>Eric / Matrix EP</td>
                         <td style="color: var(--text-muted);">Today</td>
                     </tr>
                     <tr>
-                        <td style="font-weight: 700; color: #fff;">Grayson_Medical_Office</td>
-                        <td>1</td>
-                        <td>0</td>
-                        <td>me</td>
-                        <td style="color: var(--text-muted);">Private</td>
+                        <td style="font-weight: 700; color: #fff;">Grayson_Medical_Office_ESA_Report.docx</td>
+                        <td>Phase I ESA (ASTM E1527-21)</td>
+                        <td><span class="badge-status">COMPLETED</span></td>
+                        <td>Eric / Matrix EP</td>
                         <td style="color: var(--text-muted);">Yesterday</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 700; color: #fff;">Loganville_Medical_Office_ESA_Report.docx</td>
+                        <td>Phase I ESA (ASTM E1527-21)</td>
+                        <td><span class="badge-status">COMPLETED</span></td>
+                        <td>Eric / Matrix EP</td>
+                        <td style="color: var(--text-muted);">Aug 02, 2026</td>
                     </tr>
                 </tbody>
             </table>
@@ -527,11 +482,11 @@
     <div class="main-container" id="wizardView" style="display: none;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
             <div>
-                <span style="font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="showDashboard()">← Back to projects</span>
-                <h2 style="font-size: 22px; margin: 4px 0 0 0;" id="activeProjectTitle">McGinnis Ferry Self-Storage Report</h2>
+                <span style="font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="showDashboard()">← Back to previous reports</span>
+                <h2 style="font-size: 22px; margin: 4px 0 0 0;" id="activeProjectTitle">Phase I ESA Report Generation</h2>
             </div>
             <div>
-                <span class="badge-owner">DRAFT MODE</span>
+                <span style="background:#451a03; color:#f97316; padding:4px 12px; border-radius:4px; font-weight:bold; font-size:12px;">DRAFT MODE</span>
             </div>
         </div>
 
@@ -544,32 +499,32 @@
                     <div class="step-num">2</div> Categorize & type
                 </div>
                 <div class="step-item" id="nav-step3" onclick="goToStep(3)">
-                    <div class="step-num">3</div> Sections
+                    <div class="step-num">3</div> Scope sections
                 </div>
                 <div class="step-item" id="nav-step4" onclick="goToStep(4)">
-                    <div class="step-num">4</div> Attached Map Figures
+                    <div class="step-num">4</div> Map Figure Frames
                 </div>
                 <div class="step-item" id="nav-step5" onclick="goToStep(5)">
-                    <div class="step-num">5</div> Intake form
+                    <div class="step-num">5</div> Pre-Screener form
                 </div>
             </div>
 
             <div class="wizard-card">
                 <!-- STEP 1 -->
                 <div id="step-1" class="wizard-step">
-                    <h2 style="margin-top:0; font-size: 18px;">1 · Upload your project files</h2>
+                    <h2 style="margin-top:0; font-size: 18px;">1 · Upload ESA project files</h2>
                     <p style="font-size: 13px; color: var(--text-muted);">Add everything you have — Proposal, EDR PDF package, Wetland map, Flood Insurance map (FIRM), VEC App, Folio site photos, User Questionnaire (PDF, PNG, JPG up to 50 MB each).</p>
 
                     <div class="dropzone" onclick="document.getElementById('fileInput').click()">
-                        <div style="font-size: 32px; margin-bottom: 8px;">📄</div>
-                        <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Click to choose files — or drop them here</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">Proposal, EDR, Site Photos, Maps</div>
+                        <div style="font-size: 38px; margin-bottom: 8px;">📄</div>
+                        <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Click to choose files — or drag and drop them here</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Proposal, EDR, Site Photos, Wetland & FIRM Maps</div>
                         <input type="file" id="fileInput" multiple style="display:none;" onchange="handleFileSelect(event)">
                     </div>
 
                     <div class="file-list" id="uploadedFileList"></div>
 
-                    <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+                    <div class="btn-group">
                         <button onclick="goToStep(2)">Confirm & continue ▶</button>
                     </div>
                 </div>
@@ -582,15 +537,15 @@
                     <div id="categorizeTable"></div>
 
                     <div style="margin-top: 24px;">
-                        <label>Report Type</label>
-                        <select id="reportTypeSelect" style="max-width: 320px;">
-                            <option value="Phase I ESA (ASTM E1527-21)">Phase I ESA (ASTM E1527-21)</option>
+                        <label>Report Standard</label>
+                        <select id="reportTypeSelect" style="max-width: 340px;">
+                            <option value="Phase I ESA (ASTM E1527-21)">Phase I ESA (ASTM E1527-21 Standard Practice)</option>
                             <option value="Transaction Screen (ASTM E1528)">Transaction Screen (ASTM E1528)</option>
-                            <option value="Phase II Environmental Site Assessment">Phase II ESA</option>
+                            <option value="Phase II ESA">Phase II Environmental Site Assessment</option>
                         </select>
                     </div>
 
-                    <div class="btn-group" style="margin-top: 24px;">
+                    <div class="btn-group">
                         <button class="btn-secondary" onclick="goToStep(1)">◀ Back</button>
                         <button onclick="goToStep(3)">Confirm & continue ▶</button>
                     </div>
@@ -598,8 +553,8 @@
 
                 <!-- STEP 3 -->
                 <div id="step-3" class="wizard-step" style="display:none;">
-                    <h2 style="margin-top:0; font-size: 18px;">3 · Report Scope & Section Toggles</h2>
-                    <p style="font-size: 13px; color: var(--text-muted);">Select which sections in the actual report to include or leave out based on authorized proposal scope.</p>
+                    <h2 style="margin-top:0; font-size: 18px;">3 · Scope & Section Toggles</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Select which optional sections to include in the draft report based on proposal scope.</p>
 
                     <div style="display: flex; flex-direction: column; gap: 14px; margin: 20px 0;">
                         <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer;">
@@ -625,11 +580,11 @@
                 <!-- STEP 4 -->
                 <div id="step-4" class="wizard-step" style="display:none;">
                     <h2 style="margin-top:0; font-size: 18px;">4 · Attached Map Figures & Title Blocks</h2>
-                    <p style="font-size: 13px; color: var(--text-muted);">Configure figure title blocks (Title, Source, Project Name, Project Number) for Appendix A/B image framing.</p>
+                    <p style="font-size: 13px; color: var(--text-muted);">Configure figure title blocks (Title, Source Citation, Project Name, Project Number) for Appendix figure frames.</p>
 
                     <div id="figureFramesList"></div>
 
-                    <div class="btn-group" style="margin-top: 24px;">
+                    <div class="btn-group">
                         <button class="btn-secondary" onclick="goToStep(3)">◀ Back</button>
                         <button onclick="triggerPreScreen()">Run Pre-Screener ▶</button>
                     </div>
@@ -637,8 +592,8 @@
 
                 <!-- STEP 5 -->
                 <div id="step-5" class="wizard-step" style="display:none;">
-                    <h2 style="margin-top:0; font-size: 18px;">5 · Project intake form</h2>
-                    <p style="font-size: 13px; color: var(--text-muted);">Only what couldn't be settled from your documents: conflicting values, gaps, and a few clarifications. Required questions are marked <span style="color: var(--accent);">•</span></p>
+                    <h2 style="margin-top:0; font-size: 18px;">5 · Pre-Screening Intake Form</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Only what couldn't be settled from your documents: conflicting values, gaps, and clarifications. Required questions are marked <span style="color: var(--accent);">•</span></p>
 
                     <div class="validation-banner" id="valBanner">
                         Answer all required (•) questions first before proceeding — or resolve highlighted fields below.
@@ -657,7 +612,7 @@
                     <div class="btn-group">
                         <button class="btn-secondary" onclick="goToStep(4)">◀ Back</button>
                         <button class="btn-secondary" onclick="triggerPreScreen()">Rebuild form</button>
-                        <button onclick="submitFinalGeneration()">Generate report ▶</button>
+                        <button onclick="submitFinalGeneration()">Generate report & Appendix ▶</button>
                     </div>
 
                     <div id="generationProgress" style="margin-top: 20px; display: none;" class="question-card">
@@ -665,37 +620,6 @@
                         <div style="font-size: 13px; color: var(--text-muted);" id="progressStatusText">Running ParserAgent → GeospatialEvaluator → SiteReconSynthesizer → ASTMSynthesizer → TemplateCompiler...</div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- New Project Modal -->
-    <div class="modal-overlay" id="newProjectModal" style="display:none;">
-        <div class="modal">
-            <div class="modal-title">Start a new project</div>
-            <div class="modal-sub">Everything lives in a project. Name a new one below — or file this into an existing project instead.</div>
-
-            <label>Project Name</label>
-            <input type="text" id="modalProjName" placeholder="e.g. McGinnis Ferry Self-Storage">
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <div>
-                    <label>Client</label>
-                    <input type="text" id="modalClient" placeholder="optional">
-                </div>
-                <div>
-                    <label>Project No.</label>
-                    <input type="text" id="modalProjNo" placeholder="optional (MEG-303259)">
-                </div>
-                <div>
-                    <label>Reviewed By</label>
-                    <input type="text" id="modalReviewer" placeholder="optional (Eric)">
-                </div>
-            </div>
-
-            <div class="btn-group">
-                <button class="btn-secondary" onclick="closeNewProjectModal()">Cancel</button>
-                <button onclick="createNewProjectSubmit()">Create project</button>
             </div>
         </div>
     </div>
@@ -711,35 +635,10 @@
             document.getElementById('wizardView').style.display = 'none';
         }
 
-        function openNewProjectModal() {
-            document.getElementById('newProjectModal').style.display = 'flex';
-        }
-
-        function closeNewProjectModal() {
-            document.getElementById('newProjectModal').style.display = 'none';
-        }
-
-        async function createNewProjectSubmit() {
-            const pName = document.getElementById('modalProjName').value.trim() || 'New_ESA_Project';
-            activeProject = pName;
-            activeProjectNo = document.getElementById('modalProjNo').value.trim() || 'MEG-' + Math.floor(100000 + Math.random()*900000);
-            
-            try {
-                await fetch('/api/v1/projects/create', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ project_name: pName })
-                });
-            } catch(e){}
-
-            closeNewProjectModal();
-            startNewReportDirect();
-        }
-
         function startNewReportDirect() {
             document.getElementById('dashboardView').style.display = 'none';
             document.getElementById('wizardView').style.display = 'block';
-            document.getElementById('activeProjectTitle').textContent = activeProject + " Report";
+            document.getElementById('activeProjectTitle').textContent = "Phase I ESA Report & Appendix Package";
             goToStep(1);
         }
 
@@ -757,7 +656,6 @@
 
         function handleFileSelect(evt) {
             const files = evt.target.files;
-            const list = document.getElementById('uploadedFileList');
             for(let f of files) {
                 uploadedFiles.push({
                     original_name: f.name,
@@ -798,7 +696,6 @@
         function renderCategorizeStep() {
             const div = document.getElementById('categorizeTable');
             if(uploadedFiles.length === 0) {
-                // Populate defaults
                 uploadedFiles = [
                     { original_name: 'Proposal_McGinnis_Ferry.pdf', custom_title: 'Proposal & Scope', category: 'Proposal / Contract', in_appendix: true },
                     { original_name: 'EDR_Historical_Report.pdf', custom_title: '2024 EDR Historical Package', category: 'EDR Historical Package', in_appendix: true },
