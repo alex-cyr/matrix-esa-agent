@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
@@ -387,7 +388,8 @@ func analyzeBucketHandler(w http.ResponseWriter, r *http.Request) {
 		outputPrefix = "esa_outputs" + strings.TrimPrefix(outputPrefix, "esa_inputs")
 	}
 
-	outputName := outputPrefix + "Matrix_Cloud_Final_Report.docx"
+	timestamp := time.Now().Format("20060102_150405")
+	outputName := fmt.Sprintf("%sMatrix_Cloud_Final_Report_%s.docx", outputPrefix, timestamp)
 	wc := bucket.Object(outputName).NewWriter(ctx)
 	wc.ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 	
