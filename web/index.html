@@ -392,16 +392,6 @@
             font-size: 13.5px;
             display: none;
         }
-
-        .tb-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            background: #111319;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #232733;
-        }
     </style>
 </head>
 <body>
@@ -431,7 +421,7 @@
             <div class="hero-action-card" onclick="startNewReportDirect()">
                 <div class="hero-icon">📄</div>
                 <div class="hero-title">+ Generate New Phase I ESA Report & Appendix</div>
-                <div class="hero-sub">Upload source documents (Proposal, EDR, Maps, Photos, Questionnaire), run pre-screening verification, and compile the final draft report with formatted Appendices.</div>
+                <div class="hero-sub">Upload source documents (Proposal, EDR, Maps, Filio Site Photos, Questionnaire), run pre-screening verification, and compile the final draft report with formatted Appendices.</div>
             </div>
         </div>
 
@@ -483,7 +473,7 @@
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
             <div>
                 <span style="font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="showDashboard()">← Back to previous reports</span>
-                <h2 style="font-size: 22px; margin: 4px 0 0 0;" id="activeProjectTitle">Phase I ESA Report Generation</h2>
+                <h2 style="font-size: 22px; margin: 4px 0 0 0;" id="activeProjectTitle">Phase I ESA Report & Appendix Package</h2>
             </div>
             <div>
                 <span style="background:#451a03; color:#f97316; padding:4px 12px; border-radius:4px; font-weight:bold; font-size:12px;">DRAFT MODE</span>
@@ -502,10 +492,7 @@
                     <div class="step-num">3</div> Scope sections
                 </div>
                 <div class="step-item" id="nav-step4" onclick="goToStep(4)">
-                    <div class="step-num">4</div> Map Figure Frames
-                </div>
-                <div class="step-item" id="nav-step5" onclick="goToStep(5)">
-                    <div class="step-num">5</div> Pre-Screener form
+                    <div class="step-num">4</div> Pre-Screener form
                 </div>
             </div>
 
@@ -513,12 +500,12 @@
                 <!-- STEP 1 -->
                 <div id="step-1" class="wizard-step">
                     <h2 style="margin-top:0; font-size: 18px;">1 · Upload ESA project files</h2>
-                    <p style="font-size: 13px; color: var(--text-muted);">Add everything you have — Proposal, EDR PDF package, Wetland map, Flood Insurance map (FIRM), VEC App, Folio site photos, User Questionnaire (PDF, PNG, JPG up to 50 MB each).</p>
+                    <p style="font-size: 13px; color: var(--text-muted);">Add everything you have — Proposal, EDR PDF package, Wetland map, Flood Insurance map (FIRM), VEC App, Filio site photos, User Questionnaire (PDF, PNG, JPG up to 50 MB each).</p>
 
                     <div class="dropzone" onclick="document.getElementById('fileInput').click()">
                         <div style="font-size: 38px; margin-bottom: 8px;">📄</div>
                         <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Click to choose files — or drag and drop them here</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">Proposal, EDR, Site Photos, Wetland & FIRM Maps</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Proposal, EDR, Filio Site Photos, Wetland & FIRM Maps</div>
                         <input type="file" id="fileInput" multiple style="display:none;" onchange="handleFileSelect(event)">
                     </div>
 
@@ -573,26 +560,13 @@
 
                     <div class="btn-group">
                         <button class="btn-secondary" onclick="goToStep(2)">◀ Back</button>
-                        <button onclick="goToStep(4)">Confirm & continue ▶</button>
-                    </div>
-                </div>
-
-                <!-- STEP 4 -->
-                <div id="step-4" class="wizard-step" style="display:none;">
-                    <h2 style="margin-top:0; font-size: 18px;">4 · Attached Map Figures & Title Blocks</h2>
-                    <p style="font-size: 13px; color: var(--text-muted);">Configure figure title blocks (Title, Source Citation, Project Name, Project Number) for Appendix figure frames.</p>
-
-                    <div id="figureFramesList"></div>
-
-                    <div class="btn-group">
-                        <button class="btn-secondary" onclick="goToStep(3)">◀ Back</button>
                         <button onclick="triggerPreScreen()">Run Pre-Screener ▶</button>
                     </div>
                 </div>
 
-                <!-- STEP 5 -->
-                <div id="step-5" class="wizard-step" style="display:none;">
-                    <h2 style="margin-top:0; font-size: 18px;">5 · Pre-Screening Intake Form</h2>
+                <!-- STEP 4 (Pre-Screener Intake Form) -->
+                <div id="step-4" class="wizard-step" style="display:none;">
+                    <h2 style="margin-top:0; font-size: 18px;">4 · Pre-Screening Intake Form</h2>
                     <p style="font-size: 13px; color: var(--text-muted);">Only what couldn't be settled from your documents: conflicting values, gaps, and clarifications. Required questions are marked <span style="color: var(--accent);">•</span></p>
 
                     <div class="validation-banner" id="valBanner">
@@ -610,7 +584,7 @@
                     </div>
 
                     <div class="btn-group">
-                        <button class="btn-secondary" onclick="goToStep(4)">◀ Back</button>
+                        <button class="btn-secondary" onclick="goToStep(3)">◀ Back</button>
                         <button class="btn-secondary" onclick="triggerPreScreen()">Rebuild form</button>
                         <button onclick="submitFinalGeneration()">Generate report & Appendix ▶</button>
                     </div>
@@ -628,7 +602,6 @@
         let currentStep = 1;
         let uploadedFiles = [];
         let activeProject = "Beavers_Road_Property";
-        let activeProjectNo = "MEG-303259";
 
         function showDashboard() {
             document.getElementById('dashboardView').style.display = 'block';
@@ -644,14 +617,13 @@
 
         function goToStep(step) {
             currentStep = step;
-            for(let i=1; i<=5; i++) {
+            for(let i=1; i<=4; i++) {
                 document.getElementById('step-' + i).style.display = (i === step) ? 'block' : 'none';
                 const nav = document.getElementById('nav-step' + i);
                 if(i === step) nav.classList.add('active');
                 else nav.classList.remove('active');
             }
             if(step === 2) renderCategorizeStep();
-            if(step === 4) renderFigureFramesStep();
         }
 
         function handleFileSelect(evt) {
@@ -671,11 +643,13 @@
             const l = name.toLowerCase();
             if(l.includes('proposal')) return 'Proposal / Contract';
             if(l.includes('edr')) return 'EDR Historical Package';
+            if(l.includes('filio') || l.includes('photo') || l.includes('alyateem')) return 'Filio Site Photos';
             if(l.includes('recon') || l.includes('checklist')) return 'Site Recon Checklist';
             if(l.includes('wetland')) return 'Wetland Map';
             if(l.includes('firm') || l.includes('flood')) return 'FIRM Flood Map';
             if(l.includes('vec')) return 'VEC Application';
             if(l.includes('questionnaire')) return 'User Questionnaire';
+            if(l.includes('qualification')) return 'Qualifications';
             return 'Other Document';
         }
 
@@ -699,21 +673,31 @@
                 uploadedFiles = [
                     { original_name: 'Proposal_McGinnis_Ferry.pdf', custom_title: 'Proposal & Scope', category: 'Proposal / Contract', in_appendix: true },
                     { original_name: 'EDR_Historical_Report.pdf', custom_title: '2024 EDR Historical Package', category: 'EDR Historical Package', in_appendix: true },
-                    { original_name: 'USGS_2020_Topo_Map.png', custom_title: 'USGS 2020 Topographic Map', category: 'EDR Historical Package', in_appendix: true },
+                    { original_name: 'Filio_Site_Photos_Report.pdf', custom_title: 'Filio Site Inspection Photos', category: 'Filio Site Photos', in_appendix: true },
                     { original_name: 'Flood_Insurance_Rate_Map.png', custom_title: 'Flood Insurance Rate Map', category: 'FIRM Flood Map', in_appendix: true },
                     { original_name: 'User_Questionnaire.pdf', custom_title: 'User Questionnaire', category: 'User Questionnaire', in_appendix: true }
                 ];
             }
+
+            const categories = [
+                "EDR Historical Package",
+                "Proposal / Contract",
+                "Filio Site Photos",
+                "FIRM Flood Map",
+                "Wetland Map",
+                "VEC Application",
+                "User Questionnaire",
+                "Site Recon Checklist",
+                "Qualifications",
+                "Other Document"
+            ];
+
             div.innerHTML = uploadedFiles.map((f, i) => `
                 <div class="file-row" style="margin-bottom: 10px; display: grid; grid-template-columns: 2fr 2fr 1fr;">
                     <div><strong>${f.original_name}</strong></div>
                     <div>
                         <select style="margin: 0;" onchange="uploadedFiles[${i}].category = this.value">
-                            <option value="EDR Historical Package" ${f.category.includes('EDR')?'selected':''}>EDR Historical Package</option>
-                            <option value="Proposal / Contract" ${f.category.includes('Proposal')?'selected':''}>Proposal / Contract</option>
-                            <option value="FIRM Flood Map" ${f.category.includes('FIRM')?'selected':''}>FIRM Flood Map</option>
-                            <option value="User Questionnaire" ${f.category.includes('Questionnaire')?'selected':''}>User Questionnaire</option>
-                            <option value="Site Recon Checklist" ${f.category.includes('Recon')?'selected':''}>Site Recon Checklist</option>
+                            ${categories.map(c => `<option value="${c}" ${f.category === c ? 'selected' : ''}>${c}</option>`).join('')}
                         </select>
                     </div>
                     <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
@@ -723,35 +707,8 @@
             `).join('');
         }
 
-        function renderFigureFramesStep() {
-            const div = document.getElementById('figureFramesList');
-            div.innerHTML = uploadedFiles.map((f, i) => `
-                <div class="question-card">
-                    <div class="question-title">Title Block Frame: ${f.original_name}</div>
-                    <div class="tb-grid">
-                        <div>
-                            <label>Figure Title</label>
-                            <input type="text" value="${f.custom_title}" style="margin:0;" onchange="uploadedFiles[${i}].custom_title=this.value">
-                        </div>
-                        <div>
-                            <label>Source Citation</label>
-                            <input type="text" value="Source: EDR Report" style="margin:0;">
-                        </div>
-                        <div>
-                            <label>Project Name</label>
-                            <input type="text" value="${activeProject}" style="margin:0;">
-                        </div>
-                        <div>
-                            <label>Project Number</label>
-                            <input type="text" value="${activeProjectNo}" style="margin:0;">
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
         async function triggerPreScreen() {
-            goToStep(5);
+            goToStep(4);
             const container = document.getElementById('questionsContainer');
             container.innerHTML = `<div style="color: var(--accent); font-weight: bold;">Parsing project files and analyzing gaps...</div>`;
 
@@ -804,7 +761,7 @@
 
             const progress = document.getElementById('generationProgress');
             progress.style.display = 'block';
-            document.getElementById('progressStatusText').textContent = 'Compiling main DOCX template + Appendix figure packages for ' + activeProject + '...';
+            document.getElementById('progressStatusText').textContent = 'Compiling main DOCX template + Appendix packages for ' + activeProject + '...';
 
             try {
                 const res = await fetch('/api/v1/generate', {
