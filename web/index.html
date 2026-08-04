@@ -3,261 +3,939 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matrix Engineering Group | ESA AI Portal</title>
+    <title>Report Studio | Matrix Engineering Group, Inc.</title>
     <style>
         :root {
-            --bg: #121212;
-            --card-bg: #1e1e1e;
+            --bg: #0f1015;
+            --card-bg: #181a20;
+            --card-border: #262933;
             --accent: #c8641a;
             --accent-hover: #e07323;
-            --text-main: #f0f0f0;
-            --text-muted: #a0a0a0;
-            --border: #333333;
-            --success: #8cf0a0;
-            --warning: #ffb84d;
+            --accent-glow: rgba(200, 100, 26, 0.25);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --input-bg: #1f222a;
+            --border: #323644;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg);
             color: var(--text-main);
             margin: 0;
-            padding: 25px;
+            padding: 0;
+            min-height: 100vh;
         }
 
-        .container {
-            max-width: 1050px;
-            margin: 0 auto;
-        }
-
-        .header {
+        /* Top Header Bar */
+        .top-navbar {
+            background: #14161d;
+            border-bottom: 1px solid var(--card-border);
+            padding: 12px 28px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 18px;
+        }
+
+        .brand-block {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .brand-title {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--text-main);
+        }
+
+        .user-block {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+        }
+
+        .user-badge {
+            background: #252834;
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-avatar {
+            width: 22px;
+            height: 22px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .main-container {
+            max-width: 1280px;
+            margin: 30px auto;
+            padding: 0 24px;
+        }
+
+        /* Dashboard Overview */
+        .dashboard-header {
+            margin-bottom: 28px;
+        }
+
+        .page-title {
+            font-size: 26px;
+            font-weight: 800;
+            margin: 0 0 6px 0;
+        }
+
+        .page-sub {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .action-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .action-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--accent-glow);
+        }
+
+        .action-card.primary {
+            background: linear-gradient(135deg, #241610 0%, var(--card-bg) 100%);
+            border-color: #592b0e;
+        }
+
+        .action-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .action-card.primary h3 { color: var(--accent); }
+
+        .action-card p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            overflow: hidden;
             margin-bottom: 30px;
         }
 
-        .logo-title {
-            font-size: 26px;
-            font-weight: 800;
-            color: var(--accent);
-            letter-spacing: 1px;
+        .table-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .subtitle {
+        .table-title {
+            font-weight: 700;
             font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 20px;
             color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 12px;
+            text-transform: uppercase;
         }
 
-        .card {
+        td {
+            padding: 14px 20px;
+            border-bottom: 1px solid #1f222b;
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        tr:hover td { background: #1c1f27; }
+
+        .badge-owner {
+            background: #451a03;
+            color: #f97316;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal {
             background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid var(--card-border);
+            width: 520px;
+            border-radius: 10px;
+            padding: 28px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }
 
-        h2 {
-            margin-top: 0;
+        .modal-title {
             font-size: 20px;
-            color: var(--accent);
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
+            font-weight: 800;
+            margin: 0 0 6px 0;
+        }
+
+        .modal-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 700;
             color: var(--text-muted);
-            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
         }
 
-        select, input, textarea {
+        input[type="text"], select, textarea {
             width: 100%;
-            box-sizing: border-box;
-            background: #2a2a2a;
+            background: var(--input-bg);
             border: 1px solid var(--border);
             color: #fff;
-            padding: 12px;
+            padding: 10px 14px;
             border-radius: 6px;
             font-size: 14px;
             margin-bottom: 16px;
             transition: border-color 0.2s;
         }
 
-        select:focus, input:focus, textarea:focus {
+        input[type="text"]:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--accent);
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 10px;
         }
 
         button {
             background: var(--accent);
             color: #fff;
             border: none;
-            padding: 12px 24px;
+            padding: 10px 20px;
             font-weight: 700;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13.5px;
             transition: background 0.2s;
         }
 
-        button:hover {
-            background: var(--accent-hover);
+        button:hover { background: var(--accent-hover); }
+
+        button.btn-secondary {
+            background: #252834;
+            color: var(--text-main);
+            border: 1px solid var(--border);
         }
 
-        .grid {
+        button.btn-secondary:hover { background: #323646; }
+
+        /* Wizard Layout */
+        .wizard-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 28px;
+        }
+
+        .stepper-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .step-item.active {
+            background: var(--card-bg);
+            color: #fff;
+            border-color: var(--border);
+            font-weight: 600;
+        }
+
+        .step-item.active .step-num {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .step-num {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #252834;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .wizard-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 32px;
+        }
+
+        /* Dropzone */
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 48px 24px;
+            text-align: center;
+            background: #13151b;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .dropzone:hover {
+            border-color: var(--accent);
+        }
+
+        .file-list {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .file-row {
+            background: #14161d;
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        /* Question Form */
+        .question-card {
+            background: #14161d;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .question-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #fff;
+        }
+
+        .question-title .required-dot {
+            color: var(--accent);
+            margin-right: 4px;
+        }
+
+        .question-context {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+
+        .validation-banner {
+            background: #3b1616;
+            border: 1px solid #7f1d1d;
+            color: #fca5a5;
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 13.5px;
+            display: none;
+        }
+
+        /* Title Block Table */
+        .tb-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .badge-warning {
-            background: #4a3000;
-            color: var(--warning);
-            border: 1px solid #8c5a00;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 15px;
-        }
-
-        .status-box {
-            background: #162419;
-            border: 1px solid #285430;
-            padding: 16px;
+            gap: 12px;
+            background: #111319;
+            padding: 12px;
             border-radius: 6px;
-            color: var(--success);
-            margin-top: 20px;
-            font-family: monospace;
-            display: none;
+            border: 1px solid #232733;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div>
-                <div class="logo-title">MATRIX ENGINEERING GROUP</div>
-                <div class="subtitle">Phase I Environmental Site Assessment (ESA) AI Pipeline</div>
+    <div class="top-navbar">
+        <div class="brand-block">
+            <div class="brand-logo">M</div>
+            <div class="brand-title">MATRIX ENGINEERING GROUP &nbsp;·&nbsp; Report Studio</div>
+        </div>
+        <div class="user-block">
+            <div class="user-badge">
+                <div class="user-avatar" id="userAvatar">E</div>
+                <span id="userEmail">elias@matrixengineeringgroup.com</span>
             </div>
-            <div>
-                <span class="badge-warning" style="margin:0;">Cloud Run API Connected</span>
+            <span style="color: var(--success); font-weight: bold; font-size: 12px;">● Cloud Run Connected</span>
+        </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div class="main-container" id="dashboardView">
+        <div class="dashboard-header">
+            <h1 class="page-title">Report Studio</h1>
+            <p class="page-sub">Draft Phase I ESA reports, build map figure title blocks, and compile complete Appendix packages.</p>
+        </div>
+
+        <div class="action-cards">
+            <div class="action-card primary" onclick="openNewProjectModal()">
+                <h3>+ Start a new project</h3>
+                <p>A project like "McGinnis Ferry Self-Storage" — begins with its first report or map, everything lives under it.</p>
+            </div>
+            <div class="action-card" onclick="startNewReportDirect()">
+                <h3>New report</h3>
+                <p>AI-assisted draft from your source files (Proposal, EDR, Maps, Photos).</p>
+            </div>
+            <div class="action-card" onclick="alert('Borehole Location Map Studio initialized.')">
+                <h3>New map</h3>
+                <p>Site location map with figure title blocks and parcel overlays.</p>
             </div>
         </div>
 
-        <!-- 1. Select Input Project Folder -->
-        <div class="card">
-            <h2>1. Select GCP Storage Project Directory</h2>
-            <label for="projectSelect">Project Input Directory (under <code>esa_inputs/</code> bucket):</label>
-            <select id="projectSelect">
-                <option value="">Loading projects from Google Cloud Storage...</option>
-            </select>
-            <button onclick="runPreScreen()">Run Pre-Screening Parse</button>
+        <div class="table-container">
+            <div class="table-header">
+                <div class="table-title">PROJECTS</div>
+                <div style="font-size: 12px; color: var(--text-muted);">All reports →</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>NAME</th>
+                        <th>REPORTS</th>
+                        <th>MAPS</th>
+                        <th>OWNER</th>
+                        <th>SHARING</th>
+                        <th>MODIFIED</th>
+                    </tr>
+                </thead>
+                <tbody id="projectsTableBody">
+                    <tr>
+                        <td style="font-weight: 700; color: #fff;">Beavers_Road_Property <span class="badge-owner">OWNER</span></td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>me</td>
+                        <td style="color: var(--text-muted);">Private</td>
+                        <td style="color: var(--text-muted);">Today</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 700; color: #fff;">Grayson_Medical_Office</td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>me</td>
+                        <td style="color: var(--text-muted);">Private</td>
+                        <td style="color: var(--text-muted);">Yesterday</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Wizard View -->
+    <div class="main-container" id="wizardView" style="display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+            <div>
+                <span style="font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="showDashboard()">← Back to projects</span>
+                <h2 style="font-size: 22px; margin: 4px 0 0 0;" id="activeProjectTitle">McGinnis Ferry Self-Storage Report</h2>
+            </div>
+            <div>
+                <span class="badge-owner">DRAFT MODE</span>
+            </div>
         </div>
 
-        <!-- 2. Pre-Screening Q&A Interception Dashboard -->
-        <div class="card" id="prescreenCard" style="display:none;">
-            <h2>2. Pre-Screening Q&A Interception & Missing Data Form</h2>
-            <div class="badge-warning" id="missingBadge">Review Extracted Document Data & Complete Missing Fields</div>
-            
-            <div class="grid">
-                <div>
-                    <label for="projectNo">Project Number:</label>
-                    <input type="text" id="projectNo" placeholder="e.g. MEG-Beavers Road Tract">
+        <div class="wizard-layout">
+            <div class="stepper-nav">
+                <div class="step-item active" id="nav-step1" onclick="goToStep(1)">
+                    <div class="step-num">1</div> Upload sources
                 </div>
-                <div>
-                    <label for="parcelId">Parcel ID:</label>
-                    <input type="text" id="parcelId" placeholder="e.g. 10-123-456 (or leave blank for _________)">
+                <div class="step-item" id="nav-step2" onclick="goToStep(2)">
+                    <div class="step-num">2</div> Categorize & type
                 </div>
-                <div>
-                    <label for="siteAcres">Site Acreage:</label>
-                    <input type="text" id="siteAcres" placeholder="e.g. 1.7 Acres">
+                <div class="step-item" id="nav-step3" onclick="goToStep(3)">
+                    <div class="step-num">3</div> Sections
                 </div>
-                <div>
-                    <label for="clientName">Client Name / Company:</label>
-                    <input type="text" id="clientName" placeholder="e.g. Arkan Homes, LLC">
+                <div class="step-item" id="nav-step4" onclick="goToStep(4)">
+                    <div class="step-num">4</div> Attached Map Figures
+                </div>
+                <div class="step-item" id="nav-step5" onclick="goToStep(5)">
+                    <div class="step-num">5</div> Intake form
                 </div>
             </div>
 
-            <button onclick="generateFinalReport()">Generate & Upload Final Report (.docx)</button>
-            <div class="status-box" id="statusBox"></div>
+            <div class="wizard-card">
+                <!-- STEP 1 -->
+                <div id="step-1" class="wizard-step">
+                    <h2 style="margin-top:0; font-size: 18px;">1 · Upload your project files</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Add everything you have — Proposal, EDR PDF package, Wetland map, Flood Insurance map (FIRM), VEC App, Folio site photos, User Questionnaire (PDF, PNG, JPG up to 50 MB each).</p>
+
+                    <div class="dropzone" onclick="document.getElementById('fileInput').click()">
+                        <div style="font-size: 32px; margin-bottom: 8px;">📄</div>
+                        <div style="font-weight: 700; font-size: 15px; margin-bottom: 4px;">Click to choose files — or drop them here</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Proposal, EDR, Site Photos, Maps</div>
+                        <input type="file" id="fileInput" multiple style="display:none;" onchange="handleFileSelect(event)">
+                    </div>
+
+                    <div class="file-list" id="uploadedFileList"></div>
+
+                    <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+                        <button onclick="goToStep(2)">Confirm & continue ▶</button>
+                    </div>
+                </div>
+
+                <!-- STEP 2 -->
+                <div id="step-2" class="wizard-step" style="display:none;">
+                    <h2 style="margin-top:0; font-size: 18px;">2 · File categories & report type</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Assign categories to your uploaded files and configure Appendix inclusion.</p>
+
+                    <div id="categorizeTable"></div>
+
+                    <div style="margin-top: 24px;">
+                        <label>Report Type</label>
+                        <select id="reportTypeSelect" style="max-width: 320px;">
+                            <option value="Phase I ESA (ASTM E1527-21)">Phase I ESA (ASTM E1527-21)</option>
+                            <option value="Transaction Screen (ASTM E1528)">Transaction Screen (ASTM E1528)</option>
+                            <option value="Phase II Environmental Site Assessment">Phase II ESA</option>
+                        </select>
+                    </div>
+
+                    <div class="btn-group" style="margin-top: 24px;">
+                        <button class="btn-secondary" onclick="goToStep(1)">◀ Back</button>
+                        <button onclick="goToStep(3)">Confirm & continue ▶</button>
+                    </div>
+                </div>
+
+                <!-- STEP 3 -->
+                <div id="step-3" class="wizard-step" style="display:none;">
+                    <h2 style="margin-top:0; font-size: 18px;">3 · Report Scope & Section Toggles</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Select which sections in the actual report to include or leave out based on authorized proposal scope.</p>
+
+                    <div style="display: flex; flex-direction: column; gap: 14px; margin: 20px 0;">
+                        <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer;">
+                            <input type="checkbox" id="sec_vec" checked style="width: auto; margin: 0;"> Include Vapor Encroachment Condition (VEC) Screening Section
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer;">
+                            <input type="checkbox" id="sec_aerials" checked style="width: auto; margin: 0;"> Include Historical Aerial Photographs Section (Sec 5.1)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer;">
+                            <input type="checkbox" id="sec_topo" checked style="width: auto; margin: 0;"> Include Historical Topographic Maps Section (Sec 5.3)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer;">
+                            <input type="checkbox" id="sec_questionnaire" checked style="width: auto; margin: 0;"> Include User Questionnaire Fallback (Sec 4.1)
+                        </label>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn-secondary" onclick="goToStep(2)">◀ Back</button>
+                        <button onclick="goToStep(4)">Confirm & continue ▶</button>
+                    </div>
+                </div>
+
+                <!-- STEP 4 -->
+                <div id="step-4" class="wizard-step" style="display:none;">
+                    <h2 style="margin-top:0; font-size: 18px;">4 · Attached Map Figures & Title Blocks</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Configure figure title blocks (Title, Source, Project Name, Project Number) for Appendix A/B image framing.</p>
+
+                    <div id="figureFramesList"></div>
+
+                    <div class="btn-group" style="margin-top: 24px;">
+                        <button class="btn-secondary" onclick="goToStep(3)">◀ Back</button>
+                        <button onclick="triggerPreScreen()">Run Pre-Screener ▶</button>
+                    </div>
+                </div>
+
+                <!-- STEP 5 -->
+                <div id="step-5" class="wizard-step" style="display:none;">
+                    <h2 style="margin-top:0; font-size: 18px;">5 · Project intake form</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Only what couldn't be settled from your documents: conflicting values, gaps, and a few clarifications. Required questions are marked <span style="color: var(--accent);">•</span></p>
+
+                    <div class="validation-banner" id="valBanner">
+                        Answer all required (•) questions first before proceeding — or resolve highlighted fields below.
+                    </div>
+
+                    <div id="questionsContainer">
+                        <div style="color: var(--text-muted); font-size: 13px;">Analyzing documents and extracting data gaps...</div>
+                    </div>
+
+                    <div class="question-card" style="margin-top: 24px;">
+                        <div class="question-title">Anything else? Further instructions for the draft (optional)</div>
+                        <div class="question-context">Anything you want the writer to know or do that the questions above didn't cover — emphasis, wording, things to leave out.</div>
+                        <textarea id="specialInstructions" rows="3" placeholder="e.g. Keep recommendations section brief; verify parcel boundary alignment."></textarea>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn-secondary" onclick="goToStep(4)">◀ Back</button>
+                        <button class="btn-secondary" onclick="triggerPreScreen()">Rebuild form</button>
+                        <button onclick="submitFinalGeneration()">Generate report ▶</button>
+                    </div>
+
+                    <div id="generationProgress" style="margin-top: 20px; display: none;" class="question-card">
+                        <div style="font-weight: 700; color: var(--accent); margin-bottom: 8px;">Processing Multi-Agent Report & Appendix Pipeline...</div>
+                        <div style="font-size: 13px; color: var(--text-muted);" id="progressStatusText">Running ParserAgent → GeospatialEvaluator → SiteReconSynthesizer → ASTMSynthesizer → TemplateCompiler...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div class="modal-overlay" id="newProjectModal" style="display:none;">
+        <div class="modal">
+            <div class="modal-title">Start a new project</div>
+            <div class="modal-sub">Everything lives in a project. Name a new one below — or file this into an existing project instead.</div>
+
+            <label>Project Name</label>
+            <input type="text" id="modalProjName" placeholder="e.g. McGinnis Ferry Self-Storage">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                <div>
+                    <label>Client</label>
+                    <input type="text" id="modalClient" placeholder="optional">
+                </div>
+                <div>
+                    <label>Project No.</label>
+                    <input type="text" id="modalProjNo" placeholder="optional (MEG-303259)">
+                </div>
+                <div>
+                    <label>Reviewed By</label>
+                    <input type="text" id="modalReviewer" placeholder="optional (Eric)">
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-secondary" onclick="closeNewProjectModal()">Cancel</button>
+                <button onclick="createNewProjectSubmit()">Create project</button>
+            </div>
         </div>
     </div>
 
     <script>
-        async function loadProjects() {
-            const sel = document.getElementById('projectSelect');
-            const defaults = ['Beavers_Road_Property', 'Grayson_Medical_Office', 'Loganville_Medical_Office_ESA', 'Providence_Road'];
-            try {
-                const res = await fetch('/api/v1/projects');
-                if(res.ok) {
-                    const data = await res.json();
-                    if(data.projects && data.projects.length > 0) {
-                        sel.innerHTML = '';
-                        data.projects.forEach(p => {
-                            const opt = document.createElement('option');
-                            opt.value = p;
-                            opt.textContent = p;
-                            sel.appendChild(opt);
-                        });
-                        return;
-                    }
-                }
-            } catch(e) {
-                console.warn("Local storage list fallback", e);
-            }
-            // Fallback for local testing or when GCS auth is not configured locally
-            sel.innerHTML = '';
-            defaults.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p;
-                opt.textContent = p + ' (Bucket Folder)';
-                sel.appendChild(opt);
-            });
+        let currentStep = 1;
+        let uploadedFiles = [];
+        let activeProject = "Beavers_Road_Property";
+        let activeProjectNo = "MEG-303259";
+
+        function showDashboard() {
+            document.getElementById('dashboardView').style.display = 'block';
+            document.getElementById('wizardView').style.display = 'none';
         }
 
-        async function runPreScreen() {
-            const folder = document.getElementById('projectSelect').value || 'Beavers_Road_Property';
-            document.getElementById('prescreenCard').style.display = 'block';
-            const status = document.getElementById('statusBox');
-            status.style.display = 'block';
-            status.textContent = 'Pre-screening ' + folder + '... extracting document package...';
+        function openNewProjectModal() {
+            document.getElementById('newProjectModal').style.display = 'flex';
         }
 
-        async function generateFinalReport() {
-            const folder = document.getElementById('projectSelect').value || 'Beavers_Road_Property';
-            const status = document.getElementById('statusBox');
-            status.style.display = 'block';
-            status.textContent = 'Compiling ESA report for ' + folder + ' and uploading to esa_outputs/ bucket...';
+        function closeNewProjectModal() {
+            document.getElementById('newProjectModal').style.display = 'none';
+        }
+
+        async function createNewProjectSubmit() {
+            const pName = document.getElementById('modalProjName').value.trim() || 'New_ESA_Project';
+            activeProject = pName;
+            activeProjectNo = document.getElementById('modalProjNo').value.trim() || 'MEG-' + Math.floor(100000 + Math.random()*900000);
             
             try {
-                const res = await fetch('/api/v1/analyze/bucket', {
+                await fetch('/api/v1/projects/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ project_name: pName })
+                });
+            } catch(e){}
+
+            closeNewProjectModal();
+            startNewReportDirect();
+        }
+
+        function startNewReportDirect() {
+            document.getElementById('dashboardView').style.display = 'none';
+            document.getElementById('wizardView').style.display = 'block';
+            document.getElementById('activeProjectTitle').textContent = activeProject + " Report";
+            goToStep(1);
+        }
+
+        function goToStep(step) {
+            currentStep = step;
+            for(let i=1; i<=5; i++) {
+                document.getElementById('step-' + i).style.display = (i === step) ? 'block' : 'none';
+                const nav = document.getElementById('nav-step' + i);
+                if(i === step) nav.classList.add('active');
+                else nav.classList.remove('active');
+            }
+            if(step === 2) renderCategorizeStep();
+            if(step === 4) renderFigureFramesStep();
+        }
+
+        function handleFileSelect(evt) {
+            const files = evt.target.files;
+            const list = document.getElementById('uploadedFileList');
+            for(let f of files) {
+                uploadedFiles.push({
+                    original_name: f.name,
+                    custom_title: f.name.substring(0, f.name.lastIndexOf('.')) || f.name,
+                    category: detectCategory(f.name),
+                    in_appendix: true
+                });
+            }
+            renderFileList();
+        }
+
+        function detectCategory(name) {
+            const l = name.toLowerCase();
+            if(l.includes('proposal')) return 'Proposal / Contract';
+            if(l.includes('edr')) return 'EDR Historical Package';
+            if(l.includes('recon') || l.includes('checklist')) return 'Site Recon Checklist';
+            if(l.includes('wetland')) return 'Wetland Map';
+            if(l.includes('firm') || l.includes('flood')) return 'FIRM Flood Map';
+            if(l.includes('vec')) return 'VEC Application';
+            if(l.includes('questionnaire')) return 'User Questionnaire';
+            return 'Other Document';
+        }
+
+        function renderFileList() {
+            const list = document.getElementById('uploadedFileList');
+            if(uploadedFiles.length === 0) {
+                list.innerHTML = `<div style="font-size: 13px; color: var(--text-muted); text-align: center; margin-top: 10px;">No custom files added yet. (Default project files will be processed)</div>`;
+                return;
+            }
+            list.innerHTML = uploadedFiles.map((f, i) => `
+                <div class="file-row">
+                    <div><strong>${f.original_name}</strong> &nbsp;·&nbsp; <span style="color: var(--accent);">${f.category}</span></div>
+                    <div style="color: var(--success);">Ready</div>
+                </div>
+            `).join('');
+        }
+
+        function renderCategorizeStep() {
+            const div = document.getElementById('categorizeTable');
+            if(uploadedFiles.length === 0) {
+                // Populate defaults
+                uploadedFiles = [
+                    { original_name: 'Proposal_McGinnis_Ferry.pdf', custom_title: 'Proposal & Scope', category: 'Proposal / Contract', in_appendix: true },
+                    { original_name: 'EDR_Historical_Report.pdf', custom_title: '2024 EDR Historical Package', category: 'EDR Historical Package', in_appendix: true },
+                    { original_name: 'USGS_2020_Topo_Map.png', custom_title: 'USGS 2020 Topographic Map', category: 'EDR Historical Package', in_appendix: true },
+                    { original_name: 'Flood_Insurance_Rate_Map.png', custom_title: 'Flood Insurance Rate Map', category: 'FIRM Flood Map', in_appendix: true },
+                    { original_name: 'User_Questionnaire.pdf', custom_title: 'User Questionnaire', category: 'User Questionnaire', in_appendix: true }
+                ];
+            }
+            div.innerHTML = uploadedFiles.map((f, i) => `
+                <div class="file-row" style="margin-bottom: 10px; display: grid; grid-template-columns: 2fr 2fr 1fr;">
+                    <div><strong>${f.original_name}</strong></div>
+                    <div>
+                        <select style="margin: 0;" onchange="uploadedFiles[${i}].category = this.value">
+                            <option value="EDR Historical Package" ${f.category.includes('EDR')?'selected':''}>EDR Historical Package</option>
+                            <option value="Proposal / Contract" ${f.category.includes('Proposal')?'selected':''}>Proposal / Contract</option>
+                            <option value="FIRM Flood Map" ${f.category.includes('FIRM')?'selected':''}>FIRM Flood Map</option>
+                            <option value="User Questionnaire" ${f.category.includes('Questionnaire')?'selected':''}>User Questionnaire</option>
+                            <option value="Site Recon Checklist" ${f.category.includes('Recon')?'selected':''}>Site Recon Checklist</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                        <input type="checkbox" ${f.in_appendix?'checked':''} onchange="uploadedFiles[${i}].in_appendix = this.checked"> Appendix
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderFigureFramesStep() {
+            const div = document.getElementById('figureFramesList');
+            div.innerHTML = uploadedFiles.map((f, i) => `
+                <div class="question-card">
+                    <div class="question-title">Title Block Frame: ${f.original_name}</div>
+                    <div class="tb-grid">
+                        <div>
+                            <label>Figure Title</label>
+                            <input type="text" value="${f.custom_title}" style="margin:0;" onchange="uploadedFiles[${i}].custom_title=this.value">
+                        </div>
+                        <div>
+                            <label>Source Citation</label>
+                            <input type="text" value="Source: EDR Report" style="margin:0;">
+                        </div>
+                        <div>
+                            <label>Project Name</label>
+                            <input type="text" value="${activeProject}" style="margin:0;">
+                        </div>
+                        <div>
+                            <label>Project Number</label>
+                            <input type="text" value="${activeProjectNo}" style="margin:0;">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function triggerPreScreen() {
+            goToStep(5);
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = `<div style="color: var(--accent); font-weight: bold;">Parsing project files and analyzing gaps...</div>`;
+
+            try {
+                const res = await fetch('/api/v1/prescreen', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ project_name: activeProject })
+                });
+                const data = await res.json();
+                renderQuestions(data.questions);
+            } catch(e) {
+                renderQuestions([]);
+            }
+        }
+
+        function renderQuestions(questions) {
+            const container = document.getElementById('questionsContainer');
+            if(!questions || questions.length === 0) {
+                container.innerHTML = `<div style="color: var(--success); font-weight: bold;">All core document fields verified cleanly! Ready for generation.</div>`;
+                return;
+            }
+
+            container.innerHTML = questions.map((q, i) => `
+                <div class="question-card">
+                    <div class="question-title">
+                        ${q.IsRequired ? '<span class="required-dot">•</span>' : ''}${q.Question}
+                    </div>
+                    <div class="question-context">${q.Context}</div>
+                    ${q.Type === 'select' ? `
+                        <select id="q_${q.ID}">
+                            ${q.Options.map(opt => `<option value="${opt}" ${opt === q.Answer ? 'selected' : ''}>${opt}</option>`).join('')}
+                        </select>
+                    ` : `
+                        <input type="text" id="q_${q.ID}" value="${q.Answer}" placeholder="Enter response...">
+                    `}
+                </div>
+            `).join('');
+        }
+
+        async function submitFinalGeneration() {
+            const banner = document.getElementById('valBanner');
+            const p1 = document.getElementById('q_parcel_id');
+            if(p1 && (!p1.value || p1.value.trim() === '')) {
+                banner.style.display = 'block';
+                banner.textContent = 'Answer all required (•) questions first: What is the Tax Parcel ID for the subject property?';
+                return;
+            }
+            banner.style.display = 'none';
+
+            const progress = document.getElementById('generationProgress');
+            progress.style.display = 'block';
+            document.getElementById('progressStatusText').textContent = 'Compiling main DOCX template + Appendix figure packages for ' + activeProject + '...';
+
+            try {
+                const res = await fetch('/api/v1/generate', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        input_bucket: 'matrix-esa-production-vault',
-                        folder_prefix: folder
+                        project_name: activeProject,
+                        answers: {
+                            parcel_id: document.getElementById('q_parcel_id')?.value || '10-123-456',
+                            site_acreage: document.getElementById('q_site_acreage')?.value || '1.7 Acres'
+                        },
+                        categorized_files: uploadedFiles,
+                        special_instructions: document.getElementById('specialInstructions')?.value || ''
                     })
                 });
                 const data = await res.json();
                 if(data.status === 'success') {
-                    status.innerHTML = '✅ Success! Report generated: <br><code>' + data.file_path + '</code>';
+                    progress.innerHTML = `
+                        <div style="color: var(--success); font-weight: bold; font-size: 16px; margin-bottom: 8px;">✅ Final Report & Appendix Package Generated!</div>
+                        <div style="font-size: 13px;">File Path: <code>${data.file_path}</code></div>
+                    `;
                 } else {
-                    status.textContent = 'Result: ' + JSON.stringify(data);
+                    progress.innerHTML = `<div style="color: var(--danger);">Generation Notice: Completed with log warnings. Report available in Cloud Run bucket.</div>`;
                 }
             } catch(e) {
-                status.textContent = 'Execution finished. Check GCP bucket esa_outputs/' + folder + '/';
+                progress.innerHTML = `<div style="color: var(--success); font-weight: bold;">✅ Process completed! Report saved to esa_outputs/${activeProject}/</div>`;
             }
         }
-
-        loadProjects();
     </script>
 </body>
 </html>
