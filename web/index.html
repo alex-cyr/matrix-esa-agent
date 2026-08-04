@@ -193,24 +193,34 @@
 
     <script>
         async function loadProjects() {
+            const sel = document.getElementById('projectSelect');
+            const defaults = ['Beavers_Road_Property', 'Grayson_Medical_Office', 'Loganville_Medical_Office_ESA', 'Providence_Road'];
             try {
                 const res = await fetch('/api/v1/projects');
-                const data = await res.json();
-                const sel = document.getElementById('projectSelect');
-                sel.innerHTML = '';
-                if(data.projects && data.projects.length > 0) {
-                    data.projects.forEach(p => {
-                        const opt = document.createElement('option');
-                        opt.value = p;
-                        opt.textContent = p;
-                        sel.appendChild(opt);
-                    });
-                } else {
-                    sel.innerHTML = '<option value="Beavers_Road_Property">Beavers_Road_Property (Default)</option>';
+                if(res.ok) {
+                    const data = await res.json();
+                    if(data.projects && data.projects.length > 0) {
+                        sel.innerHTML = '';
+                        data.projects.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = p;
+                            opt.textContent = p;
+                            sel.appendChild(opt);
+                        });
+                        return;
+                    }
                 }
             } catch(e) {
-                console.error(e);
+                console.warn("Local storage list fallback", e);
             }
+            // Fallback for local testing or when GCS auth is not configured locally
+            sel.innerHTML = '';
+            defaults.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p + ' (Bucket Folder)';
+                sel.appendChild(opt);
+            });
         }
 
         async function runPreScreen() {
