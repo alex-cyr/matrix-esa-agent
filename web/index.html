@@ -98,7 +98,7 @@
         }
 
         .main-container {
-            max-width: 1000px;
+            max-width: 1050px;
             margin: 40px auto;
             padding: 0 24px;
         }
@@ -392,6 +392,16 @@
             font-size: 13.5px;
             display: none;
         }
+
+        .tb-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            background: #111319;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #232733;
+        }
     </style>
 </head>
 <body>
@@ -492,7 +502,10 @@
                     <div class="step-num">3</div> Scope sections
                 </div>
                 <div class="step-item" id="nav-step4" onclick="goToStep(4)">
-                    <div class="step-num">4</div> Pre-Screener form
+                    <div class="step-num">4</div> Attached Map Figures
+                </div>
+                <div class="step-item" id="nav-step5" onclick="goToStep(5)">
+                    <div class="step-num">5</div> Intake form
                 </div>
             </div>
 
@@ -560,13 +573,26 @@
 
                     <div class="btn-group">
                         <button class="btn-secondary" onclick="goToStep(2)">◀ Back</button>
+                        <button onclick="goToStep(4)">Confirm & continue ▶</button>
+                    </div>
+                </div>
+
+                <!-- STEP 4 -->
+                <div id="step-4" class="wizard-step" style="display:none;">
+                    <h2 style="margin-top:0; font-size: 18px;">4 · Attached Map Figures & Appendix Section Titles</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Review map figure attachments, edit figure titles, and verify Appendix section assignments (Appendix A through E).</p>
+
+                    <div id="figureFramesList"></div>
+
+                    <div class="btn-group">
+                        <button class="btn-secondary" onclick="goToStep(3)">◀ Back</button>
                         <button onclick="triggerPreScreen()">Run Pre-Screener ▶</button>
                     </div>
                 </div>
 
-                <!-- STEP 4 (Pre-Screener Intake Form) -->
-                <div id="step-4" class="wizard-step" style="display:none;">
-                    <h2 style="margin-top:0; font-size: 18px;">4 · Pre-Screening Intake Form</h2>
+                <!-- STEP 5 (Pre-Screener Intake Form) -->
+                <div id="step-5" class="wizard-step" style="display:none;">
+                    <h2 style="margin-top:0; font-size: 18px;">5 · Pre-Screening Intake Form</h2>
                     <p style="font-size: 13px; color: var(--text-muted);">Only what couldn't be settled from your documents: conflicting values, gaps, and clarifications. Required questions are marked <span style="color: var(--accent);">•</span></p>
 
                     <div class="validation-banner" id="valBanner">
@@ -584,7 +610,7 @@
                     </div>
 
                     <div class="btn-group">
-                        <button class="btn-secondary" onclick="goToStep(3)">◀ Back</button>
+                        <button class="btn-secondary" onclick="goToStep(4)">◀ Back</button>
                         <button class="btn-secondary" onclick="triggerPreScreen()">Rebuild form</button>
                         <button onclick="submitFinalGeneration()">Generate report & Appendix ▶</button>
                     </div>
@@ -602,6 +628,7 @@
         let currentStep = 1;
         let uploadedFiles = [];
         let activeProject = "Beavers_Road_Property";
+        let activeProjectNo = "MEG-303259";
 
         function showDashboard() {
             document.getElementById('dashboardView').style.display = 'block';
@@ -617,13 +644,14 @@
 
         function goToStep(step) {
             currentStep = step;
-            for(let i=1; i<=4; i++) {
+            for(let i=1; i<=5; i++) {
                 document.getElementById('step-' + i).style.display = (i === step) ? 'block' : 'none';
                 const nav = document.getElementById('nav-step' + i);
                 if(i === step) nav.classList.add('active');
                 else nav.classList.remove('active');
             }
             if(step === 2) renderCategorizeStep();
+            if(step === 4) renderFigureFramesStep();
         }
 
         function handleFileSelect(evt) {
@@ -707,8 +735,35 @@
             `).join('');
         }
 
+        function renderFigureFramesStep() {
+            const div = document.getElementById('figureFramesList');
+            div.innerHTML = uploadedFiles.map((f, i) => `
+                <div class="question-card">
+                    <div class="question-title">Attached Figure / File: ${f.original_name}</div>
+                    <div class="tb-grid">
+                        <div>
+                            <label>Figure / Section Title</label>
+                            <input type="text" value="${f.custom_title}" style="margin:0;" onchange="uploadedFiles[${i}].custom_title=this.value">
+                        </div>
+                        <div>
+                            <label>Source Citation</label>
+                            <input type="text" value="${f.category.includes('EDR') ? 'Source: EDR Report' : 'Source: Matrix Engineering Group, Inc.'}" style="margin:0;">
+                        </div>
+                        <div>
+                            <label>Project Name</label>
+                            <input type="text" value="${activeProject}" style="margin:0;">
+                        </div>
+                        <div>
+                            <label>Project Number</label>
+                            <input type="text" value="${activeProjectNo}" style="margin:0;">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         async function triggerPreScreen() {
-            goToStep(4);
+            goToStep(5);
             const container = document.getElementById('questionsContainer');
             container.innerHTML = `<div style="color: var(--accent); font-weight: bold;">Parsing project files and analyzing gaps...</div>`;
 
@@ -732,21 +787,31 @@
                 return;
             }
 
-            container.innerHTML = questions.map((q, i) => `
+            container.innerHTML = questions.map((q, i) => {
+                const qText = q.question || q.Question || '';
+                const qCtx = q.context || q.Context || '';
+                const qType = q.type || q.Type || 'text';
+                const qId = q.id || q.ID || ('q_' + i);
+                const qReq = (q.is_required !== undefined) ? q.is_required : (q.IsRequired !== undefined ? q.IsRequired : false);
+                const qAns = q.answer || q.Answer || '';
+                const qOpts = q.options || q.Options || [];
+
+                return `
                 <div class="question-card">
                     <div class="question-title">
-                        ${q.IsRequired ? '<span class="required-dot">•</span>' : ''}${q.Question}
+                        ${qReq ? '<span class="required-dot">•</span>' : ''}${qText}
                     </div>
-                    <div class="question-context">${q.Context}</div>
-                    ${q.Type === 'select' ? `
-                        <select id="q_${q.ID}">
-                            ${q.Options.map(opt => `<option value="${opt}" ${opt === q.Answer ? 'selected' : ''}>${opt}</option>`).join('')}
+                    ${qCtx ? `<div class="question-context">${qCtx}</div>` : ''}
+                    ${qType === 'select' ? `
+                        <select id="q_${qId}">
+                            ${qOpts.map(opt => `<option value="${opt}" ${opt === qAns ? 'selected' : ''}>${opt}</option>`).join('')}
                         </select>
                     ` : `
-                        <input type="text" id="q_${q.ID}" value="${q.Answer}" placeholder="Enter response...">
+                        <input type="text" id="q_${qId}" value="${qAns}" placeholder="Enter response...">
                     `}
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         async function submitFinalGeneration() {
