@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Engineering Group | ESA AI Portal</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --accent: #c8641a;
+            --accent-hover: #e07323;
+            --text-main: #f0f0f0;
+            --text-muted: #a0a0a0;
+            --border: #333333;
+            --success: #8cf0a0;
+            --warning: #ffb84d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 25px;
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 18px;
+            margin-bottom: 30px;
+        }
+
+        .logo-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 20px;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            box-sizing: border-box;
+            background: #2a2a2a;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        button {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .badge-warning {
+            background: #4a3000;
+            color: var(--warning);
+            border: 1px solid #8c5a00;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .status-box {
+            background: #162419;
+            border: 1px solid #285430;
+            padding: 16px;
+            border-radius: 6px;
+            color: var(--success);
+            margin-top: 20px;
+            font-family: monospace;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <div class="logo-title">MATRIX ENGINEERING GROUP</div>
+                <div class="subtitle">Phase I Environmental Site Assessment (ESA) AI Pipeline</div>
+            </div>
+            <div>
+                <span class="badge-warning" style="margin:0;">Cloud Run API Connected</span>
+            </div>
+        </div>
+
+        <!-- 1. Select Input Project Folder -->
+        <div class="card">
+            <h2>1. Select GCP Storage Project Directory</h2>
+            <label for="projectSelect">Project Input Directory (under <code>esa_inputs/</code> bucket):</label>
+            <select id="projectSelect">
+                <option value="">Loading projects from Google Cloud Storage...</option>
+            </select>
+            <button onclick="runPreScreen()">Run Pre-Screening Parse</button>
+        </div>
+
+        <!-- 2. Pre-Screening Q&A Interception Dashboard -->
+        <div class="card" id="prescreenCard" style="display:none;">
+            <h2>2. Pre-Screening Q&A Interception & Missing Data Form</h2>
+            <div class="badge-warning" id="missingBadge">Review Extracted Document Data & Complete Missing Fields</div>
+            
+            <div class="grid">
+                <div>
+                    <label for="projectNo">Project Number:</label>
+                    <input type="text" id="projectNo" placeholder="e.g. MEG-Beavers Road Tract">
+                </div>
+                <div>
+                    <label for="parcelId">Parcel ID:</label>
+                    <input type="text" id="parcelId" placeholder="e.g. 10-123-456 (or leave blank for _________)">
+                </div>
+                <div>
+                    <label for="siteAcres">Site Acreage:</label>
+                    <input type="text" id="siteAcres" placeholder="e.g. 1.7 Acres">
+                </div>
+                <div>
+                    <label for="clientName">Client Name / Company:</label>
+                    <input type="text" id="clientName" placeholder="e.g. Arkan Homes, LLC">
+                </div>
+            </div>
+
+            <button onclick="generateFinalReport()">Generate & Upload Final Report (.docx)</button>
+            <div class="status-box" id="statusBox"></div>
+        </div>
+    </div>
+
+    <script>
+        async function loadProjects() {
+            try {
+                const res = await fetch('/api/v1/projects');
+                const data = await res.json();
+                const sel = document.getElementById('projectSelect');
+                sel.innerHTML = '';
+                if(data.projects && data.projects.length > 0) {
+                    data.projects.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p;
+                        opt.textContent = p;
+                        sel.appendChild(opt);
+                    });
+                } else {
+                    sel.innerHTML = '<option value="Beavers_Road_Property">Beavers_Road_Property (Default)</option>';
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        async function runPreScreen() {
+            const folder = document.getElementById('projectSelect').value || 'Beavers_Road_Property';
+            document.getElementById('prescreenCard').style.display = 'block';
+            const status = document.getElementById('statusBox');
+            status.style.display = 'block';
+            status.textContent = 'Pre-screening ' + folder + '... extracting document package...';
+        }
+
+        async function generateFinalReport() {
+            const folder = document.getElementById('projectSelect').value || 'Beavers_Road_Property';
+            const status = document.getElementById('statusBox');
+            status.style.display = 'block';
+            status.textContent = 'Compiling ESA report for ' + folder + ' and uploading to esa_outputs/ bucket...';
+            
+            try {
+                const res = await fetch('/api/v1/analyze/bucket', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        input_bucket: 'matrix-esa-production-vault',
+                        folder_prefix: folder
+                    })
+                });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    status.innerHTML = '✅ Success! Report generated: <br><code>' + data.file_path + '</code>';
+                } else {
+                    status.textContent = 'Result: ' + JSON.stringify(data);
+                }
+            } catch(e) {
+                status.textContent = 'Execution finished. Check GCP bucket esa_outputs/' + folder + '/';
+            }
+        }
+
+        loadProjects();
+    </script>
+</body>
+</html>

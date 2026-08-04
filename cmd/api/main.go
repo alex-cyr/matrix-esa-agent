@@ -296,7 +296,8 @@ func analyzeBucketHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Error reading bucket", http.StatusInternalServerError)
 			return
 		}
-		if strings.HasSuffix(strings.ToLower(attrs.Name), ".pdf") {
+		ext := strings.ToLower(filepath.Ext(attrs.Name))
+		if ext == ".pdf" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
 			rc, err := bucket.Object(attrs.Name).NewReader(ctx)
 			if err != nil {
 				continue
@@ -313,7 +314,7 @@ func analyzeBucketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(downloadedFiles) == 0 {
-		http.Error(w, "No PDFs found in bucket folder", http.StatusBadRequest)
+		http.Error(w, "No valid documents or images found in bucket folder", http.StatusBadRequest)
 		return
 	}
 
@@ -340,8 +341,15 @@ func analyzeBucketHandler(w http.ResponseWriter, r *http.Request) {
 	var fullExtractedData string
 	extractionPrompt := "You are the Parser Agent... Retrieve JSON."
 	for _, localPath := range downloadedFiles {
-		pdfBytes, _ := os.ReadFile(localPath)
-		parts := []genai.Part{genai.Text(extractionPrompt), genai.Blob{MIMEType: "application/pdf", Data: pdfBytes}}
+		fileBytes, _ := os.ReadFile(localPath)
+		mimeType := "application/pdf"
+		ext := strings.ToLower(filepath.Ext(localPath))
+		if ext == ".png" {
+			mimeType = "image/png"
+		} else if ext == ".jpg" || ext == ".jpeg" {
+			mimeType = "image/jpeg"
+		}
+		parts := []genai.Part{genai.Text(extractionPrompt), genai.Blob{MIMEType: mimeType, Data: fileBytes}}
 		res, err := parserAgent.Execute(ctx, parts...)
 		if err == nil {
 			fullExtractedData += "\n\n=== [EXTRACT: " + filepath.Base(localPath) + "] ===\n" + res.Content
@@ -409,12 +417,67 @@ func analyzeBucketHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func listProjectsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	bucketName := os.Getenv("ESA_INPUT_BUCKET")
+	if bucketName == "" {
+		bucketName = "matrix-esa-production-vault"
+	}
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		http.Error(w, "Failed to create storage client", http.StatusInternalServerError)
+		return
+	}
+	defer client.Close()
+
+	it := client.Bucket(bucketName).Objects(ctx, &storage.Query{
+		Prefix:    "esa_inputs/",
+		Delimiter: "/",
+	})
+
+	var projects []string
+	for {
+		attrs, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			break
+		}
+		if attrs.Prefix != "" {
+			name := strings.TrimPrefix(attrs.Prefix, "esa_inputs/")
+			name = strings.TrimSuffix(name, "/")
+			if name != "" {
+				projects = append(projects, name)
+			}
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"bucket":   bucketName,
+		"projects": projects,
+	})
+}
+
+func dashboardHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	htmlBytes, err := os.ReadFile("web/index.html")
+	if err == nil {
+		w.Write(htmlBytes)
+		return
+	}
+	// Fallback response if web/index.html is missing
+	fmt.Fprint(w, `<!DOCTYPE html><html><body><h2>Matrix Engineering Group ESA AI Portal</h2><p>Serving API endpoints.</p></body></html>`)
+}
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
+	http.HandleFunc("/", dashboardHandler)
+	http.HandleFunc("/api/v1/projects", listProjectsHandler)
 	http.HandleFunc("/api/v1/analyze", analyzeHandler)
 	http.HandleFunc("/api/v1/analyze/bucket", analyzeBucketHandler)
 
@@ -423,3 +486,4 @@ func main() {
 		slog.Error("Failed to start API Server", "err", err)
 	}
 }
+
