@@ -34,7 +34,14 @@ go test ./internal/...               # cache/corpus tests; no credentials needed
 go run ./cmd/esad -payload . -project matrix-esa-production -warm-historical
 ```
 
-Test coverage is limited to `internal/core/historical_test.go` (corpus caching). Nothing else is tested.
+### Tests
+
+Coverage is deliberate and narrow — two files, both guarding behavior that previously failed silently. Nothing else is tested.
+
+- `internal/core/historical_test.go` — corpus caching: content-hash keying, invalidation on content change, reuse on rename/duplicate, local formats bypassing the model, and per-file failures being recorded without aborting.
+- `cmd/api/merge_test.go` — tag replacement and post-model field injection.
+
+**Do not "clean up" `TestInjectFieldDefaultsCarriesNoClientHardcodes`.** It is a deliberate regression tripwire: it fails the build if the strings `Arkan`, `Morningpark`, `Hashem`, `Gwinnett`, or `Roswell` reappear in `injectFieldDefaults` output. Those hardcodes silently pinned every generated report to one client's recipient block and site address regardless of the actual project, and the shape of that function invites their return. `TestReplaceTagOrderIndependent` is likewise load-bearing — it proves colliding keys (`ParcelID` vs `SiteParcelID`) converge on the same document regardless of Go's randomized map order.
 
 **`go build ./...` and `go vet ./...` fail** — `scratch/` holds ~40 standalone `package main` throwaway scripts in one directory, so `main` is redeclared. Always scope commands to `./cmd/...` and `./internal/...`. Don't try to "fix" `scratch/`; it's a junk drawer of one-off template/PDF inspection programs, useful as reference for how to poke at the `.docx` internals.
 
