@@ -92,7 +92,7 @@ Template resolution order: `knowledge/ESA_PHASE_I_Template.docx`, falling back t
 - `.txt`, `.md`, and `.docx` are decoded in-process (`core.ExtractDocxText`) and never cost an API call. Only PDFs and images go to the model.
 - An in-process memo keyed on a directory fingerprint (names, sizes, modtimes) stops a long-running server re-reading the cache each request, while still noticing new files.
 - Warm the cache offline with `go run ./cmd/esad -payload . -warm-historical`; the Dockerfile's existing `COPY historical/` then carries it into the image, so containers never pay extraction cost on a customer request. There is no `.dockerignore`, so the cache is included automatically.
-- Files over Vertex's ~20 MB inline blob ceiling cannot be extracted this way and land in `corpus.Failed`. Two current baselines exceed it.
+- Inline blob size has **not** proven to be a practical limit: baselines of 48.8 MB and 20.1 MB both extracted successfully. An earlier assumption of a hard ~20 MB ceiling was wrong. Extraction failures still land in `corpus.Failed` rather than aborting, whatever their cause.
 
 `corpus.PromptBlock()` is a plain string appended to a system prompt, so more than one agent can consume it.
 
@@ -197,11 +197,17 @@ Elias picks keeps from the table and deletes the rest from `historical/` by hand
 directory fingerprint; orphaned cache entries are harmless and can be pruned in
 the same commit window if asked.
 
-**Branch decision (resolved by the inventory):** if a substitute
-clean/small-parcel exemplar exists among the cached transcripts, Phase 5 proceeds
-as ordered with the substitute and Homestead is grafted in after Phase 6's GCS
-work. If none exists, pull the Phase 6 GCS `FileData` extraction forward ahead of
-Phase 5. **Record whichever branch fires here.**
+**Branch decision — RESOLVED, no substitute needed.** The premise was wrong:
+Homestead (20.1 MB) extracted successfully, as did Cross Keys (48.8 MB). There is
+no inline-size failure, so **Phase 5 proceeds as ordered with Homestead itself as
+the clean/small-parcel exemplar**, and the Phase 6 GCS `FileData` work is not a
+Phase 5 blocker.
+
+Homestead's transcript was spot-checked because it ran near the assumed ceiling:
+69.6 KB / 1002 lines, cover page verbatim, 100 numbered section headings,
+Sections 9.0/10.0/11.0 all present (these sit near the end of the body and would
+be the first casualties of truncation), natural ending at the EP qualifications
+list, zero markdown/JSON contamination.
 
 **PHASE 5 — style digest replaces the raw corpus.** The warmed corpus is
 ~1.2 MB ≈ 275k tokens, attached to *two* agents (~550k tokens/report). Generate
@@ -220,8 +226,8 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   numbered-finding ordering (1 = location/parcel/owner, 2 = topography, then
   history, then regulatory); Section 5.1 aerial grouping style (year-ranges
   sharing one description).
-- **Plus 2–3 full exemplar transcripts appended whole:** one clean/small-parcel
-  (Homestead or inventory substitute), one REC-present (Rockdale), one
+- **Plus 2–3 full exemplar transcripts appended whole:** Homestead
+  (clean/small-parcel — confirmed available), one REC-present (Rockdale), one
   institutional or large-tract.
 - **Exclude Cross Keys 2022 and any other E1527-13 report from Tier 1 sourcing
   entirely.**
@@ -243,12 +249,11 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   (`filepath.Base`, restrict to the generate temp dirs) — it currently serves
   arbitrary paths with no auth.
 - Gate or delete `analyzeBucketHandler`'s hardcoded-answers path.
-- The two >20 MB historical PDFs: extract via `genai.FileData` with a GCS URI
-  (no inline limit, no new deps) during `-warm-historical`. **Homestead
-  (20.1 MB) is the priority target** — it is a Phase 5 exemplar pick
-  (clean/small-parcel) and cannot be included in the digest until this lands.
-  Cross Keys (48.8 MB) costs nothing by comparison: it cites superseded
-  E1527-13 and is already excluded from Tier 1 digest sourcing.
+- ~~The two >20 MB historical PDFs: extract via `genai.FileData` with a GCS
+  URI.~~ **Not needed.** Both extracted fine inline (48.8 MB and 20.1 MB), so
+  there is no size blocker to work around. Keep `genai.FileData` in mind only if
+  a future baseline actually fails on size — it is no longer a Phase 5
+  dependency.
 - Retry loop: classify errors by `googleapi` status, retry only retryables, then
   restore `maxRetries` to a sane value.
 - Consolidate the two divergent docx merge implementations (api vs esad).
