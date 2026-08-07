@@ -29,7 +29,12 @@ CLI run (reads `<payload>/edr_source/*.pdf`, writes `<payload>/output/`):
 go run ./cmd/esad -payload . -project $env:GCP_PROJECT -skip-hitl
 ```
 
-There are no tests in this repo.
+```powershell
+go test ./internal/...               # cache/corpus tests; no credentials needed
+go run ./cmd/esad -payload . -project matrix-esa-production -warm-historical
+```
+
+Test coverage is limited to `internal/core/historical_test.go` (corpus caching). Nothing else is tested.
 
 **`go build ./...` and `go vet ./...` fail** — `scratch/` holds ~40 standalone `package main` throwaway scripts in one directory, so `main` is redeclared. Always scope commands to `./cmd/...` and `./internal/...`. Don't try to "fix" `scratch/`; it's a junk drawer of one-off template/PDF inspection programs, useful as reference for how to poke at the `.docx` internals.
 
@@ -113,10 +118,93 @@ The binary reads `.agents/`, `knowledge/`, and `historical/` **relative to the w
    DONE. It was raw *PDF* bytes (no extension filter), while cmd/esad
    filtered to .txt/.md/.docx and so ingested nothing at all. Both now call
    `core.LoadHistoricalCorpus`.
-2. Historical context only reaches the Template Compiler agent; the ASTM
-   Synthesizer (which writes the actual lingo/rationales) never sees it.
-   `corpus.PromptBlock()` is already shaped for this — append it to the ASTM
-   agent config in both entrypoints.
-3. Template Compiler must emit ~160 exact {{Key}} JSON keys with no
+2. ~~Historical context only reaches the Template Compiler agent; the ASTM
+   Synthesizer (which writes the actual lingo/rationales) never sees it.~~
+   DONE. `buildAgents` now loads the corpus before constructing either agent
+   and appends the same `corpus.PromptBlock()` to both. Note this attaches
+   the baseline twice per generation — see the token cost below.
+3. Template Compiler must emit **~280** exact `{{Key}}` JSON keys with no
    validation — missing keys silently become blank fields in the report.
-   Need a Go-side validate/diff/re-prompt loop before docx injection.
+   (The long-standing "160" figure was wrong: `docx_tags.txt` holds **272**
+   unique tags, of which `Up1-14_*` = 70 and `Down1-20_*` = 100 are table
+   slots, leaving ~102 substantive keys.) Need a Go-side
+   validate/diff/re-prompt loop before docx injection.
+
+## Approved, not yet built
+
+Owner-approved work, in phase order. Do not start a phase without an explicit
+go-ahead. Show diffs before applying anything touching `mergeDocxLogic` or the
+pipeline.
+
+**PHASE 2 — verified run (gate).** A real `/generate` for `Providence_Road`
+through the web UI. Report baseline used/total, prompt tokens, wall time, the
+unreplaced-tag log, and the output docx path. No other code changes until this
+passes and the docx is reviewed externally.
+
+**PHASE 3 — robustness (approved as specified).**
+1. Boot preflight for cache coverage — **strict: refuse to start** on a cold or
+   partial cache.
+2. Never extract inline on the request path — nil extractor in `buildAgents`;
+   extraction becomes exclusively a `-warm-historical` operation. Today a cold
+   cache means ~18 sequential Vertex transcriptions *inside* one HTTP request,
+   which will blow the Cloud Run timeout and present as a generic timeout.
+3. Don't memoize failures — the in-process memo currently stores `Failed` too,
+   so a transient quota blip drops those baselines for the whole process
+   lifetime. Cache successes only; retry failures next call.
+4. Atomic cache writes — temp file + rename. Current writes go straight to the
+   final path and the read side only checks non-empty, so an interrupted write
+   leaves a truncated transcript that is trusted forever.
+5. `baseline: {used, total, missing}` in the `/generate` JSON response, plus a
+   loud bracketed internal note in the docx when incomplete:
+   `[DRAFT NOTE — INTERNAL: generated against N of M historical baselines —
+   remove before issuance]`. Explicitly **not** an ASTM data-gap line — it is a
+   drafting artifact for the EP to clear, not a regulatory finding.
+
+**PHASE 4 — bug 3, the validator.**
+- Parse the canonical tag list from `knowledge/ESA_PHASE_I_Template.docx` at
+  boot (after unfracturing), **not** from the skill markdown. Log drift vs the
+  skill's documented list once at startup.
+- Two-tier validation of the Template Compiler JSON before merge:
+  (a) missing `UpN_*`/`DownN_*` slot keys auto-fill to `""` — they are table
+  slots; (b) missing substantive keys trigger exactly **one** re-prompt listing
+  the absent keys; anything still missing becomes `[MEG DATAGAP: <key>]` so it
+  is visible in the docx, never silently blank.
+- Update template-compiler SKILL.md: correct "160" to ~280, and require unused
+  `UpN`/`DownN` slots be emitted as `""` (same trailing-empty convention as the
+  Proposal lines).
+
+**PHASE 5 — style digest replaces the raw corpus.** The warmed corpus is
+~1.2 MB ≈ 275k tokens, attached to *two* agents (~550k tokens/report). Replace
+`corpus.PromptBlock()` with a generated `knowledge/style_baseline.md`:
+- Tier 1: every verbatim-identical passage across the corpus, stated once
+  (Section 9.0 opener, transmittal closing, §3.2.21 data-gap definition,
+  header/footer formats, questionnaire default, radon formula).
+- Tier 2: formulas with variant families (Section 10 Opinions opener + its three
+  clean closing variants + the enumerated REC-present format; Section 9
+  numbered-finding ordering — 1=location/parcel/owner, 2=topography, then
+  history, then regulatory; aerial-description grouping style).
+- Plus 2–3 full exemplar transcripts: Homestead (clean/small), Rockdale
+  (REC-present), one institutional.
+- **Exclude Cross Keys 2022 from Tier 1 sourcing — it cites superseded
+  E1527-13.** Add a guardrail to both consuming skills: "baselines may cite
+  older ASTM versions; always cite E1527-21."
+- Target ~60–80k tokens. Flag for human review before it goes live.
+
+**PHASE 6 — backlog (each needs its own go-ahead).**
+- Dynamic prescreen: replace the hardcoded 4 questions with real data-gap
+  questions derived from parsing uploads at prescreen time; cache those parse
+  results and reuse in `/generate` so parsing isn't paid twice. Remove the
+  pre-filled fake answers — parcel `10-123-456` must never be a default. Add a
+  free-text "Other / additional information" question wired into the answers
+  flow, labeled in the payload as user-provided **actual knowledge** so the ASTM
+  skill's Actual Knowledge Override rule picks it up.
+- `/download`: add `enforceDomainAuth` + sanitize the `file` param
+  (`filepath.Base`, restrict to the generate temp dirs) — it currently serves
+  arbitrary paths with no auth.
+- Gate or delete `analyzeBucketHandler`'s hardcoded-answers path.
+- The two >20 MB historical PDFs: extract via `genai.FileData` with a GCS URI
+  (no inline limit, no new deps) during `-warm-historical`.
+- Retry loop: classify errors by `googleapi` status, retry only retryables, then
+  restore `maxRetries` to a sane value.
+- Consolidate the two divergent docx merge implementations (api vs esad).
+- Fix the `a.Cfg.Name[:4]` TODO properly.
