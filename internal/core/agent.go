@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	"cloud.google.com/go/vertexai/genai"
@@ -61,7 +60,10 @@ func (a *Agent) Execute(ctx context.Context, parts ...genai.Part) (*Artifact, er
 
 	var resp *genai.GenerateContentResponse
 	var err error
-	maxRetries := 10 // Increased for heavy free-tier testing
+	// TEMPORARY: lowered from 10 while testing the loud-failure changes. A
+	// non-retryable error (bad request, auth) burns every attempt before
+	// surfacing, so keep this low until the retry loop classifies errors.
+	maxRetries := 2
 
 	for i := 0; i <= maxRetries; i++ {
 		resp, err = model.GenerateContent(ctx, parts...)
@@ -69,27 +71,29 @@ func (a *Agent) Execute(ctx context.Context, parts ...genai.Part) (*Artifact, er
 			break
 		}
 
-		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "quota") || strings.Contains(err.Error(), "Quota") {
-			if i < maxRetries {
-				slog.Warn("/// API QUOTA EXCEEDED /// Sleeping for 60 seconds to bypass free-tier rate limits...", "retry_attempt", i+1)
-				time.Sleep(60 * time.Second)
-				continue
-			}
+		if i < maxRetries {
+			slog.Warn("/// NODE CALL FAILED /// retrying", "agent", a.Cfg.Name,
+				"attempt", i+1, "of", maxRetries+1, "err", err)
+			time.Sleep(5 * time.Second)
+			continue
 		}
-		break // Break if it's not a quota error or we've exhausted retries
+		break
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("generation failed: %w", err)
+		slog.Error("/// NODE CALL EXHAUSTED RETRIES ///", "agent", a.Cfg.Name, "err", err)
+		return nil, fmt.Errorf("generation failed for %s: %w", a.Cfg.Name, err)
 	}
 
 	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {
-		return nil, fmt.Errorf("empty yield from model")
+		return nil, fmt.Errorf("empty yield from model for %s", a.Cfg.Name)
 	}
 
 	output := fmt.Sprintf("%v", resp.Candidates[0].Content.Parts[0])
 
 	return &Artifact{
+		// TODO: a.Cfg.Name[:4] panics on any agent name shorter than 4 chars.
+		// Slice defensively or derive the ID from a sanitized full name.
 		ID:        "art-" + a.Cfg.Name[:4] + "-v1",
 		Type:      "agent_yield",
 		Content:   output,

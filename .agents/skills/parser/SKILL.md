@@ -18,7 +18,7 @@ Do not summarize randomly. You must convert the raw document packages into stand
 2. **Section 4.0 (User Provided Info):** Extract Owner Questionnaire details, Title Records/Environmental Liens, and Reason for Performing ESA.
 3. **Section 5.0 (Historical Use):** 
    - Aerials: Extract chronologies including Flight Year, Scale, Source.
-   - Topo Maps: Extract topographic gradients and contour lines to determine shallow groundwater flow.
+   - Topo Maps: Extract topographic quadrangle map names, scales (e.g. 7.5-minute, 30-minute), and publication years (e.g. "Roswell, GA - 1951, 1968, 1988, 2014, 2017, 2020, 2024" or "Suwanee, GA - 1890, 1894") directly from the EDR Historical Topographic Map Report Source Sheets. If multiple quadrangles exist, extract all quadrangle names.
    - Fire Insurance / Sanborn Maps: Extract "UNMAPPED PROPERTY" status or specific certification details. Identify industrial/commercial footprints.
 4. **Section 6.0 (Regulatory Review - Radius Map):** Extract records from summary tables (Map ID, Facility Name, Relative Distance/Direction, Elevation Status, Details). 
    - *Federal:* NPL, CORRACTS, RCRA (TSDF, LQG, SQG, VSQG), ERNS, SEMS, US ENG/INST CONTROLS.

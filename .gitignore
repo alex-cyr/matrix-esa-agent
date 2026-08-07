@@ -1,9 +1,20 @@
 .env
 .env.*
 *.exe
+*.exe~
 
 # Protect Sensitive Client M&A Data
 edr_source/*
 !edr_source/.gitkeep
 output/*
-!output/.gitkeep
+!output/.gitkeep
+
+# Real client ESA reports used as style baselines, plus their extracted-text cache
+historical/*
+!historical/.gitkeep
+
+# Per-project working dirs: client inputs and generated draft reports
+tmp/
+
+# One-off inspection scripts; ~40 redeclared mains in one package, breaks `go build ./...`
+scratch/

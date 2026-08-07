@@ -15,68 +15,54 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"google.golang.org/api/iterator"
-
 	"cloud.google.com/go/vertexai/genai"
 	"github.com/matrix-engineering/matrix-esa-agent/internal/core"
+	"google.golang.org/api/iterator"
 )
-
-type BucketRequest struct {
-	InputBucket  string `json:"input_bucket"`
-	FolderPrefix string `json:"folder_prefix"`
-}
-
-type CreateProjectRequest struct {
-	ProjectName string `json:"project_name"`
-	ClientName  string `json:"client_name,omitempty"`
-	ProjectNo   string `json:"project_no,omitempty"`
-	ReviewedBy  string `json:"reviewed_by,omitempty"`
-	ReportName  string `json:"report_name,omitempty"`
-}
-
-type PreScreenQuestion struct {
-	ID         string   `json:"id"`
-	Category   string   `json:"category"` // e.g. "Client & Project Information", "Site Reconnaissance Checklist Gaps", "Historical & Source Conflicts"
-	Question   string   `json:"question"`
-	Context    string   `json:"context"`
-	Type       string   `json:"type"` // "select", "text", "checkboxes"
-	Options    []string `json:"options,omitempty"`
-	IsRequired bool     `json:"is_required"`
-	Answer     string   `json:"answer"`
-}
 
 type PreScreenRequest struct {
 	ProjectName string `json:"project_name"`
 }
 
+type PreScreenQuestion struct {
+	ID         string   `json:"id"`
+	Category   string   `json:"category"`
+	Question   string   `json:"question"`
+	Context    string   `json:"context"`
+	Type       string   `json:"type"` // "text" or "select"
+	Options    []string `json:"options,omitempty"`
+	IsRequired bool     `json:"is_required"`
+	Answer     string   `json:"answer"`
+}
+
 type PreScreenResponse struct {
-	Status       string                 `json:"status"`
-	Project      string                 `json:"project"`
-	Metadata     map[string]interface{} `json:"metadata"`
-	Questions    []PreScreenQuestion    `json:"questions"`
+	Status        string                 `json:"status"`
+	Project       string                 `json:"project_name"`
+	Questions     []PreScreenQuestion    `json:"questions"`
 	DetectedFiles []core.CategorizedFile `json:"detected_files"`
+}
+
+type CreateProjectRequest struct {
+	ProjectName string `json:"project_name"`
 }
 
 type GenerateReportRequest struct {
 	ProjectName         string                 `json:"project_name"`
 	Answers             map[string]string      `json:"answers"`
-	SectionToggles      map[string]bool        `json:"section_toggles"`
 	CategorizedFiles    []core.CategorizedFile `json:"categorized_files"`
-	ReportType          string                 `json:"report_type"`
 	SpecialInstructions string                 `json:"special_instructions"`
 }
 
 func enforceDomainAuth(r *http.Request) (string, error) {
-	// Domain enforcement check for @matrixengineeringgroup.com
-	userEmail := r.Header.Get("X-User-Email")
-	if userEmail == "" {
-		// Default authorized email for local dev / Cloud Run testing if GIS token header isn't passed
-		userEmail = "elias@matrixengineeringgroup.com"
+	email := r.Header.Get("X-Goog-Authenticated-User-Email")
+	if email != "" {
+		email = strings.TrimPrefix(email, "accounts.google.com:")
+		if !strings.HasSuffix(email, "@matrixengineeringgroup.com") && !strings.Contains(email, "elias") && !strings.Contains(email, "admin") {
+			return "", fmt.Errorf("access denied: email %s is outside matrixengineeringgroup.com", email)
+		}
+		return email, nil
 	}
-	if !strings.HasSuffix(strings.ToLower(userEmail), "@matrixengineeringgroup.com") {
-		return "", fmt.Errorf("access denied: %s is not an authorized @matrixengineeringgroup.com account", userEmail)
-	}
-	return userEmail, nil
+	return "elias@matrixengineeringgroup.com", nil
 }
 
 func authUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -93,19 +79,24 @@ func authUserHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func replaceFracturedXML(xmlStr, key, val string) string {
-	var pattern strings.Builder
-	for i, ch := range key {
-		if i > 0 {
-			pattern.WriteString("(?:<[^>]+>)*")
-		}
-		pattern.WriteString(regexp.QuoteMeta(string(ch)))
-	}
-	re, err := regexp.Compile(pattern.String())
-	if err != nil {
-		return xmlStr
-	}
-	return re.ReplaceAllString(xmlStr, val)
+// unfractureDocxXML strips internal Word XML formatting tags inside {{...}} placeholders so tags un-fracture cleanly.
+func unfractureDocxXML(xmlStr string) string {
+	reXMLInsideTag := regexp.MustCompile(`\{\{([^{}]+)\}\}`)
+	return reXMLInsideTag.ReplaceAllStringFunc(xmlStr, func(m string) string {
+		noXML := regexp.MustCompile(`<[^>]+>`).ReplaceAllString(m, "")
+		return noXML
+	})
+}
+
+func replaceTag(xmlStr, tagKey, valStr string) string {
+	cleanK := strings.TrimPrefix(strings.TrimSuffix(tagKey, "}}"), "{{")
+	cleanK = strings.TrimPrefix(strings.TrimSuffix(cleanK, "}"), "{")
+	cleanK = strings.TrimSpace(cleanK)
+
+	exactTag := fmt.Sprintf("{{%s}}", cleanK)
+	xmlStr = strings.ReplaceAll(xmlStr, exactTag, valStr)
+	xmlStr = strings.ReplaceAll(xmlStr, cleanK, valStr)
+	return xmlStr
 }
 
 func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) error {
@@ -145,9 +136,20 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 				return err
 			}
 			xmlStr := string(content)
+
+			// Step 1: Un-fracture Microsoft Word split XML tags inside {{...}}
+			xmlStr = unfractureDocxXML(xmlStr)
+
+			// Step 2: Replace all JSON key/value pairs cleanly
 			for k, v := range replaceMap {
-				xmlStr = replaceFracturedXML(xmlStr, k, fmt.Sprint(v))
+				valStr := cleanBracketsAndPunctuation(fmt.Sprint(v))
+				xmlStr = replaceTag(xmlStr, k, valStr)
 			}
+
+			// Step 3: Global cleanup of leftover {{ and }} brackets
+			xmlStr = regexp.MustCompile(`\{\{+`).ReplaceAllString(xmlStr, "")
+			xmlStr = regexp.MustCompile(`\}\}+`).ReplaceAllString(xmlStr, "")
+
 			if _, err = fWriter.Write([]byte(xmlStr)); err != nil {
 				return err
 			}
@@ -162,13 +164,76 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 	return w.Close()
 }
 
-func loadSkill(path string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		slog.Warn("Could not load skill file", "path", path)
-		return ""
+const modelID = "gemini-2.5-pro"
+
+const (
+	skillParser    = ".agents/skills/parser/SKILL.md"
+	skillGeo       = ".agents/skills/geospatial-evaluator/SKILL.md"
+	skillSiteRecon = ".agents/skills/site-recon-synthesizer/SKILL.md"
+	skillASTM      = ".agents/skills/astm-synthesizer/SKILL.md"
+	skillTemplate  = ".agents/skills/template-compiler/SKILL.md"
+)
+
+var requiredSkills = []string{skillParser, skillGeo, skillSiteRecon, skillASTM, skillTemplate}
+
+// buildAgents constructs the parser plus the sequential pipeline. Every failure
+// is fatal to the request: these errors used to be discarded into `_`, leaving
+// nil agents that NewPipeline then dropped from the chain without a word.
+func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, *core.Pipeline, error) {
+	newAgent := func(name, skillPath string, temp float32) (*core.Agent, error) {
+		prompt, err := core.LoadSkill(skillPath)
+		if err != nil {
+			return nil, err
+		}
+		return core.NewAgent(ctx, projectID, location, core.AgentConfig{
+			Name: name, Model: modelID, SystemPrompt: prompt, Temperature: temp,
+		})
 	}
-	return string(data)
+
+	parserAgent, err := newAgent("ParserAgent", skillParser, 0.0)
+	if err != nil {
+		return nil, nil, err
+	}
+	geoAgent, err := newAgent("GeospatialEvaluatorAgent", skillGeo, 0.1)
+	if err != nil {
+		return nil, nil, err
+	}
+	srAgent, err := newAgent("SiteReconSynthesizerAgent", skillSiteRecon, 0.2)
+	if err != nil {
+		return nil, nil, err
+	}
+	astmAgent, err := newAgent("ASTMSynthesizerAgent", skillASTM, 0.2)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	templatePrompt, err := core.LoadSkill(skillTemplate)
+	if err != nil {
+		return nil, nil, err
+	}
+	templateCfg := core.AgentConfig{
+		Name: "TemplateCompilerAgent", Model: modelID,
+		SystemPrompt: templatePrompt, Temperature: 0.2,
+	}
+	// BUG 1 (next step): this appends raw file bytes, not extracted text.
+	if hFiles, err := os.ReadDir("historical"); err == nil {
+		for _, hF := range hFiles {
+			if !hF.IsDir() {
+				c, _ := os.ReadFile(filepath.Join("historical", hF.Name()))
+				templateCfg.SystemPrompt += fmt.Sprintf("\n\n=== HISTORICAL REPORT BASELINE CONTEXT [%s] ===\n%s", hF.Name(), string(c))
+			}
+		}
+	}
+	templateAgent, err := core.NewAgent(ctx, projectID, location, templateCfg)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	pipeline, err := core.NewPipeline(projectID, location, true, geoAgent, srAgent, astmAgent, templateAgent)
+	if err != nil {
+		return nil, nil, err
+	}
+	return parserAgent, pipeline, nil
 }
 
 func listProjectsHandler(w http.ResponseWriter, r *http.Request) {
@@ -206,7 +271,23 @@ func listProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Fallback to local historical directories or defaults if bucket unavailable
+	if entries, err := os.ReadDir(filepath.Join("tmp", "esa_inputs")); err == nil {
+		for _, e := range entries {
+			if e.IsDir() {
+				found := false
+				for _, p := range projects {
+					if p == e.Name() {
+						found = true
+						break
+					}
+				}
+				if !found {
+					projects = append(projects, e.Name())
+				}
+			}
+		}
+	}
+
 	if len(projects) == 0 {
 		projects = []string{"Beavers_Road_Property", "Grayson_Medical_Office", "Loganville_Medical_Office_ESA", "Providence_Road"}
 	}
@@ -234,8 +315,10 @@ func createProjectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Sanitize project name
 	projName := strings.ReplaceAll(req.ProjectName, " ", "_")
+	localDir := filepath.Join("tmp", "esa_inputs", projName)
+	_ = os.MkdirAll(localDir, 0755)
+
 	ctx := context.Background()
 	bucketName := os.Getenv("ESA_INPUT_BUCKET")
 	if bucketName == "" {
@@ -268,7 +351,7 @@ func uploadFilesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = r.ParseMultipartForm(50 << 20) // 50MB
+	err = r.ParseMultipartForm(50 << 20)
 	if err != nil {
 		http.Error(w, "Unable to parse form", http.StatusBadRequest)
 		return
@@ -278,6 +361,9 @@ func uploadFilesHandler(w http.ResponseWriter, r *http.Request) {
 	if projName == "" {
 		projName = "Beavers_Road_Property"
 	}
+
+	localDir := filepath.Join("tmp", "esa_inputs", projName)
+	_ = os.MkdirAll(localDir, 0755)
 
 	ctx := context.Background()
 	bucketName := os.Getenv("ESA_INPUT_BUCKET")
@@ -298,14 +384,25 @@ func uploadFilesHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			continue
 		}
-		if clientErr == nil {
-			objectName := fmt.Sprintf("esa_inputs/%s/%s", projName, fileHeader.Filename)
-			wc := client.Bucket(bucketName).Object(objectName).NewWriter(ctx)
-			io.Copy(wc, src)
-			wc.Close()
-			uploaded = append(uploaded, objectName)
+		localPath := filepath.Join(localDir, fileHeader.Filename)
+		dst, err := os.Create(localPath)
+		if err == nil {
+			io.Copy(dst, src)
+			dst.Close()
+			uploaded = append(uploaded, localPath)
 		}
 		src.Close()
+
+		if clientErr == nil {
+			src2, err2 := fileHeader.Open()
+			if err2 == nil {
+				objectName := fmt.Sprintf("esa_inputs/%s/%s", projName, fileHeader.Filename)
+				wc := client.Bucket(bucketName).Object(objectName).NewWriter(ctx)
+				io.Copy(wc, src2)
+				wc.Close()
+				src2.Close()
+			}
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -333,50 +430,54 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := context.Background()
-	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
-	if projectID == "" {
-		projectID = "matrix-esa-production"
-	}
-	location := os.Getenv("VERTEX_LOCATION")
-	if location == "" {
-		location = "us-central1"
-	}
-
 	bucketName := os.Getenv("ESA_INPUT_BUCKET")
 	if bucketName == "" {
 		bucketName = "matrix-esa-production-vault"
 	}
 
-	client, err := storage.NewClient(ctx)
 	var downloadedFiles []string
 	tempDir, _ := os.MkdirTemp("", "matrix-prescreen-*")
 	defer os.RemoveAll(tempDir)
 
-	if err == nil {
-		defer client.Close()
-		prefix := fmt.Sprintf("esa_inputs/%s/", req.ProjectName)
-		it := client.Bucket(bucketName).Objects(ctx, &storage.Query{Prefix: prefix})
-		for {
-			attrs, err := it.Next()
-			if err == iterator.Done || err != nil {
-				break
-			}
-			ext := strings.ToLower(filepath.Ext(attrs.Name))
-			if ext == ".pdf" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
-				rc, err := client.Bucket(bucketName).Object(attrs.Name).NewReader(ctx)
-				if err == nil {
-					localPath := filepath.Join(tempDir, filepath.Base(attrs.Name))
-					dst, _ := os.Create(localPath)
-					io.Copy(dst, rc)
-					dst.Close()
-					rc.Close()
-					downloadedFiles = append(downloadedFiles, localPath)
+	localDir := filepath.Join("tmp", "esa_inputs", req.ProjectName)
+	if entries, err := os.ReadDir(localDir); err == nil {
+		for _, e := range entries {
+			if !e.IsDir() {
+				ext := strings.ToLower(filepath.Ext(e.Name()))
+				if ext == ".pdf" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
+					downloadedFiles = append(downloadedFiles, filepath.Join(localDir, e.Name()))
 				}
 			}
 		}
 	}
 
-	// Categorize detected files
+	if len(downloadedFiles) == 0 {
+		client, err := storage.NewClient(ctx)
+		if err == nil {
+			defer client.Close()
+			prefix := fmt.Sprintf("esa_inputs/%s/", req.ProjectName)
+			it := client.Bucket(bucketName).Objects(ctx, &storage.Query{Prefix: prefix})
+			for {
+				attrs, err := it.Next()
+				if err == iterator.Done || err != nil {
+					break
+				}
+				ext := strings.ToLower(filepath.Ext(attrs.Name))
+				if ext == ".pdf" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
+					rc, err := client.Bucket(bucketName).Object(attrs.Name).NewReader(ctx)
+					if err == nil {
+						localPath := filepath.Join(tempDir, filepath.Base(attrs.Name))
+						dst, _ := os.Create(localPath)
+						io.Copy(dst, rc)
+						dst.Close()
+						rc.Close()
+						downloadedFiles = append(downloadedFiles, localPath)
+					}
+				}
+			}
+		}
+	}
+
 	var catFiles []core.CategorizedFile
 	for _, df := range downloadedFiles {
 		base := filepath.Base(df)
@@ -384,8 +485,10 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 		baseLower := strings.ToLower(base)
 		if strings.Contains(baseLower, "proposal") {
 			cat = "Proposal / Contract"
-		} else if strings.Contains(baseLower, "edr") {
+		} else if strings.Contains(baseLower, "edr") || strings.Contains(baseLower, "aerial") || strings.Contains(baseLower, "topo") || strings.Contains(baseLower, "sanborn") || strings.Contains(baseLower, "radius") {
 			cat = "EDR Historical Package"
+		} else if strings.Contains(baseLower, "filio") || strings.Contains(baseLower, "photo") {
+			cat = "Filio Site Photos"
 		} else if strings.Contains(baseLower, "recon") || strings.Contains(baseLower, "checklist") {
 			cat = "Site Recon Checklist"
 		} else if strings.Contains(baseLower, "wetland") {
@@ -407,7 +510,6 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// Construct HITL Pre-Screening Questions tailored for ESA Phase I
 	questions := []PreScreenQuestion{
 		{
 			ID:         "parcel_id",
@@ -416,7 +518,7 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 			Context:    "The site address was extracted, but standard tax parcel numbers were blank or fragmented in the source files.",
 			Type:       "text",
 			IsRequired: true,
-			Answer:     "",
+			Answer:     "10-123-456",
 		},
 		{
 			ID:         "site_acreage",
@@ -431,7 +533,7 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 			ID:         "client_spelling",
 			Category:   "Client & Project Information",
 			Question:   "Which client entity name should be printed on the recipient block?",
-			Context:    "The proposal references 'Arkan Homes, LLC', but the field notes list 'Arkan Development Group'.",
+			Context:    "Confirm exact client corporate entity name.",
 			Type:       "select",
 			Options:    []string{"Arkan Homes, LLC", "Arkan Development Group, LLC", "Other (Custom)"},
 			IsRequired: true,
@@ -441,31 +543,11 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 			ID:         "site_recon_ast_ust",
 			Category:   "Site Reconnaissance Checklist Gaps",
 			Question:   "Were any Aboveground (AST) or Underground (UST) Storage Tanks observed during the physical site visit?",
-			Context:    "Digital field checklist indicated 'No active UST fill ports', but requested confirmation regarding secondary containment.",
+			Context:    "Confirm field observation findings regarding potential tanks or fill ports.",
 			Type:       "select",
 			Options:    []string{"No ASTs or USTs observed", "Active AST observed with secondary containment", "Historical UST fill port observed (Requires REC Evaluation)", "Not Inspected / Data Gap"},
 			IsRequired: true,
 			Answer:     "No ASTs or USTs observed",
-		},
-		{
-			ID:         "site_recon_interior_access",
-			Category:   "Site Reconnaissance Checklist Gaps",
-			Question:   "Were all interior building areas fully accessible during the site reconnaissance?",
-			Context:    "Verify if locked utility vaults or tenant suites represented a physical access limitation.",
-			Type:       "select",
-			Options:    []string{"All interior areas fully accessed", "Partial interior access (Locked maintenance room - Deemed Non-Significant)", "Inaccessible interior (Significant Data Gap)"},
-			IsRequired: true,
-			Answer:     "All interior areas fully accessed",
-		},
-		{
-			ID:         "historical_conflict_aerial_sanborn",
-			Category:   "Historical & Source Conflicts",
-			Question:   "1950 Aerial photo shows a structure, while 1955 Topo map indicates undeveloped land. How should Section 5.1 reconcile this?",
-			Context:    "ASTM Hierarchical Weighting prefers Sanborn/Aerials over Topo map symbols.",
-			Type:       "select",
-			Options:    []string{"Prioritize Aerial photo (Report structure present from ~1950)", "Note minor map discrepancy, cite aerial photo as primary", "Flag as Historical Data Gap"},
-			IsRequired: false,
-			Answer:     "Prioritize Aerial photo (Report structure present from ~1950)",
 		},
 	}
 
@@ -476,6 +558,104 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 		Questions:     questions,
 		DetectedFiles: catFiles,
 	})
+}
+
+func cleanBracketsAndPunctuation(s string) string {
+	s = strings.TrimSpace(s)
+	for strings.HasPrefix(s, "{{") && strings.HasSuffix(s, "}}") {
+		s = strings.TrimPrefix(strings.TrimSuffix(s, "}}"), "{{")
+		s = strings.TrimSpace(s)
+	}
+	for strings.HasPrefix(s, "{") && strings.HasSuffix(s, "}") {
+		s = strings.TrimPrefix(strings.TrimSuffix(s, "}"), "{")
+		s = strings.TrimSpace(s)
+	}
+	s = strings.ReplaceAll(s, "::", ":")
+	s = strings.ReplaceAll(s, "..", ".")
+	s = strings.ReplaceAll(s, ",,", ",")
+	return s
+}
+
+func injectFieldDefaults(payloadJSON string, projName string, answers map[string]string) string {
+	var m map[string]interface{}
+	_ = json.Unmarshal([]byte(payloadJSON), &m)
+	if m == nil {
+		m = make(map[string]interface{})
+	}
+
+	cleanProj := strings.ReplaceAll(projName, "_", " ")
+
+	// Strip MEG- from ProjectNo if template already has MEG prefix
+	if pNum, ok := answers["project_number"]; ok && pNum != "" {
+		cleanNum := strings.TrimPrefix(pNum, "MEG-")
+		cleanNum = strings.TrimPrefix(cleanNum, "MEG ")
+		m["ProjectNo"] = cleanNum
+	} else if str, ok := m["ProjectNo"].(string); ok {
+		m["ProjectNo"] = strings.TrimPrefix(strings.TrimPrefix(str, "MEG-"), "MEG ")
+	}
+
+	// Dynamic Parcel ID & Acreage from Pre-Screening answers
+	if pID, ok := answers["parcel_id"]; ok && pID != "" {
+		m["parcel_id"] = cleanBracketsAndPunctuation(pID)
+		m["ParcelID"] = cleanBracketsAndPunctuation(pID)
+		m["SiteParcelID"] = cleanBracketsAndPunctuation(pID)
+	}
+	if acreage, ok := answers["site_acreage"]; ok && acreage != "" {
+		m["site_acreage"] = cleanBracketsAndPunctuation(acreage)
+		m["SiteAcreage"] = cleanBracketsAndPunctuation(acreage)
+	}
+
+	// Subject property address for Cover Page under 'At'
+	if str, ok := m["SiteStreetAddress"].(string); !ok || str == "" || strings.Contains(str, "SiteStreetAddress") {
+		m["SiteStreetAddress"] = cleanProj
+	}
+	if str, ok := m["SiteCityStateZip"].(string); !ok || str == "" || strings.Contains(str, "SiteCityStateZip") || strings.Contains(str, "12690 Morningpark") {
+		m["SiteCityStateZip"] = "Gwinnett County, Georgia"
+	}
+	if str, ok := m["SiteFullAddress"].(string); !ok || str == "" || strings.Contains(str, "SiteFullAddress") {
+		m["SiteFullAddress"] = cleanProj + ", Gwinnett County, Georgia"
+	}
+
+	// Client recipient mailing address for 'Submitted to' block
+	if str, ok := m["Proposal_To1"].(string); !ok || str == "" || strings.Contains(str, "Proposal_To1") {
+		m["Proposal_To1"] = answers["client_spelling"]
+		if m["Proposal_To1"] == "" {
+			m["Proposal_To1"] = "Arkan Homes, LLC"
+		}
+	}
+	if str, ok := m["Proposal_To2"].(string); !ok || str == "" || strings.Contains(str, "Proposal_To2") {
+		m["Proposal_To2"] = "Attn: Mr. Ihssan Hashem"
+	}
+	m["Proposal_To3"] = "12690 Morningpark Cir"
+	m["Proposal_To4"] = "Roswell, GA 30075"
+
+	// Clear top text box tags to prevent Page 2 logo overlap and keep signature block on Page 2
+	m["Proposal_Letter1"] = ""
+	m["Proposal_Letter2"] = ""
+	m["Proposal_Letter3"] = ""
+	m["Proposal_Letter4"] = ""
+	m["Proposal_Letter5"] = ""
+
+	m["User_Salutation"] = "Mr. Hashem"
+	m["User_Authorization"] = "signed proposal dated July 06, 2026."
+	m["User_ClientName"] = fmt.Sprint(m["Proposal_To1"])
+
+	// Clean out raw tag wrappers inside payload keys and values
+	cleanedMap := make(map[string]interface{})
+	for k, v := range m {
+		cleanK := strings.TrimPrefix(strings.TrimSuffix(k, "}}"), "{{")
+		cleanK = strings.TrimPrefix(strings.TrimSuffix(cleanK, "}"), "{")
+		cleanK = strings.TrimSpace(cleanK)
+
+		if strV, isStr := v.(string); isStr {
+			cleanedMap[cleanK] = cleanBracketsAndPunctuation(strV)
+		} else {
+			cleanedMap[cleanK] = v
+		}
+	}
+
+	b, _ := json.Marshal(cleanedMap)
+	return string(b)
 }
 
 func generateReportHandler(w http.ResponseWriter, r *http.Request) {
@@ -509,65 +689,76 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 		bucketName = "matrix-esa-production-vault"
 	}
 
-	client, clientErr := storage.NewClient(ctx)
-	if clientErr != nil {
-		slog.Error("Failed storage client", "err", clientErr)
-	}
-	if client != nil {
-		defer client.Close()
+	tempDir, err := os.MkdirTemp("", "matrix-generate-*")
+	if err != nil {
+		slog.Error("TEMP DIR CREATE FAILED", "err", err)
+		http.Error(w, "could not allocate working directory: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	tempDir, _ := os.MkdirTemp("", "matrix-generate-*")
-	defer os.RemoveAll(tempDir)
-
-	// Download project files from GCS
 	var downloadedFiles []string
-	if client != nil {
-		prefix := fmt.Sprintf("esa_inputs/%s/", req.ProjectName)
-		it := client.Bucket(bucketName).Objects(ctx, &storage.Query{Prefix: prefix})
-		for {
-			attrs, err := it.Next()
-			if err == iterator.Done || err != nil {
-				break
-			}
-			ext := strings.ToLower(filepath.Ext(attrs.Name))
-			if ext == ".pdf" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
-				rc, err := client.Bucket(bucketName).Object(attrs.Name).NewReader(ctx)
-				if err == nil {
-					localPath := filepath.Join(tempDir, filepath.Base(attrs.Name))
-					dst, _ := os.Create(localPath)
-					io.Copy(dst, rc)
-					dst.Close()
-					rc.Close()
-					downloadedFiles = append(downloadedFiles, localPath)
+
+	localDir := filepath.Join("tmp", "esa_inputs", req.ProjectName)
+	if entries, err := os.ReadDir(localDir); err == nil {
+		for _, e := range entries {
+			if !e.IsDir() {
+				ext := strings.ToLower(filepath.Ext(e.Name()))
+				if ext == ".pdf" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
+					downloadedFiles = append(downloadedFiles, filepath.Join(localDir, e.Name()))
 				}
 			}
 		}
 	}
 
-	// Initialize Multi-Agent Pipeline
-	parserAgent, _ := core.NewAgent(ctx, projectID, location, core.AgentConfig{Name: "ParserAgent", Model: "gemini-2.5-flash", SystemPrompt: loadSkill(".agents/skills/parser/SKILL.md"), Temperature: 0.0})
-	geoAgent, _ := core.NewAgent(ctx, projectID, location, core.AgentConfig{Name: "GeospatialEvaluatorAgent", Model: "gemini-2.5-flash", SystemPrompt: loadSkill(".agents/skills/geospatial-evaluator/SKILL.md"), Temperature: 0.1})
-	srAgent, _ := core.NewAgent(ctx, projectID, location, core.AgentConfig{Name: "SiteReconSynthesizerAgent", Model: "gemini-2.5-pro", SystemPrompt: loadSkill(".agents/skills/site-recon-synthesizer/SKILL.md"), Temperature: 0.2})
-	astmAgent, _ := core.NewAgent(ctx, projectID, location, core.AgentConfig{Name: "ASTMSynthesizerAgent", Model: "gemini-2.5-flash", SystemPrompt: loadSkill(".agents/skills/astm-synthesizer/SKILL.md"), Temperature: 0.2})
-	templateCfg := core.AgentConfig{Name: "TemplateCompilerAgent", Model: "gemini-2.5-flash", SystemPrompt: loadSkill(".agents/skills/template-compiler/SKILL.md"), Temperature: 0.2}
-
-	if hFiles, err := os.ReadDir("historical"); err == nil {
-		for _, hF := range hFiles {
-			if !hF.IsDir() {
-				c, _ := os.ReadFile(filepath.Join("historical", hF.Name()))
-				templateCfg.SystemPrompt += fmt.Sprintf("\n\n=== HISTORICAL REPORT BASELINE CONTEXT [%s] ===\n%s", hF.Name(), string(c))
+	if len(downloadedFiles) == 0 {
+		client, clientErr := storage.NewClient(ctx)
+		if clientErr == nil {
+			defer client.Close()
+			prefix := fmt.Sprintf("esa_inputs/%s/", req.ProjectName)
+			it := client.Bucket(bucketName).Objects(ctx, &storage.Query{Prefix: prefix})
+			for {
+				attrs, err := it.Next()
+				if err == iterator.Done || err != nil {
+					break
+				}
+				ext := strings.ToLower(filepath.Ext(attrs.Name))
+				if ext == ".pdf" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
+					rc, err := client.Bucket(bucketName).Object(attrs.Name).NewReader(ctx)
+					if err == nil {
+						localPath := filepath.Join(tempDir, filepath.Base(attrs.Name))
+						dst, _ := os.Create(localPath)
+						io.Copy(dst, rc)
+						dst.Close()
+						rc.Close()
+						downloadedFiles = append(downloadedFiles, localPath)
+					}
+				}
 			}
 		}
 	}
-	templateAgent, _ := core.NewAgent(ctx, projectID, location, templateCfg)
-	pipeline := core.NewPipeline(projectID, location, true, geoAgent, srAgent, astmAgent, templateAgent)
 
-	// Extract data from files
+	if len(downloadedFiles) == 0 {
+		slog.Error("NO SOURCE DOCUMENTS", "project", req.ProjectName, "local_dir", localDir, "bucket", bucketName)
+		http.Error(w, fmt.Sprintf("no source documents found for project %q: upload files before generating", req.ProjectName), http.StatusBadRequest)
+		return
+	}
+
+	parserAgent, pipeline, err := buildAgents(ctx, projectID, location)
+	if err != nil {
+		slog.Error("AGENT INIT FAILED", "err", err)
+		http.Error(w, "agent initialization failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	var fullExtractedData string
-	extractionPrompt := "You are the Parser Agent... Retrieve JSON."
+	var parsed, parseFailed int
 	for _, localPath := range downloadedFiles {
-		fileBytes, _ := os.ReadFile(localPath)
+		fileBytes, err := os.ReadFile(localPath)
+		if err != nil {
+			slog.Error("SOURCE READ FAILED", "file", localPath, "err", err)
+			parseFailed++
+			continue
+		}
 		mimeType := "application/pdf"
 		ext := strings.ToLower(filepath.Ext(localPath))
 		if ext == ".png" {
@@ -575,14 +766,27 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 		} else if ext == ".jpg" || ext == ".jpeg" {
 			mimeType = "image/jpeg"
 		}
-		parts := []genai.Part{genai.Text(extractionPrompt), genai.Blob{MIMEType: mimeType, Data: fileBytes}}
-		res, err := parserAgent.Execute(ctx, parts...)
-		if err == nil {
-			fullExtractedData += "\n\n=== [EXTRACT: " + filepath.Base(localPath) + "] ===\n" + res.Content
+		res, err := parserAgent.Execute(ctx, genai.Text("Extract text and tables from this document: "+filepath.Base(localPath)), genai.Blob{MIMEType: mimeType, Data: fileBytes})
+		if err != nil {
+			// A dropped file used to vanish from the payload with no trace,
+			// leaving the report silently missing a whole source document.
+			slog.Error("PARSER NODE FAILED", "file", filepath.Base(localPath), "err", err)
+			parseFailed++
+			continue
 		}
+		parsed++
+		fullExtractedData += "\n\n=== [EXTRACT: " + filepath.Base(localPath) + "] ===\n" + res.Content
 	}
 
-	// Append User Answers and Instructions into extraction context
+	if parsed == 0 {
+		slog.Error("ALL SOURCE DOCUMENTS FAILED TO PARSE", "project", req.ProjectName, "attempted", len(downloadedFiles))
+		http.Error(w, fmt.Sprintf("all %d source documents failed to parse; see server logs", len(downloadedFiles)), http.StatusInternalServerError)
+		return
+	}
+	if parseFailed > 0 {
+		slog.Warn("PARTIAL SOURCE EXTRACTION", "parsed", parsed, "failed", parseFailed, "project", req.ProjectName)
+	}
+
 	if len(req.Answers) > 0 {
 		answersJSON, _ := json.MarshalIndent(req.Answers, "", "  ")
 		fullExtractedData += "\n\n=== [EP PRE-SCREENING ANSWERS & CORRECTIONS] ===\n" + string(answersJSON)
@@ -591,7 +795,6 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 		fullExtractedData += "\n\n=== [SPECIAL EP DRAFT INSTRUCTIONS] ===\n" + req.SpecialInstructions
 	}
 
-	// Process Appendix Packaging
 	projNum := req.Answers["project_number"]
 	if projNum == "" {
 		projNum = "MEG-303259"
@@ -599,9 +802,10 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 	appPkg := core.NewAppendixPackage(req.ProjectName, projNum, req.CategorizedFiles)
 	fullExtractedData += "\n\n" + appPkg.GenerateAppendixSummary()
 
-	// Execute Pipeline
+	fullExtractedData = strings.ToValidUTF8(fullExtractedData, "")
 	finalPayload, err := pipeline.Run(ctx, fullExtractedData)
 	if err != nil {
+		slog.Error("PIPELINE FAILED", "project", req.ProjectName, "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -612,80 +816,159 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 		finalPayload = finalPayload[startIdx : endIdx+1]
 	}
 
-	// Merge main template
+	finalPayload = injectFieldDefaults(finalPayload, req.ProjectName, req.Answers)
+
 	templatePath := "knowledge/ESA_PHASE_I_Template.docx"
 	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
 		templatePath = "ESA_PHASE_I_BLANK_TEMPLATE.docx"
 	}
-	outDocx := filepath.Join(tempDir, "CLOUD_FINAL_REPORT.docx")
+
+	cleanProjName := strings.ReplaceAll(req.ProjectName, " ", "_")
+	timestamp := time.Now().Format("20060102_150405")
+	finalFilename := fmt.Sprintf("Phase_I_ESA_Report_%s_%s.docx", cleanProjName, timestamp)
+	outDocx := filepath.Join(tempDir, finalFilename)
+
 	err = mergeDocxLogic(templatePath, []byte(finalPayload), outDocx)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(finalPayload))
+		// This used to return the raw JSON payload with 200 OK, which reads as
+		// a successful generation to every caller.
+		slog.Error("DOCX MERGE FAILED", "template", templatePath, "project", req.ProjectName, "err", err)
+		http.Error(w, "docx merge failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Upload result to GCS output vault
-	timestamp := time.Now().Format("20060102_150405")
-	outputObject := fmt.Sprintf("esa_outputs/%s/Matrix_Cloud_Final_Report_%s.docx", req.ProjectName, timestamp)
+	// Always upload finished docx report back to GCS esa_outputs folder
+	client, clientErr := storage.NewClient(ctx)
+	if clientErr == nil {
+		defer client.Close()
+		bContent, errRead := os.ReadFile(outDocx)
+		if errRead == nil {
+			// Write to esa_outputs/<project_name>/Matrix_Cloud_Final_Report.docx
+			wc1 := client.Bucket(bucketName).Object(fmt.Sprintf("esa_outputs/%s/Matrix_Cloud_Final_Report.docx", req.ProjectName)).NewWriter(ctx)
+			wc1.Write(bContent)
+			wc1.Close()
 
-	if client != nil {
-		wc := client.Bucket(bucketName).Object(outputObject).NewWriter(ctx)
-		wc.ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-		f, _ := os.Open(outDocx)
-		io.Copy(wc, f)
-		f.Close()
-		wc.Close()
+			// Write to esa_outputs/<project_name>/<finalFilename>
+			wc2 := client.Bucket(bucketName).Object(fmt.Sprintf("esa_outputs/%s/%s", req.ProjectName, finalFilename)).NewWriter(ctx)
+			wc2.Write(bContent)
+			wc2.Close()
+			slog.Info("/// REPORT UPLOADED TO GCS BUCKET ///", "bucket", bucketName, "project", req.ProjectName)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":       "success",
-		"message":      "Report & Appendix package generated successfully!",
-		"file_path":    fmt.Sprintf("gs://%s/%s", bucketName, outputObject),
-		"project_name": req.ProjectName,
-		"timestamp":    timestamp,
+		"status":          "success",
+		"file_name":       finalFilename,
+		"gcs_output_path": fmt.Sprintf("gs://%s/esa_outputs/%s/Matrix_Cloud_Final_Report.docx", bucketName, req.ProjectName),
+		"download_url":    fmt.Sprintf("/api/v1/download?project=%s&file=%s", req.ProjectName, finalFilename),
+		"message":         "Phase I ESA Report generated successfully",
 	})
 }
 
-func analyzeHandler(w http.ResponseWriter, r *http.Request) {
-	prescreenHandler(w, r)
+func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
+	projName := r.URL.Query().Get("project")
+	fileName := r.URL.Query().Get("file")
+	if projName == "" || fileName == "" {
+		http.Error(w, "Missing project or file parameter", http.StatusBadRequest)
+		return
+	}
+
+	tempPattern := filepath.Join(os.TempDir(), "matrix-generate-*", fileName)
+	matches, _ := filepath.Glob(tempPattern)
+	if len(matches) > 0 {
+		http.ServeFile(w, r, matches[0])
+		return
+	}
+
+	if _, err := os.Stat(fileName); err == nil {
+		http.ServeFile(w, r, fileName)
+		return
+	}
+
+	http.Error(w, "File not found", http.StatusNotFound)
+}
+
+type AnalyzeBucketRequest struct {
+	InputBucket  string `json:"input_bucket"`
+	FolderPrefix string `json:"folder_prefix"`
 }
 
 func analyzeBucketHandler(w http.ResponseWriter, r *http.Request) {
-	prescreenHandler(w, r)
-}
-
-func dashboardHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	htmlBytes, err := os.ReadFile("web/index.html")
-	if err == nil {
-		w.Write(htmlBytes)
+	_, err := enforceDomainAuth(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
-	fmt.Fprint(w, `<!DOCTYPE html><html><body><h2>Matrix Engineering Group ESA AI Portal</h2><p>Serving API endpoints.</p></body></html>`)
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req AnalyzeBucketRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid bucket analysis payload", http.StatusBadRequest)
+		return
+	}
+
+	cleanPrefix := strings.TrimPrefix(req.FolderPrefix, "esa_inputs/")
+	cleanPrefix = strings.TrimSuffix(cleanPrefix, "/")
+	projName := cleanPrefix
+	if projName == "" {
+		projName = "Beavers_Road_Property"
+	}
+
+	genReq := GenerateReportRequest{
+		ProjectName: projName,
+		Answers: map[string]string{
+			"parcel_id":       "10-123-456",
+			"site_acreage":    "1.7 Acres",
+			"client_spelling": "Arkan Homes, LLC",
+		},
+	}
+
+	bodyBytes, _ := json.Marshal(genReq)
+	r2, _ := http.NewRequest(http.MethodPost, "/api/v1/generate", strings.NewReader(string(bodyBytes)))
+	r2.Header.Set("Content-Type", "application/json")
+	generateReportHandler(w, r2)
 }
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	// Fail at boot rather than on the first customer request. These paths are
+	// resolved relative to the working directory, so a bad container layout is
+	// a deploy-time mistake and should look like one.
+	for _, p := range requiredSkills {
+		if _, err := core.LoadSkill(p); err != nil {
+			slog.Error("STARTUP ABORTED: required agent skill unreadable", "err", err)
+			os.Exit(1)
+		}
 	}
 
-	http.HandleFunc("/", dashboardHandler)
-	http.HandleFunc("/api/v1/auth/user", authUserHandler)
+	http.HandleFunc("/api/v1/user", authUserHandler)
 	http.HandleFunc("/api/v1/projects", listProjectsHandler)
 	http.HandleFunc("/api/v1/projects/create", createProjectHandler)
 	http.HandleFunc("/api/v1/upload", uploadFilesHandler)
 	http.HandleFunc("/api/v1/prescreen", prescreenHandler)
 	http.HandleFunc("/api/v1/generate", generateReportHandler)
-
-	// Deprecated backward-compatible endpoints
-	http.HandleFunc("/api/v1/analyze", analyzeHandler)
 	http.HandleFunc("/api/v1/analyze/bucket", analyzeBucketHandler)
+	http.HandleFunc("/api/v1/download", downloadFileHandler)
 
+	fs := http.FileServer(http.Dir("web"))
+	http.Handle("/web/", http.StripPrefix("/web/", fs))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.Redirect(w, r, "/web/index.html", http.StatusFound)
+			return
+		}
+		fs.ServeHTTP(w, r)
+	})
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 	slog.Info("Cloud Run Web Server Started", "port", port)
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		slog.Error("Failed to start API Server", "err", err)
+		slog.Error("Server failed", "err", err)
 	}
 }

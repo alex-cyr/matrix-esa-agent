@@ -208,6 +208,97 @@
             font-weight: 700;
         }
 
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            width: 540px;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 0 0 6px 0;
+            color: var(--accent);
+        }
+
+        .modal-sub {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"], select, textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13.5px;
+            transition: background 0.2s;
+        }
+
+        button:hover { background: var(--accent-hover); }
+
+        button.btn-secondary {
+            background: #252834;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        button.btn-secondary:hover { background: #323646; }
+
         /* Wizard Layout */
         .wizard-layout {
             display: grid;
@@ -298,63 +389,6 @@
             font-size: 13px;
         }
 
-        label {
-            display: block;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        input[type="text"], select, textarea {
-            width: 100%;
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            color: #fff;
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 16px;
-            transition: border-color 0.2s;
-        }
-
-        input[type="text"]:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .btn-group {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 24px;
-        }
-
-        button {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            font-weight: 700;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13.5px;
-            transition: background 0.2s;
-        }
-
-        button:hover { background: var(--accent-hover); }
-
-        button.btn-secondary {
-            background: #252834;
-            color: var(--text-main);
-            border: 1px solid var(--border);
-        }
-
-        button.btn-secondary:hover { background: #323646; }
-
-        /* Question Form */
         .question-card {
             background: #14161d;
             border: 1px solid var(--border);
@@ -428,10 +462,10 @@
 
         <!-- Centered Single Action Box -->
         <div class="hero-action-container">
-            <div class="hero-action-card" onclick="startNewReportDirect()">
+            <div class="hero-action-card" onclick="openNewReportModal()">
                 <div class="hero-icon">📄</div>
                 <div class="hero-title">+ Generate New Phase I ESA Report & Appendix</div>
-                <div class="hero-sub">Upload source documents (Proposal, EDR, Maps, Filio Site Photos, Questionnaire), run pre-screening verification, and compile the final draft report with formatted Appendices.</div>
+                <div class="hero-sub">Initialize project details (Project Name, Client, Project No.), upload source documents, run pre-screening verification, and compile final draft report with Appendices.</div>
             </div>
         </div>
 
@@ -478,12 +512,53 @@
         </div>
     </div>
 
+    <!-- New Project Setup Modal -->
+    <div class="modal-overlay" id="newReportModal" style="display:none;">
+        <div class="modal">
+            <div class="modal-title">Start New Phase I ESA Project</div>
+            <div class="modal-sub">Enter the project details below to initialize the report workspace and title block metadata.</div>
+
+            <label>Project Name / Site Address</label>
+            <input type="text" id="modalProjName" placeholder="e.g. McGinnis Ferry Self-Storage">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                    <label>Client Name / Entity</label>
+                    <input type="text" id="modalClient" placeholder="e.g. Arkan Homes, LLC">
+                </div>
+                <div>
+                    <label>Project Number</label>
+                    <input type="text" id="modalProjNo" placeholder="e.g. MEG-303259">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                    <label>Environmental Professional (EP)</label>
+                    <input type="text" id="modalReviewer" placeholder="e.g. Eric">
+                </div>
+                <div>
+                    <label>Report Standard</label>
+                    <select id="modalReportStandard">
+                        <option value="Phase I ESA (ASTM E1527-21)">Phase I ESA (ASTM E1527-21)</option>
+                        <option value="Transaction Screen (ASTM E1528)">Transaction Screen (ASTM E1528)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-secondary" onclick="closeNewReportModal()">Cancel</button>
+                <button onclick="confirmNewReportSetup()">Start Project & Upload Files ▶</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Wizard View -->
     <div class="main-container" id="wizardView" style="display: none;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
             <div>
                 <span style="font-size: 12px; color: var(--text-muted); cursor: pointer;" onclick="showDashboard()">← Back to previous reports</span>
-                <h2 style="font-size: 22px; margin: 4px 0 0 0;" id="activeProjectTitle">Phase I ESA Report & Appendix Package</h2>
+                <h2 style="font-size: 22px; margin: 4px 0 0 0;" id="activeProjectTitle">Phase I ESA Report Generator</h2>
             </div>
             <div>
                 <span style="background:#451a03; color:#f97316; padding:4px 12px; border-radius:4px; font-weight:bold; font-size:12px;">DRAFT MODE</span>
@@ -496,24 +571,18 @@
                     <div class="step-num">1</div> Upload sources
                 </div>
                 <div class="step-item" id="nav-step2" onclick="goToStep(2)">
-                    <div class="step-num">2</div> Categorize & type
+                    <div class="step-num">2</div> Pre-Screen intake
                 </div>
                 <div class="step-item" id="nav-step3" onclick="goToStep(3)">
-                    <div class="step-num">3</div> Scope sections
-                </div>
-                <div class="step-item" id="nav-step4" onclick="goToStep(4)">
-                    <div class="step-num">4</div> Attached Map Figures
-                </div>
-                <div class="step-item" id="nav-step5" onclick="goToStep(5)">
-                    <div class="step-num">5</div> Intake form
+                    <div class="step-num">3</div> Generate report
                 </div>
             </div>
 
             <div class="wizard-card">
                 <!-- STEP 1 -->
                 <div id="step-1" class="wizard-step">
-                    <h2 style="margin-top:0; font-size: 18px;">1 · Upload ESA project files</h2>
-                    <p style="font-size: 13px; color: var(--text-muted);">Add everything you have — Proposal, EDR PDF package, Wetland map, Flood Insurance map (FIRM), VEC App, Filio site photos, User Questionnaire (PDF, PNG, JPG up to 50 MB each).</p>
+                    <h2 style="margin-top:0; font-size: 18px;">1 · Upload ESA project files & categorize</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Add project documents — Proposal, EDR PDF package, Wetland map, Flood Insurance map (FIRM), VEC App, Filio site photos, User Questionnaire (PDF, PNG, JPG up to 50 MB each).</p>
 
                     <div class="dropzone" onclick="document.getElementById('fileInput').click()">
                         <div style="font-size: 38px; margin-bottom: 8px;">📄</div>
@@ -525,74 +594,13 @@
                     <div class="file-list" id="uploadedFileList"></div>
 
                     <div class="btn-group">
-                        <button onclick="goToStep(2)">Confirm & continue ▶</button>
+                        <button onclick="triggerPreScreen()">Confirm & Run Pre-Screener ▶</button>
                     </div>
                 </div>
 
-                <!-- STEP 2 -->
+                <!-- STEP 2 (PRE-SCREENER INTAKE FORM) -->
                 <div id="step-2" class="wizard-step" style="display:none;">
-                    <h2 style="margin-top:0; font-size: 18px;">2 · File categories & report type</h2>
-                    <p style="font-size: 13px; color: var(--text-muted);">Assign categories to your uploaded files and configure Appendix inclusion.</p>
-
-                    <div id="categorizeTable"></div>
-
-                    <div style="margin-top: 24px;">
-                        <label>Report Standard</label>
-                        <select id="reportTypeSelect" style="max-width: 340px;">
-                            <option value="Phase I ESA (ASTM E1527-21)">Phase I ESA (ASTM E1527-21 Standard Practice)</option>
-                            <option value="Transaction Screen (ASTM E1528)">Transaction Screen (ASTM E1528)</option>
-                            <option value="Phase II ESA">Phase II Environmental Site Assessment</option>
-                        </select>
-                    </div>
-
-                    <div class="btn-group">
-                        <button class="btn-secondary" onclick="goToStep(1)">◀ Back</button>
-                        <button onclick="goToStep(3)">Confirm & continue ▶</button>
-                    </div>
-                </div>
-
-                <!-- STEP 3 -->
-                <div id="step-3" class="wizard-step" style="display:none;">
-                    <h2 style="margin-top:0; font-size: 18px;">3 · Scope & Section Toggles</h2>
-                    <p style="font-size: 13px; color: var(--text-muted);">Select which optional sections to include in the draft report based on proposal scope.</p>
-
-                    <div style="display: flex; flex-direction: column; gap: 14px; margin: 20px 0;">
-                        <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer;">
-                            <input type="checkbox" id="sec_vec" checked style="width: auto; margin: 0;"> Include Vapor Encroachment Condition (VEC) Screening Section
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer;">
-                            <input type="checkbox" id="sec_aerials" checked style="width: auto; margin: 0;"> Include Historical Aerial Photographs Section (Sec 5.1)
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer;">
-                            <input type="checkbox" id="sec_topo" checked style="width: auto; margin: 0;"> Include Historical Topographic Maps Section (Sec 5.3)
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer;">
-                            <input type="checkbox" id="sec_questionnaire" checked style="width: auto; margin: 0;"> Include User Questionnaire Fallback (Sec 4.1)
-                        </label>
-                    </div>
-
-                    <div class="btn-group">
-                        <button class="btn-secondary" onclick="goToStep(2)">◀ Back</button>
-                        <button onclick="goToStep(4)">Confirm & continue ▶</button>
-                    </div>
-                </div>
-
-                <!-- STEP 4 -->
-                <div id="step-4" class="wizard-step" style="display:none;">
-                    <h2 style="margin-top:0; font-size: 18px;">4 · Attached Map Figures & Appendix Section Titles</h2>
-                    <p style="font-size: 13px; color: var(--text-muted);">Review map figure attachments, edit figure titles, and verify Appendix section assignments (Appendix A through E).</p>
-
-                    <div id="figureFramesList"></div>
-
-                    <div class="btn-group">
-                        <button class="btn-secondary" onclick="goToStep(3)">◀ Back</button>
-                        <button onclick="triggerPreScreen()">Run Pre-Screener ▶</button>
-                    </div>
-                </div>
-
-                <!-- STEP 5 (Pre-Screener Intake Form) -->
-                <div id="step-5" class="wizard-step" style="display:none;">
-                    <h2 style="margin-top:0; font-size: 18px;">5 · Pre-Screening Intake Form</h2>
+                    <h2 style="margin-top:0; font-size: 18px;">2 · Pre-Screening Intake Form</h2>
                     <p style="font-size: 13px; color: var(--text-muted);">Only what couldn't be settled from your documents: conflicting values, gaps, and clarifications. Required questions are marked <span style="color: var(--accent);">•</span></p>
 
                     <div class="validation-banner" id="valBanner">
@@ -603,21 +611,29 @@
                         <div style="color: var(--text-muted); font-size: 13px;">Analyzing documents and extracting data gaps...</div>
                     </div>
 
-                    <div class="question-card" style="margin-top: 24px;">
-                        <div class="question-title">Anything else? Further instructions for the draft (optional)</div>
-                        <div class="question-context">Anything you want the writer to know or do that the questions above didn't cover — emphasis, wording, things to leave out.</div>
-                        <textarea id="specialInstructions" rows="3" placeholder="e.g. Keep recommendations section brief; verify parcel boundary alignment."></textarea>
+                    <div class="btn-group">
+                        <button class="btn-secondary" onclick="goToStep(1)">◀ Back</button>
+                        <button onclick="goToStep(3)">Review & Generate Report ▶</button>
+                    </div>
+                </div>
+
+                <!-- STEP 3 (GENERATION & DOWNLOAD) -->
+                <div id="step-3" class="wizard-step" style="display:none;">
+                    <h2 style="margin-top:0; font-size: 18px;">3 · Generate Phase I ESA Report</h2>
+                    <p style="font-size: 13px; color: var(--text-muted);">Final review before running multi-agent AI pipeline generation (gemini-2.5-pro).</p>
+
+                    <div style="margin-bottom: 24px;">
+                        <label>Special Instructions (Optional)</label>
+                        <textarea id="specialInstructions" style="width: 100%; height: 90px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; color: var(--text-main); font-size: 13.5px;" placeholder="e.g. Note recent site grading on North property boundary..."></textarea>
                     </div>
 
                     <div class="btn-group">
-                        <button class="btn-secondary" onclick="goToStep(4)">◀ Back</button>
-                        <button class="btn-secondary" onclick="triggerPreScreen()">Rebuild form</button>
-                        <button onclick="submitFinalGeneration()">Generate report & Appendix ▶</button>
+                        <button class="btn-secondary" onclick="goToStep(2)">◀ Back</button>
+                        <button style="background: var(--success); color: #000; font-weight: 800; padding: 14px 28px;" onclick="submitFinalGeneration()">⚡ Generate Phase I ESA Report (.docx)</button>
                     </div>
 
-                    <div id="generationProgress" style="margin-top: 20px; display: none;" class="question-card">
-                        <div style="font-weight: 700; color: var(--accent); margin-bottom: 8px;">Processing Multi-Agent Report & Appendix Pipeline...</div>
-                        <div style="font-size: 13px; color: var(--text-muted);" id="progressStatusText">Running ParserAgent → GeospatialEvaluator → SiteReconSynthesizer → ASTMSynthesizer → TemplateCompiler...</div>
+                    <div id="generationProgress" style="margin-top: 24px; display: none; background: #111319; border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
+                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 15px;" id="progressStatusText">Running multi-agent pipeline...</div>
                     </div>
                 </div>
             </div>
@@ -629,56 +645,121 @@
         let uploadedFiles = [];
         let activeProject = "Beavers_Road_Property";
         let activeProjectNo = "MEG-303259";
+        let activeClient = "Arkan Homes, LLC";
 
         function showDashboard() {
             document.getElementById('dashboardView').style.display = 'block';
             document.getElementById('wizardView').style.display = 'none';
         }
 
+        function openNewReportModal() {
+            document.getElementById('newReportModal').style.display = 'flex';
+        }
+
+        function closeNewReportModal() {
+            document.getElementById('newReportModal').style.display = 'none';
+        }
+
+        async function confirmNewReportSetup() {
+            const rawName = document.getElementById('modalProjName').value.trim() || 'Beavers_Road_Property';
+            activeProject = rawName.replace(/\s+/g, '_');
+            activeProjectNo = document.getElementById('modalProjNo').value.trim() || 'MEG-' + Math.floor(100000 + Math.random()*900000);
+            activeClient = document.getElementById('modalClient').value.trim() || 'Arkan Homes, LLC';
+
+            try {
+                await fetch('/api/v1/projects/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ project_name: activeProject })
+                });
+            } catch(e){}
+
+            closeNewReportModal();
+            startNewReportDirect();
+        }
+
         function startNewReportDirect() {
             document.getElementById('dashboardView').style.display = 'none';
             document.getElementById('wizardView').style.display = 'block';
-            document.getElementById('activeProjectTitle').textContent = "Phase I ESA Report & Appendix Package";
+            document.getElementById('activeProjectTitle').textContent = activeProject.replace(/_/g, ' ') + " - Phase I ESA Report & Appendix";
             goToStep(1);
         }
 
         function goToStep(step) {
             currentStep = step;
-            for(let i=1; i<=5; i++) {
-                document.getElementById('step-' + i).style.display = (i === step) ? 'block' : 'none';
-                const nav = document.getElementById('nav-step' + i);
-                if(i === step) nav.classList.add('active');
-                else nav.classList.remove('active');
+            for(let i=1; i<=3; i++) {
+                const stepElem = document.getElementById('step-' + i);
+                const navElem = document.getElementById('nav-step' + i);
+                if (stepElem) stepElem.style.display = (i === step) ? 'block' : 'none';
+                if (navElem) {
+                    if (i === step) navElem.classList.add('active');
+                    else navElem.classList.remove('active');
+                }
             }
-            if(step === 2) renderCategorizeStep();
-            if(step === 4) renderFigureFramesStep();
         }
 
-        function handleFileSelect(evt) {
+        async function handleFileSelect(evt) {
             const files = evt.target.files;
+            if(!files || files.length === 0) return;
+
+            const formData = new FormData();
+            formData.append('project_name', activeProject);
+
             for(let f of files) {
+                formData.append('files', f);
                 uploadedFiles.push({
                     original_name: f.name,
-                    custom_title: f.name.substring(0, f.name.lastIndexOf('.')) || f.name,
+                    custom_title: formatIntuitiveTitle(f.name),
                     category: detectCategory(f.name),
                     in_appendix: true
                 });
             }
+
             renderFileList();
+
+            try {
+                await fetch('/api/v1/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+            } catch(e){}
         }
 
         function detectCategory(name) {
             const l = name.toLowerCase();
-            if(l.includes('proposal')) return 'Proposal / Contract';
-            if(l.includes('edr')) return 'EDR Historical Package';
-            if(l.includes('filio') || l.includes('photo') || l.includes('alyateem')) return 'Filio Site Photos';
+            if(l.includes('aerial') || l.includes('topo') || l.includes('sanborn') || l.includes('radius') || l.includes('edr') || l.includes('historical')) {
+                return 'EDR Historical Package';
+            }
+            if(l.includes('proposal') || l.includes('contract')) return 'Proposal / Contract';
             if(l.includes('recon') || l.includes('checklist')) return 'Site Recon Checklist';
-            if(l.includes('wetland')) return 'Wetland Map';
             if(l.includes('firm') || l.includes('flood')) return 'FIRM Flood Map';
-            if(l.includes('vec')) return 'VEC Application';
-            if(l.includes('questionnaire')) return 'User Questionnaire';
-            if(l.includes('qualification')) return 'Qualifications';
+            if(l.includes('wetland') || l.includes('nwi')) return 'Wetland Map';
+            if(l.includes('questionnaire') || l.includes('owner')) return 'User Questionnaire';
+            if(l.includes('vec') || l.includes('vapor')) return 'VEC Application';
+            if(l.includes('qualification') || l.includes('resume')) return 'Qualifications';
+            if(l.includes('filio') || l.includes('alyateem') || l.includes('site_photo') || l.includes('field_photo') || l.includes('site photos')) return 'Filio Site Photos';
             return 'Other Document';
+        }
+
+        function formatIntuitiveTitle(name) {
+            const l = name.toLowerCase();
+            if(l.includes('aerial')) {
+                const yearMatch = name.match(/\b(19\d\d|20\d\d)\b/);
+                if(yearMatch) return `Historical Aerial Photograph - ${yearMatch[1]}`;
+                return 'Historical Aerial Photograph';
+            }
+            if(l.includes('topo')) return 'USGS Historical Topographic Maps';
+            if(l.includes('sanborn')) return 'Certified Sanborn Map Report';
+            if(l.includes('radius')) return 'EDR Radius Map Report';
+            if(l.includes('firm') || l.includes('flood')) return 'Flood Insurance Rate Map';
+            if(l.includes('wetland') || l.includes('nwi')) return 'National Wetland Inventory Map';
+            if(l.includes('filio') || l.includes('alyateem') || l.includes('photo')) return 'Filio Site Inspection Photographs';
+            if(l.includes('recon') || l.includes('checklist')) return 'Site Reconnaissance Field Checklist';
+            if(l.includes('questionnaire') || l.includes('owner')) return 'User Questionnaire & Owner Information';
+            if(l.includes('proposal') || l.includes('contract')) return 'Signed Project Proposal & Scope';
+            if(l.includes('vec') || l.includes('vapor')) return 'Vapor Encroachment Screen Report';
+            if(l.includes('qualification') || l.includes('resume')) return 'Qualifications of Environmental Professional';
+            return name.substring(0, name.lastIndexOf('.')) || name;
         }
 
         function renderFileList() {
@@ -695,77 +776,10 @@
             `).join('');
         }
 
-        function renderCategorizeStep() {
-            const div = document.getElementById('categorizeTable');
-            if(uploadedFiles.length === 0) {
-                uploadedFiles = [
-                    { original_name: 'Proposal_McGinnis_Ferry.pdf', custom_title: 'Proposal & Scope', category: 'Proposal / Contract', in_appendix: true },
-                    { original_name: 'EDR_Historical_Report.pdf', custom_title: '2024 EDR Historical Package', category: 'EDR Historical Package', in_appendix: true },
-                    { original_name: 'Filio_Site_Photos_Report.pdf', custom_title: 'Filio Site Inspection Photos', category: 'Filio Site Photos', in_appendix: true },
-                    { original_name: 'Flood_Insurance_Rate_Map.png', custom_title: 'Flood Insurance Rate Map', category: 'FIRM Flood Map', in_appendix: true },
-                    { original_name: 'User_Questionnaire.pdf', custom_title: 'User Questionnaire', category: 'User Questionnaire', in_appendix: true }
-                ];
-            }
-
-            const categories = [
-                "EDR Historical Package",
-                "Proposal / Contract",
-                "Filio Site Photos",
-                "FIRM Flood Map",
-                "Wetland Map",
-                "VEC Application",
-                "User Questionnaire",
-                "Site Recon Checklist",
-                "Qualifications",
-                "Other Document"
-            ];
-
-            div.innerHTML = uploadedFiles.map((f, i) => `
-                <div class="file-row" style="margin-bottom: 10px; display: grid; grid-template-columns: 2fr 2fr 1fr;">
-                    <div><strong>${f.original_name}</strong></div>
-                    <div>
-                        <select style="margin: 0;" onchange="uploadedFiles[${i}].category = this.value">
-                            ${categories.map(c => `<option value="${c}" ${f.category === c ? 'selected' : ''}>${c}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
-                        <input type="checkbox" ${f.in_appendix?'checked':''} onchange="uploadedFiles[${i}].in_appendix = this.checked"> Appendix
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderFigureFramesStep() {
-            const div = document.getElementById('figureFramesList');
-            div.innerHTML = uploadedFiles.map((f, i) => `
-                <div class="question-card">
-                    <div class="question-title">Attached Figure / File: ${f.original_name}</div>
-                    <div class="tb-grid">
-                        <div>
-                            <label>Figure / Section Title</label>
-                            <input type="text" value="${f.custom_title}" style="margin:0;" onchange="uploadedFiles[${i}].custom_title=this.value">
-                        </div>
-                        <div>
-                            <label>Source Citation</label>
-                            <input type="text" value="${f.category.includes('EDR') ? 'Source: EDR Report' : 'Source: Matrix Engineering Group, Inc.'}" style="margin:0;">
-                        </div>
-                        <div>
-                            <label>Project Name</label>
-                            <input type="text" value="${activeProject}" style="margin:0;">
-                        </div>
-                        <div>
-                            <label>Project Number</label>
-                            <input type="text" value="${activeProjectNo}" style="margin:0;">
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
         async function triggerPreScreen() {
-            goToStep(5);
+            goToStep(2);
             const container = document.getElementById('questionsContainer');
-            container.innerHTML = `<div style="color: var(--accent); font-weight: bold;">Parsing project files and analyzing gaps...</div>`;
+            container.innerHTML = `<div style="color: var(--accent); font-weight: bold; font-size: 15px;">Parsing project files and extracting data gaps...</div>`;
 
             try {
                 const res = await fetch('/api/v1/prescreen', {
@@ -774,7 +788,7 @@
                     body: JSON.stringify({ project_name: activeProject })
                 });
                 const data = await res.json();
-                renderQuestions(data.questions);
+                renderQuestions(data.questions || []);
             } catch(e) {
                 renderQuestions([]);
             }
@@ -828,25 +842,58 @@
             progress.style.display = 'block';
             document.getElementById('progressStatusText').textContent = 'Compiling main DOCX template + Appendix packages for ' + activeProject + '...';
 
+            // Gather all answers dynamically from the Pre-Screen questions container
+            const ansObj = {
+                project_number: activeProjectNo,
+                client_spelling: activeClient,
+                parcel_id: '10-123-456',
+                site_acreage: '1.7 Acres'
+            };
+            const questionInputs = document.querySelectorAll('#questionsContainer input, #questionsContainer select');
+            questionInputs.forEach(input => {
+                const val = input.value ? input.value.trim() : '';
+                if (!val) return;
+                const rawId = input.id ? input.id.replace(/^q_/, '') : '';
+                if (rawId) ansObj[rawId] = val;
+
+                // Intelligently parse parcel ID or acreage if typed in text answers
+                const lower = val.toLowerCase();
+                if (lower.includes('parcel') || val.match(/\b\d{2}[\s\-]?\d+/)) {
+                    const pMatch = val.match(/\bParcel\s+ID\s*([\d\s\-]+)/i) || val.match(/([\d]{2}[\s\-]?[\d\s\-]{8,})/);
+                    if (pMatch) ansObj['parcel_id'] = pMatch[1].trim();
+                    else if (!ansObj['parcel_id'] || ansObj['parcel_id'] === '10-123-456') ansObj['parcel_id'] = val;
+                }
+                if (lower.includes('acre') || val.match(/\b\d+(\.\d+)?\s*acre/i)) {
+                    const aMatch = val.match(/([\d\.]+\s*acres?)/i);
+                    if (aMatch) ansObj['site_acreage'] = aMatch[1].trim();
+                    else if (!ansObj['site_acreage'] || ansObj['site_acreage'] === '1.7 Acres') ansObj['site_acreage'] = val;
+                }
+            });
+
             try {
                 const res = await fetch('/api/v1/generate', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         project_name: activeProject,
-                        answers: {
-                            parcel_id: document.getElementById('q_parcel_id')?.value || '10-123-456',
-                            site_acreage: document.getElementById('q_site_acreage')?.value || '1.7 Acres'
-                        },
+                        answers: ansObj,
                         categorized_files: uploadedFiles,
                         special_instructions: document.getElementById('specialInstructions')?.value || ''
                     })
                 });
                 const data = await res.json();
-                if(data.status === 'success') {
+                if(data.status === 'success' || data.download_url) {
+                    const dlUrl = data.download_url || ('/api/v1/download?project=' + activeProject + '&file=' + (data.file_name || ''));
                     progress.innerHTML = `
-                        <div style="color: var(--success); font-weight: bold; font-size: 16px; margin-bottom: 8px;">✅ Final Report & Appendix Package Generated!</div>
-                        <div style="font-size: 13px;">File Path: <code>${data.file_path}</code></div>
+                        <div style="color: var(--success); font-weight: bold; font-size: 16px; margin-bottom: 10px;">✅ Phase I ESA Report Generated Successfully!</div>
+                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Saved in Vault: <code>${data.file_path || ('gs://matrix-esa-production-vault/esa_outputs/' + activeProject)}</code></div>
+                        <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+                            <a href="${dlUrl}" download style="text-decoration: none;">
+                                <button style="background: var(--success); color: #000; font-size: 15px; padding: 14px 28px; font-weight: 800; cursor: pointer; border-radius: 6px; border: none;">
+                                    📥 Download Phase I ESA Report (.docx)
+                                </button>
+                            </a>
+                        </div>
                     `;
                 } else {
                     progress.innerHTML = `<div style="color: var(--danger);">Generation Notice: Completed with log warnings. Report available in Cloud Run bucket.</div>`;

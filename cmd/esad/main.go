@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -154,38 +155,38 @@ func main() {
 
 	// 1. Initialize Matrix Agent Skill Configs (loaded from .agents/skills/...)
 	loadSkill := func(path string) string {
-		data, err := os.ReadFile(path)
+		s, err := core.LoadSkill(path)
 		if err != nil {
-			slog.Warn("Could not load skill file", "path", path)
-			return ""
+			slog.Error("SYSTEM_FAULT: required agent skill unreadable", "err", err)
+			os.Exit(1)
 		}
-		return string(data)
+		return s
 	}
 
 	parserCfg := core.AgentConfig{
 		Name:         "ParserAgent",
-		Model:        "gemini-2.5-flash",
+		Model:        "gemini-2.5-pro",
 		SystemPrompt: loadSkill(".agents/skills/parser/SKILL.md"),
 		Temperature:  0.0,
 	}
 
 	geoCfg := core.AgentConfig{
 		Name:         "GeospatialEvaluatorAgent",
-		Model:        "gemini-2.5-flash",
+		Model:        "gemini-2.5-pro",
 		SystemPrompt: loadSkill(".agents/skills/geospatial-evaluator/SKILL.md"),
 		Temperature:  0.1,
 	}
 
 	astmCfg := core.AgentConfig{
 		Name:         "ASTMSynthesizerAgent",
-		Model:        "gemini-2.5-flash", // We use flash to avoid model/quota issues
+		Model:        "gemini-2.5-pro",
 		SystemPrompt: loadSkill(".agents/skills/astm-synthesizer/SKILL.md"),
 		Temperature:  0.2,
 	}
 
 	templateCfg := core.AgentConfig{
 		Name:         "TemplateCompilerAgent",
-		Model:        "gemini-2.5-flash",
+		Model:        "gemini-2.5-pro",
 		SystemPrompt: loadSkill(".agents/skills/template-compiler/SKILL.md"),
 		Temperature:  0.2,
 	}
@@ -260,7 +261,11 @@ func main() {
 	}
 	activeAgents = append(activeAgents, tAgent)
 
-	pipeline := core.NewPipeline(*projectID, *location, *skipHITL, activeAgents...)
+	pipeline, err := core.NewPipeline(*projectID, *location, *skipHITL, activeAgents...)
+	if err != nil {
+		slog.Error("SYSTEM_FAULT: Pipeline assembly failed", "err", err)
+		os.Exit(1)
+	}
 
 	// 4. Extract Initial Payload using real pAgent execution from edr_source/
 	pdfSourceDir := *payloadPath + "\\edr_source"
@@ -273,10 +278,16 @@ func main() {
 	if len(pipeline.Agents) > 0 {
 		finalPayload, err := pipeline.Run(ctx, initialDataFlow)
 		if err != nil {
-			slog.Error("EXECUTION_SUSPENDED: State Yielded to Matrix Engineering", "cause", err)
-			// Yield state here requires manual Antigravity IDE UI review loop (HITL)
+			// A HITL yield is a normal pause requiring the manual review loop.
+			// Anything else is a real failure and must not exit 0, or shell and
+			// CI callers read the run as a success.
 			// NOTE: Teammates do not alter this exit constraint without modifying HW approval logic.
-			os.Exit(0)
+			if errors.Is(err, core.ErrHITLYield) {
+				slog.Info("EXECUTION_SUSPENDED: State Yielded to Matrix Engineering", "cause", err)
+				os.Exit(0)
+			}
+			slog.Error("EXECUTION_FAILED: Pipeline aborted", "err", err)
+			os.Exit(1)
 		}
 
 		// Save the final payload to a file inside output/
