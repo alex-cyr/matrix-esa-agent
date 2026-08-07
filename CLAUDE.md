@@ -191,7 +191,11 @@ passes and the docx is reviewed externally.
   numbered-finding ordering — 1=location/parcel/owner, 2=topography, then
   history, then regulatory; aerial-description grouping style).
 - Plus 2–3 full exemplar transcripts: Homestead (clean/small), Rockdale
-  (REC-present), one institutional.
+  (REC-present), one institutional. **Ordering conflict:** Homestead is 20.1 MB
+  and fails inline extraction, so it has no transcript until the Phase 6 GCS
+  `FileData` work lands. Either pull that item forward ahead of Phase 5 or
+  build the digest with a substitute clean/small exemplar and add Homestead
+  later.
 - **Exclude Cross Keys 2022 from Tier 1 sourcing — it cites superseded
   E1527-13.** Add a guardrail to both consuming skills: "baselines may cite
   older ASTM versions; always cite E1527-21."
@@ -210,7 +214,11 @@ passes and the docx is reviewed externally.
   arbitrary paths with no auth.
 - Gate or delete `analyzeBucketHandler`'s hardcoded-answers path.
 - The two >20 MB historical PDFs: extract via `genai.FileData` with a GCS URI
-  (no inline limit, no new deps) during `-warm-historical`.
+  (no inline limit, no new deps) during `-warm-historical`. **Homestead
+  (20.1 MB) is the priority target** — it is a Phase 5 exemplar pick
+  (clean/small-parcel) and cannot be included in the digest until this lands.
+  Cross Keys (48.8 MB) costs nothing by comparison: it cites superseded
+  E1527-13 and is already excluded from Tier 1 digest sourcing.
 - Retry loop: classify errors by `googleapi` status, retry only retryables, then
   restore `maxRetries` to a sane value.
 - Consolidate the two divergent docx merge implementations (api vs esad).
