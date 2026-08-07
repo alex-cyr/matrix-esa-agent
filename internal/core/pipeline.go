@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"unicode/utf8"
 
 	"cloud.google.com/go/vertexai/genai"
 )
@@ -43,6 +44,19 @@ func NewPipeline(project, location string, skipHITL bool, agents ...*Agent) (*Pi
 	}, nil
 }
 
+// artifactPreview returns the leading n characters of a node's output,
+// collapsed to a single line for logging. Truncation respects rune boundaries.
+func artifactPreview(s string, n int) string {
+	s = strings.Join(strings.Fields(s), " ")
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n] + "..."
+}
+
 // Run executes the chain sequentially, pausing on unapproved artifacts.
 func (p *Pipeline) Run(ctx context.Context, initialPayload string) (string, error) {
 	slog.Info("MATRIX EXECUTABLE LOADED: Initializing SequentialAgent Pipeline", "nodes", len(p.Agents))
@@ -66,6 +80,12 @@ func (p *Pipeline) Run(ctx context.Context, initialPayload string) (string, erro
 			slog.Error("/// NODE FAILED /// aborting pipeline", "agent", agent.Cfg.Name, "sequence_step", i+1, "err", err)
 			return "", fmt.Errorf("pipeline node %d (%s) failed: %w", i+1, agent.Cfg.Name, err)
 		}
+
+		// Direct inspection of what a node actually said, so "why is this
+		// output small?" never has to be answered by ranking hypotheses again.
+		// Enable with LOG_LEVEL=debug.
+		slog.Debug("/// NODE ARTIFACT PREVIEW ///", "agent", agent.Cfg.Name,
+			"chars", len(artifact.Content), "head", artifactPreview(artifact.Content, 200))
 
 		p.Memory = append(p.Memory, artifact)
 

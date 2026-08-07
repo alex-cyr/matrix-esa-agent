@@ -101,6 +101,14 @@ func mergeDocxLogic(templatePath, jsonPath, outputPath string) error {
 func main() {
 	// Load .env file if it exists
 	_ = godotenv.Load()
+
+	// Without this the default handler drops slog.Debug, silently disabling the
+	// per-node artifact previews.
+	if strings.EqualFold(os.Getenv("LOG_LEVEL"), "debug") {
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		})))
+	}
 	var (
 		payloadPath = flag.String("payload", "", "Path to raw EDR PDF suite or initialized project folder")
 		projectID   = flag.String("project", os.Getenv("GCP_PROJECT"), "GCP Project ID for Vertex AI")

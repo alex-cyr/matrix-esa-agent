@@ -32,7 +32,10 @@ go run ./cmd/esad -payload . -project $env:GCP_PROJECT -skip-hitl
 ```powershell
 go test ./internal/...               # cache/corpus tests; no credentials needed
 go run ./cmd/esad -payload . -project matrix-esa-production -warm-historical
+$env:LOG_LEVEL="debug"; go run ./cmd/api   # per-node artifact previews
 ```
+
+`LOG_LEVEL=debug` enables `NODE ARTIFACT PREVIEW` — the first ~200 characters of each pipeline node's actual output. Reach for it before theorizing about why a node's output looks wrong; direct inspection beats ranking hypotheses, as the SiteRecon 520-token investigation demonstrated.
 
 ### Tests
 
@@ -375,10 +378,11 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   uploads — e.g. surface `SV_*` site-visit questions ONLY when no recon
   checklist was detected.
 
-  **Never ask for data that is sitting in an uploaded document.** Doing so masks
-  an extraction failure behind a human answer: the pipeline looks healthy while
-  the parser silently fails, and the defect resurfaces on the next project where
-  nobody happens to fill the field in.
+  **Never ask for data that is sitting in an uploaded document.** Doing so
+  **launders an extraction failure into a green run**: the EP fills the field,
+  the report looks complete, and the parser bug survives to the next project
+  where nobody happens to notice. The question hides exactly the defect it
+  appears to solve.
 
   **Every dynamic question carries a source-of-truth note in its `Context`
   field**, so the EP knows why it is being asked — "No site recon checklist
@@ -398,23 +402,28 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
 - **`SV_*` blanking is NOT a prescreen problem** — it belongs to the Phase 4
   validator plus the SiteRecon handoff. Do not paper over it with questions.
 
-  Open investigation: SiteRecon emitted only **520 tokens** on the Providence
-  Road run. **Ruled out:** a missing source document —
-  `Site_Recon_Checklist_Providence Road Properties.pdf` *was* in the uploads.
-  Remaining hypotheses, in rough order of likelihood:
-  1. The compiler under-consumes SiteRecon's output. SiteRecon emits JSON keyed
-     by literal `{{Sec8_*}}` tags, but it is not the final payload — the
-     Template Compiler must carry those values into its own JSON, and nothing
-     verifies that it did.
-  2. SiteRecon cannot locate the checklist data. Its skill says it "receives the
-     raw JSON checklist data from the Parser Agent", but `Pipeline.Run` hands it
-     the entire accumulated payload — every parser extract plus the Geospatial
-     output — with no isolation of the checklist.
-  3. The skill is thin. site-recon-synthesizer is by far the shortest skill in
-     the repo; compare template-compiler's ~290 lines.
+  **SiteRecon's 520 tokens on the Providence Road run are probably normal.**
+  Docx evidence closed this, and it is a good example of why artifact
+  inspection beats reasoning from token counts:
+  - `Sec8.1`, `8.2`, `8.4`–`8.10`, `8.13` were all **filled with real
+    site-visit content** — so the compiler consumed most of SiteRecon's output.
+    A full handoff-drop is ruled out.
+  - The two `Sec8` blanks were **fractured-tag survivors**, addressed by the
+    un-fracture fix in `45c2446`.
+  - The `SV_*` blanks are **Section 3.1 parser-extracted strings, not SiteRecon
+    products** — a compiler key-skip, i.e. bug 3's shape, already covered by the
+    Phase 4 validator.
+  - `Site_Recon_Checklist_Providence Road Properties.pdf` *was* in the uploads,
+    so no missing-input explanation either.
 
-  The per-node token logging added in `e25e5e6` will show input and output sizes
-  for this node on the next run, which should separate hypothesis 2 from 1.
+  520 tokens appears near-normal for this node's narrow contract. Still worth
+  reading its `NODE ENGAGED` / `NODE YIELD` pair on the Beavers run to confirm.
+
+  One genuine latent issue remains: SiteRecon's skill claims it "receives the
+  raw JSON checklist data from the Parser Agent", but `Pipeline.Run` hands it
+  the entire accumulated payload — every parser extract plus the Geospatial
+  output. The skill's stated contract and the pipeline's real behavior do not
+  match, independent of the token question.
 - `/download`: add `enforceDomainAuth` + sanitize the `file` param
   (`filepath.Base`, restrict to the generate temp dirs) — it currently serves
   arbitrary paths with no auth.

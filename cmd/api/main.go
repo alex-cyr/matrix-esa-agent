@@ -1069,7 +1069,21 @@ func analyzeBucketHandler(w http.ResponseWriter, r *http.Request) {
 	generateReportHandler(w, r2)
 }
 
+// configureLogging enables debug output when LOG_LEVEL=debug. Without this the
+// default handler drops slog.Debug entirely, which would silently disable the
+// per-node artifact previews.
+func configureLogging() {
+	if strings.EqualFold(os.Getenv("LOG_LEVEL"), "debug") {
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		})))
+		slog.Debug("debug logging enabled", "source", "LOG_LEVEL")
+	}
+}
+
 func main() {
+	configureLogging()
+
 	// Fail at boot rather than on the first customer request. These paths are
 	// resolved relative to the working directory, so a bad container layout is
 	// a deploy-time mistake and should look like one.
