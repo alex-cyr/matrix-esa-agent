@@ -69,12 +69,16 @@ Key behaviors to know before changing anything here:
 The template is a plain Word file whose text contains `{{TagName}}` placeholders (the full inventory is in `docx_tags.txt`). `mergeDocxLogic` unzips it, and for `word/document.xml` + every `word/header*` / `word/footer*`:
 
 1. `unfractureDocxXML` strips Word's run-splitting XML from *inside* `{{...}}` — Word routinely shatters a placeholder across `<w:r>` runs, so naive replacement misses it.
-2. Each JSON key is substituted, both as `{{Key}}` and as a bare `Key` substring.
-3. Leftover `{{` / `}}` are stripped globally.
+2. Each value is passed through `core.SanitizeDocxValue`, then substituted for its **exact** `{{Key}}` only.
+3. Any `{{Tag}}` still present is logged at error level (`UNREPLACED TEMPLATE TAGS`) — this is the input to the Phase 4 validator.
+4. Leftover `{{` / `}}` are stripped globally.
+5. **Post-merge validation** (`core.ValidateDocxXML`) re-opens the written file and parses every rewritten part. A malformed artifact fails the request; it is never uploaded to GCS or offered for download.
 
-Two independent implementations exist: the API's (`cmd/api/main.go`, brace-based) and the CLI's (`cmd/esad/main.go`, `replaceFracturedXML`, which builds a per-character regex tolerating interleaved tags). They have diverged — fix bugs in both or consolidate deliberately.
+**`core.SanitizeDocxValue` is not optional.** Values are injected as raw text into XML, so it must run on every one, in this order: strip XML-1.0-illegal control characters → escape `&`, `<`, `>` → expand newlines into `</w:t><w:br/><w:t>`. The order matters — escaping after the break expansion would mangle the break markup, and escaping before the control-char strip would leave characters no parser accepts. A single unescaped `&` (e.g. an owner named "Diane & Brian J. Pete", or the address "12735 & 12725 Providence Road") makes Word refuse the whole document with "experienced an error trying to open the file."
 
-`injectFieldDefaults` runs after the LLM and **overrides** template values with hardcoded client data (recipient block, salutation, authorization date, `Proposal_Letter1-5` blanked to prevent a page-2 logo overlap). This is the current per-client hack layer; expect to touch it when onboarding a different client.
+Two merge implementations still exist — the API's brace-based `replaceTag` and the CLI's `replaceFracturedXML` (a per-character regex tolerating interleaved tags). **They now share sanitization and validation via `internal/core/docxsafe.go`**; only the matching strategy differs. The CLI additionally uses `ReplaceAllLiteralString`, because `$` in a value would otherwise expand as a capture-group reference.
+
+`injectFieldDefaults` runs after the LLM and applies exactly three things: `MEG-` prefix normalization on `ProjectNo`, `parcel_id`/`site_acreage` from EP pre-screen answers, and blanking `Proposal_Letter1-5` (a layout hack — populating those text boxes overlaps the page-2 logo). It also normalizes keys/values that arrive wrapped in their own braces, which matters because `replaceTag` matches exactly. It deliberately contains **no client-specific data**; see the tripwire test.
 
 Template resolution order: `knowledge/ESA_PHASE_I_Template.docx`, falling back to `ESA_PHASE_I_BLANK_TEMPLATE.docx` at repo root.
 
@@ -283,5 +287,9 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   appendix printouts, which the extractor skill would discard anyway.
 - Retry loop: classify errors by `googleapi` status, retry only retryables, then
   restore `maxRetries` to a sane value.
-- Consolidate the two divergent docx merge implementations (api vs esad).
+- Consolidate the two docx merge implementations (api vs esad). **Partially
+  done:** value sanitization and post-merge validation are now shared via
+  `internal/core/docxsafe.go`. What still differs is the matching strategy —
+  the API's exact `{{Key}}` replacement after un-fracturing, versus the CLI's
+  per-character `replaceFracturedXML` regex. Pick one and delete the other.
 - Fix the `a.Cfg.Name[:4]` TODO properly.

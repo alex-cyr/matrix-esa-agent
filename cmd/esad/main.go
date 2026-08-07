@@ -45,7 +45,9 @@ func replaceFracturedXML(xmlStr, key, val string) string {
 	if err != nil {
 		return xmlStr
 	}
-	return re.ReplaceAllString(xmlStr, val)
+	// Literal: values are pre-sanitized XML fragments, and "$" in a value would
+	// otherwise be expanded as a capture-group reference.
+	return re.ReplaceAllLiteralString(xmlStr, val)
 }
 
 func mergeDocxLogic(templatePath, jsonPath, outputPath string) error {
@@ -72,7 +74,7 @@ func mergeDocxLogic(templatePath, jsonPath, outputPath string) error {
 	for _, f := range r.File {
 		rc, err := f.Open()
 		if err != nil { return err }
-		needProcess := f.Name == "word/document.xml" || strings.HasPrefix(f.Name, "word/header") || strings.HasPrefix(f.Name, "word/footer")
+		needProcess := core.IsProcessedDocxPart(f.Name)
 		fWriter, err := w.Create(f.Name)
 		if err != nil { rc.Close(); return err }
 		if needProcess {
@@ -80,8 +82,10 @@ func mergeDocxLogic(templatePath, jsonPath, outputPath string) error {
 			rc.Close()
 			if err != nil { return err }
 			xmlStr := string(content)
+			// Same XML sanitization as cmd/api: an unescaped "&" in a value
+			// produces a document Word refuses to open.
 			for k, v := range replaceMap {
-				xmlStr = replaceFracturedXML(xmlStr, k, fmt.Sprint(v))
+				xmlStr = replaceFracturedXML(xmlStr, k, core.SanitizeDocxValue(fmt.Sprint(v)))
 			}
 			if _, err = fWriter.Write([]byte(xmlStr)); err != nil { return err }
 		} else {
@@ -89,7 +93,9 @@ func mergeDocxLogic(templatePath, jsonPath, outputPath string) error {
 			rc.Close()
 		}
 	}
-	return w.Close()
+	if err := w.Close(); err != nil { return fmt.Errorf("zip close: %w", err) }
+	if err := outf.Close(); err != nil { return fmt.Errorf("output close: %w", err) }
+	return core.ValidateDocxXML(outputPath)
 }
 
 func main() {

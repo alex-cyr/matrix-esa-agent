@@ -145,7 +145,7 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 		if err != nil {
 			return err
 		}
-		needProcess := f.Name == "word/document.xml" || strings.HasPrefix(f.Name, "word/header") || strings.HasPrefix(f.Name, "word/footer")
+		needProcess := core.IsProcessedDocxPart(f.Name)
 		fWriter, err := w.Create(f.Name)
 		if err != nil {
 			rc.Close()
@@ -162,9 +162,13 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 			// Step 1: Un-fracture Microsoft Word split XML tags inside {{...}}
 			xmlStr = unfractureDocxXML(xmlStr)
 
-			// Step 2: Replace all JSON key/value pairs cleanly
+			// Step 2: Replace all JSON key/value pairs cleanly.
+			// Values are XML-sanitized at insertion: an unescaped "&" in a
+			// value such as "Diane & Brian J. Pete" produced a document Word
+			// refused to open.
 			for k, v := range replaceMap {
 				valStr := cleanBracketsAndPunctuation(fmt.Sprint(v))
+				valStr = core.SanitizeDocxValue(valStr)
 				xmlStr = replaceTag(xmlStr, k, valStr)
 			}
 
@@ -190,7 +194,20 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 			rc.Close()
 		}
 	}
-	return w.Close()
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("zip close error: %w", err)
+	}
+	if err := outf.Close(); err != nil {
+		return fmt.Errorf("output close error: %w", err)
+	}
+
+	// Post-merge validation. A docx Word cannot open must never be reported as
+	// success, so a malformed artifact fails the request here -- before the
+	// caller uploads it to GCS or hands the EP a download link.
+	if err := core.ValidateDocxXML(outputPath); err != nil {
+		return err
+	}
+	return nil
 }
 
 const modelID = "gemini-2.5-pro"
