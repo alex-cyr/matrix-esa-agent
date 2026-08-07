@@ -184,7 +184,11 @@ func main() {
 	for _, d := range corpus.Docs {
 		slog.Info("/// INGESTING HISTORICAL REPORT (CONTEXT) ///", "file", d.Name, "chars", len(d.Text))
 	}
-	templateCfg.SystemPrompt += corpus.PromptBlock()
+	// The ASTM Synthesizer writes the actual rationales and regulatory lingo,
+	// so it needs the same style baseline as the Template Compiler.
+	baseline := corpus.PromptBlock()
+	astmCfg.SystemPrompt += baseline
+	templateCfg.SystemPrompt += baseline
 
 	if *warmHistorical {
 		slog.Info("/// HISTORICAL CACHE WARM /// exiting without running pipeline",

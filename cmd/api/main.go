@@ -206,17 +206,9 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 	if err != nil {
 		return nil, nil, err
 	}
-	astmAgent, err := newAgent("ASTMSynthesizerAgent", skillASTM, 0.2)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	templatePrompt, err := core.LoadSkill(skillTemplate)
-	if err != nil {
-		return nil, nil, err
-	}
 	// Historical reports are PDFs. They used to be concatenated into the prompt
 	// as raw file bytes; now they are transcribed once and cached on disk.
+	// Loaded before the downstream agents because both of them consume it.
 	histAgent, err := newAgent("HistoricalExtractorAgent", skillHistorical, 0.0)
 	if err != nil {
 		return nil, nil, err
@@ -234,10 +226,29 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 	if len(corpus.Docs) == 0 {
 		slog.Warn("NO HISTORICAL STYLE BASELINE: output tone will be unanchored", "dir", historicalDir)
 	}
+	baseline := corpus.PromptBlock()
 
+	// The ASTM Synthesizer writes the actual rationales and regulatory lingo,
+	// so it needs the same style baseline as the Template Compiler.
+	astmPrompt, err := core.LoadSkill(skillASTM)
+	if err != nil {
+		return nil, nil, err
+	}
+	astmAgent, err := core.NewAgent(ctx, projectID, location, core.AgentConfig{
+		Name: "ASTMSynthesizerAgent", Model: modelID,
+		SystemPrompt: astmPrompt + baseline, Temperature: 0.2,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	templatePrompt, err := core.LoadSkill(skillTemplate)
+	if err != nil {
+		return nil, nil, err
+	}
 	templateCfg := core.AgentConfig{
 		Name: "TemplateCompilerAgent", Model: modelID,
-		SystemPrompt: templatePrompt + corpus.PromptBlock(), Temperature: 0.2,
+		SystemPrompt: templatePrompt + baseline, Temperature: 0.2,
 	}
 	templateAgent, err := core.NewAgent(ctx, projectID, location, templateCfg)
 	if err != nil {
