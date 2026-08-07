@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -93,10 +94,31 @@ func replaceTag(xmlStr, tagKey, valStr string) string {
 	cleanK = strings.TrimPrefix(strings.TrimSuffix(cleanK, "}"), "{")
 	cleanK = strings.TrimSpace(cleanK)
 
-	exactTag := fmt.Sprintf("{{%s}}", cleanK)
-	xmlStr = strings.ReplaceAll(xmlStr, exactTag, valStr)
-	xmlStr = strings.ReplaceAll(xmlStr, cleanK, valStr)
-	return xmlStr
+	// Exact {{Key}} only. The bare-key fallback that used to follow matched
+	// substrings anywhere in the XML, so "ParcelID" also hit "SiteParcelID"
+	// and short keys hit longer ones containing them. Because Go randomizes
+	// map iteration order, which key won varied per run -- the same payload
+	// could produce a different document every time.
+	return strings.ReplaceAll(xmlStr, fmt.Sprintf("{{%s}}", cleanK), valStr)
+}
+
+var unreplacedTagRe = regexp.MustCompile(`\{\{([^{}]{1,120})\}\}`)
+
+// findUnreplacedTags returns the distinct {{Tag}} names still present. This is
+// the raw material for the Phase 4 validator.
+func findUnreplacedTags(xmlStr string) []string {
+	seen := map[string]bool{}
+	var out []string
+	for _, m := range unreplacedTagRe.FindAllStringSubmatch(xmlStr, -1) {
+		name := strings.TrimSpace(m[1])
+		if name == "" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		out = append(out, name)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) error {
@@ -146,7 +168,14 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 				xmlStr = replaceTag(xmlStr, k, valStr)
 			}
 
-			// Step 3: Global cleanup of leftover {{ and }} brackets
+			// Step 3: report what the payload failed to fill, before the
+			// global brace strip erases the evidence.
+			if leftover := findUnreplacedTags(xmlStr); len(leftover) > 0 {
+				slog.Error("UNREPLACED TEMPLATE TAGS", "part", f.Name,
+					"count", len(leftover), "tags", leftover)
+			}
+
+			// Step 4: Global cleanup of leftover {{ and }} brackets
 			xmlStr = regexp.MustCompile(`\{\{+`).ReplaceAllString(xmlStr, "")
 			xmlStr = regexp.MustCompile(`\}\}+`).ReplaceAllString(xmlStr, "")
 
@@ -165,6 +194,11 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 }
 
 const modelID = "gemini-2.5-pro"
+
+// maxOutputTokens is set explicitly on every agent: the compiler emits ~280
+// JSON keys, and relying on an unstated server-side default risks silent
+// truncation into blank template fields.
+const maxOutputTokens int32 = 65535
 
 const (
 	skillParser     = ".agents/skills/parser/SKILL.md"
@@ -191,6 +225,7 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 		}
 		return core.NewAgent(ctx, projectID, location, core.AgentConfig{
 			Name: name, Model: modelID, SystemPrompt: prompt, Temperature: temp,
+			MaxOutputTokens: maxOutputTokens,
 		})
 	}
 
@@ -237,6 +272,7 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 	astmAgent, err := core.NewAgent(ctx, projectID, location, core.AgentConfig{
 		Name: "ASTMSynthesizerAgent", Model: modelID,
 		SystemPrompt: astmPrompt + baseline, Temperature: 0.2,
+		MaxOutputTokens: maxOutputTokens,
 	})
 	if err != nil {
 		return nil, nil, err
@@ -249,6 +285,10 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 	templateCfg := core.AgentConfig{
 		Name: "TemplateCompilerAgent", Model: modelID,
 		SystemPrompt: templatePrompt + baseline, Temperature: 0.2,
+		MaxOutputTokens: maxOutputTokens,
+		// Its entire yield is one JSON object, so the response is guaranteed
+		// parseable and the brace-hunting heuristic downstream is unnecessary.
+		ResponseMIMEType: "application/json",
 	}
 	templateAgent, err := core.NewAgent(ctx, projectID, location, templateCfg)
 	if err != nil {
@@ -602,16 +642,23 @@ func cleanBracketsAndPunctuation(s string) string {
 	return s
 }
 
-func injectFieldDefaults(payloadJSON string, projName string, answers map[string]string) string {
+// injectFieldDefaults applies the few deterministic corrections that must run
+// after the model: project-number normalization, EP pre-screen answers, and one
+// layout hack.
+//
+// Everything else -- recipient block, salutation, authorization wording, site
+// address -- belongs to the template-compiler skill (rules 3 and 6). It used to
+// be hardcoded here to one client's details (Arkan Homes / Morningpark Cir /
+// Gwinnett County), which silently overwrote correct model output and pinned
+// every generated report to that client regardless of the actual project.
+func injectFieldDefaults(payloadJSON string, answers map[string]string) string {
 	var m map[string]interface{}
 	_ = json.Unmarshal([]byte(payloadJSON), &m)
 	if m == nil {
 		m = make(map[string]interface{})
 	}
 
-	cleanProj := strings.ReplaceAll(projName, "_", " ")
-
-	// Strip MEG- from ProjectNo if template already has MEG prefix
+	// The template already prints a "MEG" prefix; strip a duplicated one.
 	if pNum, ok := answers["project_number"]; ok && pNum != "" {
 		cleanNum := strings.TrimPrefix(pNum, "MEG-")
 		cleanNum = strings.TrimPrefix(cleanNum, "MEG ")
@@ -620,7 +667,7 @@ func injectFieldDefaults(payloadJSON string, projName string, answers map[string
 		m["ProjectNo"] = strings.TrimPrefix(strings.TrimPrefix(str, "MEG-"), "MEG ")
 	}
 
-	// Dynamic Parcel ID & Acreage from Pre-Screening answers
+	// EP pre-screen answers outrank the model: a human typed these.
 	if pID, ok := answers["parcel_id"]; ok && pID != "" {
 		m["parcel_id"] = cleanBracketsAndPunctuation(pID)
 		m["ParcelID"] = cleanBracketsAndPunctuation(pID)
@@ -631,42 +678,17 @@ func injectFieldDefaults(payloadJSON string, projName string, answers map[string
 		m["SiteAcreage"] = cleanBracketsAndPunctuation(acreage)
 	}
 
-	// Subject property address for Cover Page under 'At'
-	if str, ok := m["SiteStreetAddress"].(string); !ok || str == "" || strings.Contains(str, "SiteStreetAddress") {
-		m["SiteStreetAddress"] = cleanProj
-	}
-	if str, ok := m["SiteCityStateZip"].(string); !ok || str == "" || strings.Contains(str, "SiteCityStateZip") || strings.Contains(str, "12690 Morningpark") {
-		m["SiteCityStateZip"] = "Gwinnett County, Georgia"
-	}
-	if str, ok := m["SiteFullAddress"].(string); !ok || str == "" || strings.Contains(str, "SiteFullAddress") {
-		m["SiteFullAddress"] = cleanProj + ", Gwinnett County, Georgia"
-	}
-
-	// Client recipient mailing address for 'Submitted to' block
-	if str, ok := m["Proposal_To1"].(string); !ok || str == "" || strings.Contains(str, "Proposal_To1") {
-		m["Proposal_To1"] = answers["client_spelling"]
-		if m["Proposal_To1"] == "" {
-			m["Proposal_To1"] = "Arkan Homes, LLC"
-		}
-	}
-	if str, ok := m["Proposal_To2"].(string); !ok || str == "" || strings.Contains(str, "Proposal_To2") {
-		m["Proposal_To2"] = "Attn: Mr. Ihssan Hashem"
-	}
-	m["Proposal_To3"] = "12690 Morningpark Cir"
-	m["Proposal_To4"] = "Roswell, GA 30075"
-
-	// Clear top text box tags to prevent Page 2 logo overlap and keep signature block on Page 2
+	// Layout hack: populating these cover-letter text boxes overlaps the page-2
+	// logo and pushes the signature block off page 2.
 	m["Proposal_Letter1"] = ""
 	m["Proposal_Letter2"] = ""
 	m["Proposal_Letter3"] = ""
 	m["Proposal_Letter4"] = ""
 	m["Proposal_Letter5"] = ""
 
-	m["User_Salutation"] = "Mr. Hashem"
-	m["User_Authorization"] = "signed proposal dated July 06, 2026."
-	m["User_ClientName"] = fmt.Sprint(m["Proposal_To1"])
-
-	// Clean out raw tag wrappers inside payload keys and values
+	// Normalize keys and values that arrive wrapped in their own braces. Kept
+	// deliberately: with replaceTag now matching {{Key}} exactly, a key the
+	// model emitted as "{{SiteAcres}}" would otherwise never match anything.
 	cleanedMap := make(map[string]interface{})
 	for k, v := range m {
 		cleanK := strings.TrimPrefix(strings.TrimSuffix(k, "}}"), "{{")
@@ -823,7 +845,11 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 
 	projNum := req.Answers["project_number"]
 	if projNum == "" {
-		projNum = "MEG-303259"
+		// No silent stand-in: a wrong project number stamped on every appendix
+		// figure frame is worse than a visibly missing one. Matches the
+		// convention in template-compiler SKILL.md rule 5.
+		projNum = "[MEG DATAGAP: INSERT PROJECT NUMBER]"
+		slog.Warn("NO PROJECT NUMBER SUPPLIED", "project", req.ProjectName)
 	}
 	appPkg := core.NewAppendixPackage(req.ProjectName, projNum, req.CategorizedFiles)
 	fullExtractedData += "\n\n" + appPkg.GenerateAppendixSummary()
@@ -836,13 +862,9 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	startIdx := strings.Index(finalPayload, "{")
-	endIdx := strings.LastIndex(finalPayload, "}")
-	if startIdx != -1 && endIdx != -1 && endIdx > startIdx {
-		finalPayload = finalPayload[startIdx : endIdx+1]
-	}
-
-	finalPayload = injectFieldDefaults(finalPayload, req.ProjectName, req.Answers)
+	// No brace-hunting: the compiler runs with ResponseMIMEType
+	// "application/json", so its yield is a JSON object by construction.
+	finalPayload = injectFieldDefaults(finalPayload, req.Answers)
 
 	templatePath := "knowledge/ESA_PHASE_I_Template.docx"
 	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
