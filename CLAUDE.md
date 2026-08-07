@@ -359,13 +359,62 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   agents to it** — the digest is a reviewable style asset, not just a prompt.
 
 **PHASE 6 — backlog (each needs its own go-ahead).**
-- Dynamic prescreen: replace the hardcoded 4 questions with real data-gap
+- **Dynamic prescreen.** Replace the hardcoded 4 questions with real data-gap
   questions derived from parsing uploads at prescreen time; cache those parse
   results and reuse in `/generate` so parsing isn't paid twice. Remove the
   pre-filled fake answers — parcel `10-123-456` must never be a default. Add a
   free-text "Other / additional information" question wired into the answers
   flow, labeled in the payload as user-provided **actual knowledge** so the ASTM
   skill's Actual Knowledge Override rule picks it up.
+
+  **Design principle — what may be asked.** A question is legitimate only if it
+  asks for either:
+  (a) a fact that exists solely in the user's head — authorization, client
+  entity spelling, parcel IDs; or
+  (b) a document-derived fact whose **source document is absent** from the
+  uploads — e.g. surface `SV_*` site-visit questions ONLY when no recon
+  checklist was detected.
+
+  **Never ask for data that is sitting in an uploaded document.** Doing so masks
+  an extraction failure behind a human answer: the pipeline looks healthy while
+  the parser silently fails, and the defect resurfaces on the next project where
+  nobody happens to fill the field in.
+
+  **Every dynamic question carries a source-of-truth note in its `Context`
+  field**, so the EP knows why it is being asked — "No site recon checklist
+  found in uploads" vs "Value conflicts between the proposal and the EDR
+  package". Without it the EP cannot judge whether answering is appropriate or
+  whether something upstream is broken.
+
+  **Permanent structured question — authorization.** "How was this work
+  authorized?" with options [Signed Proposal / Purchase Order / Other] plus the
+  relevant date field(s). The `User_Authorization` sentence is then **composed
+  in Go** per template-compiler rule 6 and injected via `injectFieldDefaults` —
+  deterministic, never model-dependent. This kills both observed defects on that
+  field at once: the blank value, and the splice duplication ("This work was
+  performed in accordance with Matrix Engineering Group was authorized under
+  signed proposal dated July 06, 2026..").
+
+- **`SV_*` blanking is NOT a prescreen problem** — it belongs to the Phase 4
+  validator plus the SiteRecon handoff. Do not paper over it with questions.
+
+  Open investigation: SiteRecon emitted only **520 tokens** on the Providence
+  Road run. **Ruled out:** a missing source document —
+  `Site_Recon_Checklist_Providence Road Properties.pdf` *was* in the uploads.
+  Remaining hypotheses, in rough order of likelihood:
+  1. The compiler under-consumes SiteRecon's output. SiteRecon emits JSON keyed
+     by literal `{{Sec8_*}}` tags, but it is not the final payload — the
+     Template Compiler must carry those values into its own JSON, and nothing
+     verifies that it did.
+  2. SiteRecon cannot locate the checklist data. Its skill says it "receives the
+     raw JSON checklist data from the Parser Agent", but `Pipeline.Run` hands it
+     the entire accumulated payload — every parser extract plus the Geospatial
+     output — with no isolation of the checklist.
+  3. The skill is thin. site-recon-synthesizer is by far the shortest skill in
+     the repo; compare template-compiler's ~290 lines.
+
+  The per-node token logging added in `e25e5e6` will show input and output sizes
+  for this node on the next run, which should separate hypothesis 2 from 1.
 - `/download`: add `enforceDomainAuth` + sanitize the `file` param
   (`filepath.Base`, restrict to the generate temp dirs) — it currently serves
   arbitrary paths with no auth.
