@@ -814,6 +814,8 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 		} else if ext == ".jpg" || ext == ".jpeg" {
 			mimeType = "image/jpeg"
 		}
+		slog.Info("PARSER NODE ENGAGED", "file", filepath.Base(localPath),
+			"bytes", len(fileBytes), "mime", mimeType)
 		res, err := parserAgent.Execute(ctx, genai.Text("Extract text and tables from this document: "+filepath.Base(localPath)), genai.Blob{MIMEType: mimeType, Data: fileBytes})
 		if err != nil {
 			// A dropped file used to vanish from the payload with no trace,

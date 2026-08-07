@@ -48,9 +48,19 @@ func (p *Pipeline) Run(ctx context.Context, initialPayload string) (string, erro
 	slog.Info("MATRIX EXECUTABLE LOADED: Initializing SequentialAgent Pipeline", "nodes", len(p.Agents))
 
 	currentPayload := initialPayload
+	var cumulativeEstTokens int
 	for i, agent := range p.Agents {
-		slog.Info("/// NODE ENGAGED ///", "name", agent.Cfg.Name, "sequence_step", i+1)
 		validPayload := strings.ToValidUTF8(currentPayload, "")
+		// Logged before the call: a context-limit rejection returns an error
+		// with no UsageMetadata, so this is the only record of what we sent.
+		// chars/4 is a crude undercount for table-dense text -- exact counts
+		// come from UsageMetadata in the NODE YIELD line when a node succeeds.
+		sysChars, payChars := len(agent.Cfg.SystemPrompt), len(validPayload)
+		cumulativeEstTokens += (sysChars + payChars) / 4
+		slog.Info("/// NODE ENGAGED ///", "name", agent.Cfg.Name, "sequence_step", i+1,
+			"system_prompt_chars", sysChars, "payload_chars", payChars,
+			"est_input_tokens", (sysChars+payChars)/4,
+			"cumulative_est_tokens", cumulativeEstTokens)
 		artifact, err := agent.Execute(ctx, genai.Text(validPayload))
 		if err != nil {
 			slog.Error("/// NODE FAILED /// aborting pipeline", "agent", agent.Cfg.Name, "sequence_step", i+1, "err", err)
