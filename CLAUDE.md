@@ -180,26 +180,56 @@ passes and the docx is reviewed externally.
   `UpN`/`DownN` slots be emitted as `""` (same trailing-empty convention as the
   Proposal lines).
 
+**PHASE 5 PREP — corpus inventory.** Read-only, zero model calls. May run any
+time after the nil-extractor verification, in parallel with Phase 2. One row per
+cached transcript: source filename | report year | ASTM version cited
+(`E 1527-13` vs `E 1527-21`) | county | property type (residential / commercial /
+institutional / vacant-undeveloped / large tract) | outcome (clean = "revealed no
+evidence" vs REC-present = "revealed the following") | approx tokens.
+
+Flag specifically: any **vacant/undeveloped-land** report (highest-relevance
+exemplar for Providence Road, and template-compiler SKILL.md references Section
+4.2 undeveloped verbiage), any **Fulton County** report, and **every E1527-13
+citation**.
+
+Elias picks keeps from the table and deletes the rest from `historical/` by hand
+— the Hard rules bar Claude from touching that folder. Deletions only shift the
+directory fingerprint; orphaned cache entries are harmless and can be pruned in
+the same commit window if asked.
+
+**Branch decision (resolved by the inventory):** if a substitute
+clean/small-parcel exemplar exists among the cached transcripts, Phase 5 proceeds
+as ordered with the substitute and Homestead is grafted in after Phase 6's GCS
+work. If none exists, pull the Phase 6 GCS `FileData` extraction forward ahead of
+Phase 5. **Record whichever branch fires here.**
+
 **PHASE 5 — style digest replaces the raw corpus.** The warmed corpus is
-~1.2 MB ≈ 275k tokens, attached to *two* agents (~550k tokens/report). Replace
-`corpus.PromptBlock()` with a generated `knowledge/style_baseline.md`:
-- Tier 1: every verbatim-identical passage across the corpus, stated once
-  (Section 9.0 opener, transmittal closing, §3.2.21 data-gap definition,
-  header/footer formats, questionnaire default, radon formula).
-- Tier 2: formulas with variant families (Section 10 Opinions opener + its three
-  clean closing variants + the enumerated REC-present format; Section 9
-  numbered-finding ordering — 1=location/parcel/owner, 2=topography, then
-  history, then regulatory; aerial-description grouping style).
-- Plus 2–3 full exemplar transcripts: Homestead (clean/small), Rockdale
-  (REC-present), one institutional. **Ordering conflict:** Homestead is 20.1 MB
-  and fails inline extraction, so it has no transcript until the Phase 6 GCS
-  `FileData` work lands. Either pull that item forward ahead of Phase 5 or
-  build the digest with a substitute clean/small exemplar and add Homestead
-  later.
-- **Exclude Cross Keys 2022 from Tier 1 sourcing — it cites superseded
-  E1527-13.** Add a guardrail to both consuming skills: "baselines may cite
-  older ASTM versions; always cite E1527-21."
-- Target ~60–80k tokens. Flag for human review before it goes live.
+~1.2 MB ≈ 275k tokens, attached to *two* agents (~550k tokens/report). Generate
+**once** from the kept transcripts into `knowledge/style_baseline.md`. Both
+consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
+`corpus.PromptBlock()`; the raw corpus stops shipping in prompts entirely.
+
+- **Tier 1 — canonical blocks, stated once each.** Every passage
+  verbatim-identical across the kept corpus. Known so far: Section 9.0 opener,
+  transmittal closing ("...looks forward to our continued association..."),
+  §3.2.21 data-gap definition, running header/footer formats,
+  questionnaire-pending default, radon county formula. **Verify identity by
+  diffing across transcripts — do not assume.**
+- **Tier 2 — formulas with variant families.** Section 10 Opinions opener plus
+  its clean-closing variants and the enumerated REC-present format; Section 9
+  numbered-finding ordering (1 = location/parcel/owner, 2 = topography, then
+  history, then regulatory); Section 5.1 aerial grouping style (year-ranges
+  sharing one description).
+- **Plus 2–3 full exemplar transcripts appended whole:** one clean/small-parcel
+  (Homestead or inventory substitute), one REC-present (Rockdale), one
+  institutional or large-tract.
+- **Exclude Cross Keys 2022 and any other E1527-13 report from Tier 1 sourcing
+  entirely.**
+- Add one guardrail line to both consuming skills: *"Baseline reports may cite
+  older ASTM versions; always cite E 1527-21 regardless of baseline phrasing."*
+- Target **60–80k tokens** total. Write the file, report its actual token count
+  and what went into each tier, then **STOP for human review before wiring the
+  agents to it** — the digest is a reviewable style asset, not just a prompt.
 
 **PHASE 6 — backlog (each needs its own go-ahead).**
 - Dynamic prescreen: replace the hardcoded 4 questions with real data-gap
