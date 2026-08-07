@@ -68,9 +68,9 @@ Key behaviors to know before changing anything here:
 
 The template is a plain Word file whose text contains `{{TagName}}` placeholders (the full inventory is in `docx_tags.txt`). `mergeDocxLogic` unzips it, and for `word/document.xml` + every `word/header*` / `word/footer*`:
 
-1. `unfractureDocxXML` strips Word's run-splitting XML from *inside* `{{...}}` — Word routinely shatters a placeholder across `<w:r>` runs, so naive replacement misses it.
+1. `unfractureDocxXML` runs two passes. **(a)** Rejoins brace pairs Word split across runs — in `header9`/`header10` the *opening* `{{` of `{{ReportDate}}` is two separate `<w:t>` runs, which the complete-tag regex cannot see, so that tag survived into a delivered report. **(b)** Strips the run-splitting markup from *inside* now-complete `{{...}}`. Pass (a) is bounded to 12 intervening tags so two unrelated braces cannot be welded into a placeholder.
 2. Each value is passed through `core.SanitizeDocxValue`, then substituted for its **exact** `{{Key}}` only.
-3. Any `{{Tag}}` still present is logged at error level (`UNREPLACED TEMPLATE TAGS`) — this is the input to the Phase 4 validator.
+3. Any `{{Tag}}` still present is logged at error level (`UNREPLACED TEMPLATE TAGS`), **and** orphaned `{{` with no close is logged separately (`FRACTURED TAG SURVIVORS`). The second count exists because the first is blind to fractured survivors — the Providence Road run reported 13 unfilled tags when 15 were actually unfilled. Both feed the Phase 4 validator.
 4. Leftover `{{` / `}}` are stripped globally.
 5. **Post-merge validation** (`core.ValidateDocxXML`) re-opens the written file and parses every rewritten part. A malformed artifact fails the request; it is never uploaded to GCS or offered for download.
 
@@ -122,6 +122,93 @@ The binary reads `.agents/`, `knowledge/`, and `historical/` **relative to the w
 
 
 
+
+## EP-caught errors
+
+Failure modes found by Environmental Professional review of delivered drafts.
+These are permanent institutional memory: each one shipped, looked correct, and
+was caught by a human rather than by any check in this repo. **Do not weaken or
+"simplify" the guards listed here.**
+
+### 1. Fabricated REC from a misidentified field artifact (Providence Road)
+
+The pipeline asserted a REC for a potential former septic component. The feature
+was actually a water meter / well cap. **The reasoning chain was internally
+valid; the premise was false** — and a sound argument from a false premise
+produces a fabricated finding in a signed, sealed report. This is the most
+dangerous failure mode in the system precisely because the output reads as
+rigorous.
+
+Fixed across three skills, defence in depth at each stage where the error could
+enter:
+- **parser** — *Verbatim Label Protocol.* Photo tags and survey callouts carry
+  the original wording ("paved over junction box"), never a normalized
+  interpretation. Normalization smuggles in a conclusion the inspector never
+  made, and downstream agents cannot tell it from an observation.
+- **site-recon-synthesizer** — *Ambiguous Feature Rule.* Describe, never
+  diagnose. Neutral physical description plus
+  `[UNIDENTIFIED UTILITY FEATURE — EP TO VERIFY: <verbatim label>]`.
+- **astm-synthesizer** — *Field-Observation Confidence Gate.* A
+  field-derived REC requires EXPLICIT identification in the checklist or a photo
+  tag. Caps, boxes, cleanouts, meters, vaults and paved-over fittings are never
+  classified as septic/UST/AST/waste infrastructure.
+
+The gate is deliberately scoped to **field observations only**. Regulatory
+listings and documentary evidence are evaluated normally — the rule removes
+invented findings, not real ones.
+
+### 2. Splice duplication
+
+Template lead-in text plus a value that restated the lead-in produced doubled
+sentences in the delivered report (`User_Authorization`, `Sec4_4`, topographic
+summary, Section 10 Opinions opener). Values must *continue* the template's
+surrounding sentence, never restate it, and must not add a period the template
+already supplies. Fixed in template-compiler SKILL.md.
+
+### 3. Emptied letter recipient block, and the overlap it was hiding
+
+The unconditional `Proposal_Letter1-5` blanking in `injectFieldDefaults` wiped
+Providence Road's letter recipient block, and contradicted template-compiler
+rule 3, which instructs the model to populate those very lines.
+
+**The overlap it suppressed was never caused by address lines.** A historical
+screenshot identified the real defect: an earlier pipeline routed body
+paragraph prose and the "Re:" subject block into the `Proposal_Letter` tags.
+Those render in **floating text boxes anchored near the page-2 header** — they
+expanded over the Matrix logo and pushed the signature block onto page 3.
+Blanking suppressed the symptom while destroying correct data.
+
+Retired, and replaced with two guards on the actual defect:
+- `auditPayloadValues` logs any `Proposal_To*` / `Proposal_Letter*` value over
+  60 characters as a probable misrouted value.
+- template-compiler rule 3 now states these are **short address lines only —
+  never sentences, never the "Re:" subject, never body prose.**
+
+If the overlap ever recurs, the cause is an over-long value, not the presence of
+values. Fix the routing; do not reinstate the blanking.
+
+### 4. Client address printed as the subject property
+
+The same historical screenshot showed the cover page reading "At 12690
+Morningpark Cir, Roswell, GA 30075" — the **client's mailing address** — while
+the actual subject property was Beavers Road Tract. This is precisely what
+template-compiler's **CRITICAL ADDRESS SEPARATION RULE** (rule 14) exists to
+prevent: `SiteStreetAddress` / `SiteCityStateZip` / `SiteFullAddress` come from
+the EDR target property, while `Proposal_To*` / `Proposal_Letter*` carry the
+client's corporate mailing address.
+
+**Rule 14 and rule 3 are both load-bearing. Neither is redundant boilerplate.**
+Between them they prevent a report that names the wrong property — the single
+most consequential error this system can make — and one that ships with no
+recipient at all.
+
+### 5. Splice duplication, seen in the wild
+
+The same artifact contains the delivered text: *"This work was performed in
+accordance with Matrix Engineering Group was authorized under signed proposal
+dated July 06, 2026.."* — the template lead-in, the restated lead-in, and a
+doubled period. Concrete evidence for the splice rule and trailing-punctuation
+rule in template-compiler SKILL.md.
 
 ## Known bugs to fix (in order)
 1. ~~main.go feeds raw .docx bytes (zip binary) from historical/ into the
@@ -180,6 +267,12 @@ passes and the docx is reviewed externally.
   slots; (b) missing substantive keys trigger exactly **one** re-prompt listing
   the absent keys; anything still missing becomes `[MEG DATAGAP: <key>]` so it
   is visible in the docx, never silently blank.
+
+**Confirmed target list (from the Providence Road run):** 13 unreplaced tags
+plus 2 fractured survivors in header parts. **`Sec9_Item1`–`Sec9_Item7` must be
+classed substantive-mandatory** — the compiler skipped the entire Section 9.0
+findings enumeration, which is the core of the report. A validator that let
+Sec9 keys fall through to `""` would reproduce exactly the delivered defect.
 - Update template-compiler SKILL.md: correct "160" to ~280, and require unused
   `UpN`/`DownN` slots be emitted as `""` (same trailing-empty convention as the
   Proposal lines).

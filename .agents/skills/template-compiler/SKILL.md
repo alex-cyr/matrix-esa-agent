@@ -55,7 +55,8 @@ You MUST populate the individual contextual variables within Section 9.0 FINDING
 ## Specific Content Rules
 1. **Incomplete Sections (Data Gaps Formatting)**: When listing data gaps in Section 2.6.2, do NOT introduce extra indents or line breaks before the numbered list. Maintain the template's flush alignment.
 2. **Undeveloped Land**: If an assessment is being conducted on undeveloped land or a new piece of land, refer to the verbiage used in Section 4.2 of the Static Report Template and follow that style / wording pattern as applicable.
-3. **Recipient Block**: To populate the recipient information block(s) in the "ESA PHASE I - Blank Template," refer to the user-provided proposal. You MUST extract the full mailing address fields individually. Map the Individual's Name to `{{Proposal_To1}}` and the Company Name to `{{Proposal_To2}}`. Map the Street Address to `{{Proposal_To3}}` and the City/State/Zip to `{{Proposal_To4}}`. DO NOT concatenate these strings. Each field must be assigned its own line to exactly match the recipient address block format in the Static Report Template. If a field (like Individual Name) is missing, assign the Company to `{{Proposal_To1}}`, Street to `{{Proposal_To2}}`, etc. Apply the same logic to `{{Proposal_Letter1}}` through `{{Proposal_Letter5}}` for the cover letter. CRITICAL: Do NOT put the Proposal's "Subject" line into `{{Proposal_To5}}` or `{{Proposal_Letter5}}`. If the recipient address requires fewer than 5 lines, you MUST populate the trailing unused lines as an exact empty string `""` to preserve visual carriage-return spacing.
+3. **Recipient Block**: To populate the recipient information block(s) in the "ESA PHASE I - Blank Template," refer to the user-provided proposal. You MUST extract the full mailing address fields individually. Map the Individual's Name to `{{Proposal_To1}}` and the Company Name to `{{Proposal_To2}}`. Map the Street Address to `{{Proposal_To3}}` and the City/State/Zip to `{{Proposal_To4}}`. DO NOT concatenate these strings. Each field must be assigned its own line to exactly match the recipient address block format in the Static Report Template. If a field (like Individual Name) is missing, assign the Company to `{{Proposal_To1}}`, Street to `{{Proposal_To2}}`, etc. Apply the same logic to `{{Proposal_Letter1}}` through `{{Proposal_Letter5}}` for the cover letter.
+   **SHORT ADDRESS LINES ONLY — HARD CONSTRAINT.** `Proposal_To*` and `Proposal_Letter*` values are single address-block lines: a name, a company, a street, a city/state/zip. **Never a sentence. Never the "Re:" subject block. Never body prose.** These tags render inside floating text boxes anchored near the page-2 header; anything longer expands the box over the Matrix logo and pushes the signature block onto page 3. An earlier pipeline did exactly this. If a value here would exceed roughly 60 characters, it is the wrong value for this tag. CRITICAL: Do NOT put the Proposal's "Subject" line into `{{Proposal_To5}}` or `{{Proposal_Letter5}}`. If the recipient address requires fewer than 5 lines, you MUST populate the trailing unused lines as an exact empty string `""` to preserve visual carriage-return spacing.
 4. **Dates**: Use the present-day report date unless the user explicitly provides a different date. If the user provides a date, use the user-provided date.
 5. **Project Number**: If the Project Number is absent from the context, you MUST yield the literal string `[MEG DATAGAP: INSERT PROJECT NUMBER]` for `{{ProjectNo}}` so the user can easily CTRL+F and update the final Word document.
 6. **User Authorization / Verbiage**: Look for a Purchase Order or signed Proposal in the context. For `{{User_Authorization}}`: IF a Purchase Order exists, populate with "This work was performed in accordance with Purchase Order [PO Number] which was emailed to [Name] on [Date]." IF NO Purchase Order exists but a signed Proposal exists, populate with "This work was performed in accordance with our proposal dated [Proposal Date] and approved on [Approval Date]."
@@ -285,6 +286,37 @@ Do not yield conversational text. Map your generated data directly into the foll
   "{{ReportDate}}": "string"
 }
 ```
-*(This is a structural excerpt; apply this exact map to generate a payload capable of completing all 160 variables directly derived from context)*
+*(This is a structural excerpt; apply this exact map to generate a payload capable of completing all ~280 variables directly derived from context. The template contains 272 distinct tags: ~102 substantive keys plus 170 table slots — `Up1-14_*` and `Down1-20_*`.)*
+
+## SPLICE RULE — CONTINUE THE SENTENCE, NEVER RESTATE IT (EP-CAUGHT FAILURE)
+
+Every value you emit is spliced into a sentence the template has already begun.
+**Read the template text immediately before each tag and continue it.** Restating
+the lead-in produces doubled sentences in the delivered report.
+
+Observed duplications: `User_Authorization`, `Sec4_4`, the topographic summary,
+and the Section 10 Opinions opener.
+
+- Template: `Matrix was authorized to perform this work under ` + `{{User_Authorization}}`
+  - Correct: `a signed proposal dated July 6, 2026.`
+  - Wrong: `Matrix was authorized to perform this work under a signed proposal dated July 6, 2026.`
+
+**Trailing punctuation:** if the template already supplies the period, do not
+include one. Check whether the character after the tag is `.` before adding your
+own.
+
+## UNUSED TABLE SLOTS
+
+Unused `UpN_*` and `DownN_*` slots MUST be emitted as an empty string `""` —
+never omitted. This mirrors the trailing-empty convention already required for
+`Proposal_To*` / `Proposal_Letter*` lines. Omitting a key leaves its raw
+placeholder or a blank gap in the delivered table.
+
+## PARCEL IDENTIFIERS (SECTION 3.1)
+
+If the EP pre-screen answers supply more than one parcel ID, **every** one must
+appear in Section 3.1. Multi-parcel sites are common; silently rendering only
+the first understates the assessed property boundary. List them exactly as the
+EP entered them.
 
 Once compiled into the JSON buffer, flag the Pipeline orchestrator that generation is complete.

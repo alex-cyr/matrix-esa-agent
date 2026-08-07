@@ -80,13 +80,71 @@ func authUserHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// unfractureDocxXML strips internal Word XML formatting tags inside {{...}} placeholders so tags un-fracture cleanly.
+var (
+	// Word splits placeholders across runs. In header9/header10 the OPENING
+	// "{{" of {{ReportDate}} is two separate <w:t> runs:
+	//   <w:t>   {</w:t></w:r><w:proofErr w:type="gramEnd"/><w:r><w:t>{</w:t>
+	// The complete-tag regex below cannot see that, so the tag survived into the
+	// delivered document. Rejoin brace pairs separated only by markup.
+	//
+	// Bounded to 12 intervening tags so two unrelated braces far apart in body
+	// text cannot be accidentally welded into a placeholder.
+	splitOpenBraceRe  = regexp.MustCompile(`\{(?:<[^<>]*>){1,12}\{`)
+	splitCloseBraceRe = regexp.MustCompile(`\}(?:<[^<>]*>){1,12}\}`)
+
+	xmlTagRe = regexp.MustCompile(`<[^>]+>`)
+)
+
+// unfractureDocxXML rejoins placeholders that Word split across runs, then
+// strips the internal formatting markup from inside them.
 func unfractureDocxXML(xmlStr string) string {
+	// Step A: rejoin braces separated only by markup.
+	xmlStr = splitOpenBraceRe.ReplaceAllString(xmlStr, "{{")
+	xmlStr = splitCloseBraceRe.ReplaceAllString(xmlStr, "}}")
+
+	// Step B: strip markup from inside now-complete {{...}} tags.
 	reXMLInsideTag := regexp.MustCompile(`\{\{([^{}]+)\}\}`)
 	return reXMLInsideTag.ReplaceAllStringFunc(xmlStr, func(m string) string {
-		noXML := regexp.MustCompile(`<[^>]+>`).ReplaceAllString(m, "")
-		return noXML
+		return xmlTagRe.ReplaceAllString(m, "")
 	})
+}
+
+// maxAddressLineChars is the length beyond which a Proposal_To / Proposal_Letter
+// value is almost certainly not an address line.
+const maxAddressLineChars = 60
+
+// auditPayloadValues logs values that look misrouted into the cover-letter
+// address blocks.
+//
+// Those tags render inside floating text boxes anchored near the page-2 header.
+// An earlier pipeline routed body prose and the "Re:" subject block into them;
+// the boxes expanded over the Matrix logo and pushed the signature block onto
+// page 3. The old fix blanked the tags unconditionally, which destroyed correct
+// recipient data. This detects the actual defect instead.
+func auditPayloadValues(replaceMap map[string]interface{}) {
+	for k, v := range replaceMap {
+		if !strings.Contains(k, "Proposal_To") && !strings.Contains(k, "Proposal_Letter") {
+			continue
+		}
+		s := strings.TrimSpace(fmt.Sprint(v))
+		if len(s) <= maxAddressLineChars {
+			continue
+		}
+		preview := s
+		if len(preview) > 120 {
+			preview = preview[:120] + "..."
+		}
+		slog.Error("SUSPECT ADDRESS-BLOCK VALUE", "key", k, "chars", len(s),
+			"limit", maxAddressLineChars, "value", preview,
+			"note", "Proposal_To/Proposal_Letter are short address lines; prose here inflates the floating text boxes and displaces the signature block")
+	}
+}
+
+// countOrphanOpenBraces counts "{{" that is not part of a complete {{Tag}}.
+// findUnreplacedTags is blind to fractured survivors, which is why the
+// Providence Road run reported 13 unfilled tags when 15 were actually unfilled.
+func countOrphanOpenBraces(xmlStr string) int {
+	return strings.Count(unreplacedTagRe.ReplaceAllString(xmlStr, ""), "{{")
 }
 
 func replaceTag(xmlStr, tagKey, valStr string) string {
@@ -126,6 +184,7 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 	if err := json.Unmarshal(jsonBytes, &replaceMap); err != nil {
 		return fmt.Errorf("json parse error: %w", err)
 	}
+	auditPayloadValues(replaceMap)
 
 	r, err := zip.OpenReader(templatePath)
 	if err != nil {
@@ -177,6 +236,11 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 			if leftover := findUnreplacedTags(xmlStr); len(leftover) > 0 {
 				slog.Error("UNREPLACED TEMPLATE TAGS", "part", f.Name,
 					"count", len(leftover), "tags", leftover)
+			}
+			if orphans := countOrphanOpenBraces(xmlStr); orphans > 0 {
+				slog.Error("FRACTURED TAG SURVIVORS", "part", f.Name,
+					"orphan_open_braces", orphans,
+					"note", "un-fracture failed; these are invisible to the tag list above")
 			}
 
 			// Step 4: Global cleanup of leftover {{ and }} brackets
@@ -695,13 +759,18 @@ func injectFieldDefaults(payloadJSON string, answers map[string]string) string {
 		m["SiteAcreage"] = cleanBracketsAndPunctuation(acreage)
 	}
 
-	// Layout hack: populating these cover-letter text boxes overlaps the page-2
-	// logo and pushes the signature block off page 2.
-	m["Proposal_Letter1"] = ""
-	m["Proposal_Letter2"] = ""
-	m["Proposal_Letter3"] = ""
-	m["Proposal_Letter4"] = ""
-	m["Proposal_Letter5"] = ""
+	// RETIRED: this blanked Proposal_Letter1-5 unconditionally as a layout hack.
+	//
+	// The real defect was never the address lines. An earlier pipeline routed
+	// body prose and the "Re:" subject block into those tags, which render in
+	// floating text boxes anchored near the page-2 header; the boxes expanded
+	// over the Matrix logo and pushed the signature block onto page 3. Blanking
+	// suppressed the symptom and destroyed the recipient block with it --
+	// Providence Road shipped with an empty letter address -- while directly
+	// contradicting template-compiler rule 3, which populates these lines.
+	//
+	// auditPayloadValues now flags over-long values here instead, which catches
+	// the actual failure without discarding correct output.
 
 	// Normalize keys and values that arrive wrapped in their own braces. Kept
 	// deliberately: with replaceTag now matching {{Key}} exactly, a key the

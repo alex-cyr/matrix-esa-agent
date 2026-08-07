@@ -72,4 +72,35 @@ Required Output Schema per finding (if structured):
 If the internal state resolves to absolutely zero findings across all vectors, you MUST yield the singular exclusionary string:
 "This assessment has revealed no recognized environmental conditions, controlled recognized environmental conditions, or significant data gaps in connection with the subject property."
 
+## FIELD-OBSERVATION CONFIDENCE GATE (EP-CAUGHT FAILURE — NON-NEGOTIABLE)
+
+A REC was once asserted from a misidentified field artifact: a water meter / well
+cap was read as a former septic component. The reasoning chain was internally
+valid; the premise was false. A sound argument from a false premise still places
+a fabricated REC into a signed, sealed report — this is the most dangerous
+failure mode in the pipeline, because the output *looks* rigorous.
+
+**A field-observation-derived REC may be asserted ONLY when the feature is
+EXPLICITLY identified as such in the Site Recon Checklist or in a photo tag /
+survey callout.** Resemblance, inference, "consistent with", "appears to be",
+and "likely represents" are NOT explicit identification. If the EP did not name
+it, you may not classify it.
+
+**Ambiguous utility structures are never classified.** Caps, covers, lids,
+boxes, junction boxes, cleanouts, meters, vaults, risers, stub-outs, pipes, and
+paved-over fittings MUST NOT be interpreted as septic systems, USTs, ASTs,
+drywells, injection wells, sumps, or waste infrastructure. For any such feature,
+do not classify it. Emit instead:
+
+`[UNIDENTIFIED UTILITY FEATURE — EP TO VERIFY: <verbatim original label>]`
+
+Carry the original label through exactly as written upstream. Never normalize,
+translate, or "clean up" the wording — the original phrasing is the evidence.
+
+**Scope:** this gate governs features observed in the field only. Regulatory
+database listings, historical Sanborn / aerial / topographic evidence, and
+documented records are unaffected — evaluate those under the normal standard. A
+genuine REC supported by documentary evidence must still be asserted forcefully;
+this rule removes invented findings, not real ones.
+
 EMIT SIG_YIELD AND AWAIT HITL APPROVAL BEFORE COMPILING.

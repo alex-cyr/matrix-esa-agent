@@ -160,9 +160,50 @@ func TestInjectFieldDefaultsAppliesEPAnswers(t *testing.T) {
 			t.Errorf("missing %s in %s", want, out)
 		}
 	}
-	// The cover-letter text boxes must stay blanked (page-2 layout hack).
-	if !strings.Contains(out, `"Proposal_Letter1":""`) {
-		t.Errorf("Proposal_Letter blanking lost: %s", out)
+}
+
+// The inverse of the retired layout hack: model-supplied letter lines must
+// survive. Blanking them unconditionally shipped Providence Road with an empty
+// recipient block, so this guards against the hack being reinstated.
+func TestInjectFieldDefaultsPreservesLetterRecipientBlock(t *testing.T) {
+	out := injectFieldDefaults(
+		`{"Proposal_Letter1":"Ms. Paige Singer","Proposal_Letter2":"DeKalb County Parks","Proposal_Letter3":"3681 Chestnut Street","Proposal_Letter4":"Scottdale, Georgia 30079"}`,
+		map[string]string{})
+	for _, want := range []string{"Ms. Paige Singer", "DeKalb County Parks", "3681 Chestnut Street", "Scottdale, Georgia 30079"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("letter recipient line %q was wiped: %s", want, out)
+		}
+	}
+}
+
+func TestUnfractureRejoinsBracesSplitAcrossRuns(t *testing.T) {
+	// The exact shape found in the real template's header9/header10, where the
+	// opening "{{" of {{ReportDate}} is two separate runs.
+	in := `<w:t xml:space="preserve">   {</w:t></w:r><w:proofErr w:type="gramEnd"/><w:r><w:t>{</w:t></w:r>` +
+		`<w:proofErr w:type="spellStart"/><w:r><w:t>ReportDate</w:t></w:r><w:proofErr w:type="spellEnd"/><w:r><w:t>}}</w:t>`
+	got := unfractureDocxXML(in)
+	if !strings.Contains(got, "{{ReportDate}}") {
+		t.Fatalf("split braces were not rejoined into a complete tag: %s", got)
+	}
+	// And the rejoined tag must now be replaceable.
+	filled := replaceTag(got, "ReportDate", "August 2026")
+	if strings.Contains(filled, "{{") || strings.Contains(filled, "ReportDate") {
+		t.Errorf("rejoined tag did not get replaced: %s", filled)
+	}
+}
+
+func TestCountOrphanOpenBracesSeesFracturedSurvivors(t *testing.T) {
+	// A complete tag is reported by findUnreplacedTags, not by the orphan count.
+	if n := countOrphanOpenBraces(`<w:t>{{Complete}}</w:t>`); n != 0 {
+		t.Errorf("complete tag counted as orphan: %d", n)
+	}
+	// An opening brace pair with no close is invisible to the tag list, which
+	// is how the Providence Road run under-reported 15 unfilled tags as 13.
+	if n := countOrphanOpenBraces(`<w:t>{{Dangling and no close</w:t>`); n != 1 {
+		t.Errorf("orphan {{ not detected, got %d", n)
+	}
+	if n := countOrphanOpenBraces(`<w:t>{{A}} then {{Orphan</w:t>`); n != 1 {
+		t.Errorf("mixed complete + orphan miscounted: %d", n)
 	}
 }
 
@@ -272,6 +313,9 @@ func TestMergeRealTemplateWithHazardousValues(t *testing.T) {
 		"Opinions_Text":         "First paragraph.\nSecond paragraph.\r\nThird after CRLF.",
 		"DataGaps_Text":         "Depth <5 feet; area >2 acres",
 		"ExecutiveSummary_Text": "Control chars \x00\x07 stripped\tbut tabs kept.",
+		// Fractured across runs in header9/header10 -- survived into the
+		// delivered Providence Road document.
+		"ReportDate": "August 2026",
 	}
 	js, _ := json.Marshal(payload)
 	out := filepath.Join(t.TempDir(), "real.docx")
@@ -283,6 +327,36 @@ func TestMergeRealTemplateWithHazardousValues(t *testing.T) {
 	}
 	if err := core.ValidateDocxXML(out); err != nil {
 		t.Fatalf("real-template output failed validation: %v", err)
+	}
+
+	// The fractured header tag must actually be filled now.
+	r, err := zip.OpenReader(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+	headersChecked := 0
+	for _, f := range r.File {
+		if !strings.HasPrefix(f.Name, "word/header") {
+			continue
+		}
+		rc, err := f.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, _ := io.ReadAll(rc)
+		rc.Close()
+		s := string(b)
+		if strings.Contains(s, "ReportDate") {
+			t.Errorf("%s still contains the ReportDate placeholder after merge", f.Name)
+		}
+		if n := countOrphanOpenBraces(s); n > 0 {
+			t.Errorf("%s has %d orphan open braces after merge", f.Name, n)
+		}
+		headersChecked++
+	}
+	if headersChecked == 0 {
+		t.Error("no header parts found; the fractured-tag check did not run")
 	}
 }
 
