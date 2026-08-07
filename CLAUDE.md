@@ -92,7 +92,7 @@ Template resolution order: `knowledge/ESA_PHASE_I_Template.docx`, falling back t
 - `.txt`, `.md`, and `.docx` are decoded in-process (`core.ExtractDocxText`) and never cost an API call. Only PDFs and images go to the model.
 - An in-process memo keyed on a directory fingerprint (names, sizes, modtimes) stops a long-running server re-reading the cache each request, while still noticing new files.
 - Warm the cache offline with `go run ./cmd/esad -payload . -warm-historical`; the Dockerfile's existing `COPY historical/` then carries it into the image, so containers never pay extraction cost on a customer request. There is no `.dockerignore`, so the cache is included automatically.
-- Inline blob size has **not** proven to be a practical limit: baselines of 48.8 MB and 20.1 MB both extracted successfully. An earlier assumption of a hard ~20 MB ceiling was wrong. Extraction failures still land in `corpus.Failed` rather than aborting, whatever their cause.
+- The real extraction limit is **page count, not bytes**: Vertex rejects documents over **1000 pages** (`InvalidArgument`). Byte size has not proven to be a practical constraint — baselines of 48.8 MB and 20.1 MB both extracted fine. Of 20 baselines, 19 extract; only the 1400-page Hidden Hills report fails. Extraction failures land in `corpus.Failed` rather than aborting, whatever the cause.
 
 `corpus.PromptBlock()` is a plain string appended to a system prompt, so more than one agent can consume it.
 
@@ -197,11 +197,12 @@ Elias picks keeps from the table and deletes the rest from `historical/` by hand
 directory fingerprint; orphaned cache entries are harmless and can be pruned in
 the same commit window if asked.
 
-**Branch decision — RESOLVED, no substitute needed.** The premise was wrong:
-Homestead (20.1 MB) extracted successfully, as did Cross Keys (48.8 MB). There is
-no inline-size failure, so **Phase 5 proceeds as ordered with Homestead itself as
-the clean/small-parcel exemplar**, and the Phase 6 GCS `FileData` work is not a
-Phase 5 blocker.
+**Branch decision — RESOLVED, no substitute needed, inventory complete.** The
+premise was wrong: Homestead (20.1 MB) extracted successfully, as did Cross Keys
+(48.8 MB). Nothing in Phase 6 gates Phase 5. The inventory has since run and its
+conclusions are folded into the sourcing rules below; Homestead was in fact
+demoted from primary exemplar to optional third, on relevance grounds rather
+than availability.
 
 Homestead's transcript was spot-checked because it ran near the assumed ceiling:
 69.6 KB / 1002 lines, cover page verbatim, 100 numbered section headings,
@@ -215,6 +216,20 @@ list, zero markdown/JSON contamination.
 consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
 `corpus.PromptBlock()`; the raw corpus stops shipping in prompts entirely.
 
+**Sourcing rules — settled by the corpus inventory, not to be re-derived:**
+
+- **Tier 1 sources from 9 independent E1527-21 reports, not 19.** Eight of the
+  19 transcripts are excluded from digest sourcing entirely: the seven citing
+  superseded **E1527-13** (304 Creighton, 318-328 3rd Ave, Cross Keys, Hilton
+  Garden Inn, Regalwoods, 2333 Defoor Hills, Colham Ferry) plus **HIES 2014**,
+  which cites neither version and uses pre-convention phrasing ("revealed the
+  following *information*").
+- **Versioned pairs — keep the later half only.** ELC/ELC-R1 share 77% of
+  distinct lines and Rockdale Jan/Feb share 59%; they are draft/revision pairs
+  of one project, not independent reports. Keep **Rockdale Feb 2025** and
+  **ELC R1**; exclude the earlier halves from Tier 1 diffing so draft/revision
+  overlap cannot masquerade as house style.
+
 - **Tier 1 — canonical blocks, stated once each.** Every passage
   verbatim-identical across the kept corpus. Known so far: Section 9.0 opener,
   transmittal closing ("...looks forward to our continued association..."),
@@ -226,11 +241,20 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   numbered-finding ordering (1 = location/parcel/owner, 2 = topography, then
   history, then regulatory); Section 5.1 aerial grouping style (year-ranges
   sharing one description).
-- **Plus 2–3 full exemplar transcripts appended whole:** Homestead
-  (clean/small-parcel — confirmed available), one REC-present (Rockdale), one
-  institutional or large-tract.
-- **Exclude Cross Keys 2022 and any other E1527-13 report from Tier 1 sourcing
-  entirely.**
+- **Plus 2–3 full exemplar transcripts appended whole.** Picks upgraded for
+  relevance to Providence Road (an undeveloped parcel), replacing Homestead as
+  the primary pair:
+  1. **Old Field Road** — clean outcome, **vacant/undeveloped** subject
+     property, E1527-21, Bartow County. The only transcript that is all three,
+     and the closest match to Providence Road. Template-compiler SKILL.md
+     rule 2 points at Section 4.2 undeveloped-land verbiage, which this
+     supplies.
+  2. **1080 Moreland FINAL** — **REC-present**, vacant/heavily wooded,
+     E1527-21.
+  3. Optional third for a developed-parcel voice: **Homestead** (residential
+     small-parcel) or **Rockdale Feb 2025** (institutional, REC-present).
+- Exclusions are enumerated in the sourcing rules above (7 × E1527-13 + HIES
+  2014 + the 2 earlier halves of the versioned pairs).
 - Add one guardrail line to both consuming skills: *"Baseline reports may cite
   older ASTM versions; always cite E 1527-21 regardless of baseline phrasing."*
 - Target **60–80k tokens** total. Write the file, report its actual token count
@@ -249,11 +273,14 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   (`filepath.Base`, restrict to the generate temp dirs) — it currently serves
   arbitrary paths with no auth.
 - Gate or delete `analyzeBucketHandler`'s hardcoded-answers path.
-- ~~The two >20 MB historical PDFs: extract via `genai.FileData` with a GCS
-  URI.~~ **Not needed.** Both extracted fine inline (48.8 MB and 20.1 MB), so
-  there is no size blocker to work around. Keep `genai.FileData` in mind only if
-  a future baseline actually fails on size — it is no longer a Phase 5
-  dependency.
+- **Hidden Hills: split it, or extract only its report body.**
+  `5 Hidden Hills Parcels ESA-Phase I Oct 2022.pdf` is the sole extraction
+  failure: `InvalidArgument: The document contains 1400 pages which exceeds the
+  supported page limit of 1000`. The cap is on **page count, not bytes** —
+  Cross Keys extracted fine at 48.8 MB. A `genai.FileData`/GCS URI would
+  therefore **not** fix it; the page limit applies however the document is
+  passed. Only ~20 of the 1400 pages are the report proper; the rest is EDR
+  appendix printouts, which the extractor skill would discard anyway.
 - Retry loop: classify errors by `googleapi` status, retry only retryables, then
   restore `maxRetries` to a sane value.
 - Consolidate the two divergent docx merge implementations (api vs esad).
