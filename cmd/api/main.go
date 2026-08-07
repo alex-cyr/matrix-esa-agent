@@ -167,14 +167,18 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 const modelID = "gemini-2.5-pro"
 
 const (
-	skillParser    = ".agents/skills/parser/SKILL.md"
-	skillGeo       = ".agents/skills/geospatial-evaluator/SKILL.md"
-	skillSiteRecon = ".agents/skills/site-recon-synthesizer/SKILL.md"
-	skillASTM      = ".agents/skills/astm-synthesizer/SKILL.md"
-	skillTemplate  = ".agents/skills/template-compiler/SKILL.md"
+	skillParser     = ".agents/skills/parser/SKILL.md"
+	skillGeo        = ".agents/skills/geospatial-evaluator/SKILL.md"
+	skillSiteRecon  = ".agents/skills/site-recon-synthesizer/SKILL.md"
+	skillASTM       = ".agents/skills/astm-synthesizer/SKILL.md"
+	skillTemplate   = ".agents/skills/template-compiler/SKILL.md"
+	skillHistorical = ".agents/skills/historical-extractor/SKILL.md"
 )
 
-var requiredSkills = []string{skillParser, skillGeo, skillSiteRecon, skillASTM, skillTemplate}
+var requiredSkills = []string{skillParser, skillGeo, skillSiteRecon, skillASTM, skillTemplate, skillHistorical}
+
+// historicalDir holds completed human-authored reports used as a style baseline.
+const historicalDir = "historical"
 
 // buildAgents constructs the parser plus the sequential pipeline. Every failure
 // is fatal to the request: these errors used to be discarded into `_`, leaving
@@ -211,18 +215,29 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 	if err != nil {
 		return nil, nil, err
 	}
+	// Historical reports are PDFs. They used to be concatenated into the prompt
+	// as raw file bytes; now they are transcribed once and cached on disk.
+	histAgent, err := newAgent("HistoricalExtractorAgent", skillHistorical, 0.0)
+	if err != nil {
+		return nil, nil, err
+	}
+	corpus, err := core.LoadHistoricalCorpus(ctx, historicalDir, core.AgentExtractor{Agent: histAgent})
+	if err != nil {
+		// Style baselines are advisory: a report still generates without them,
+		// so this degrades loudly rather than failing the request.
+		slog.Error("HISTORICAL CORPUS UNAVAILABLE: proceeding without style baseline", "err", err)
+		corpus = &core.HistoricalCorpus{}
+	}
+	if len(corpus.Failed) > 0 {
+		slog.Error("HISTORICAL DOCS FAILED EXTRACTION", "files", corpus.Failed)
+	}
+	if len(corpus.Docs) == 0 {
+		slog.Warn("NO HISTORICAL STYLE BASELINE: output tone will be unanchored", "dir", historicalDir)
+	}
+
 	templateCfg := core.AgentConfig{
 		Name: "TemplateCompilerAgent", Model: modelID,
-		SystemPrompt: templatePrompt, Temperature: 0.2,
-	}
-	// BUG 1 (next step): this appends raw file bytes, not extracted text.
-	if hFiles, err := os.ReadDir("historical"); err == nil {
-		for _, hF := range hFiles {
-			if !hF.IsDir() {
-				c, _ := os.ReadFile(filepath.Join("historical", hF.Name()))
-				templateCfg.SystemPrompt += fmt.Sprintf("\n\n=== HISTORICAL REPORT BASELINE CONTEXT [%s] ===\n%s", hF.Name(), string(c))
-			}
-		}
+		SystemPrompt: templatePrompt + corpus.PromptBlock(), Temperature: 0.2,
 	}
 	templateAgent, err := core.NewAgent(ctx, projectID, location, templateCfg)
 	if err != nil {

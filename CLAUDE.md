@@ -46,11 +46,11 @@ Order (see `generateReportHandler` in [cmd/api/main.go](cmd/api/main.go)):
 
 Key behaviors to know before changing anything here:
 
-- **The pipeline never hard-fails on LLM errors.** A failed node substitutes `mockFallbackReportPayload()` — a hardcoded "Arkan Homes / 12690 Morningpark Cir" JSON blob in [pipeline.go](internal/core/pipeline.go). If a generated report comes out with that address, the LLM call failed silently; check the logs, don't chase the template.
-- **HITL is structurally present but bypassed.** `Agent.Execute` returns `Approved: false` on every artifact; the API constructs the pipeline with `skipHITL = true`, so approval is auto-granted. The CLI exposes `-skip-hitl`.
-- `Agent.Execute` retries any error 10× with a 5s sleep — a genuine (non-quota) error costs ~50s before surfacing.
-- Model IDs are **hardcoded to `gemini-2.5-pro` in Go**, and disagree with the `model:` frontmatter inside the SKILL.md files (which say `gemini-2.5-flash`). The Go value wins; the frontmatter is decorative.
-- Every `historical/*.pdf` is read and appended verbatim to the TemplateCompiler's system prompt as style-mirroring context. Adding files there directly inflates every generation's token cost.
+- **The pipeline aborts on any node error.** `Pipeline.Run` returns a wrapped error naming the failing node; `NewPipeline` rejects nil agents rather than dropping them from the chain. Both used to be silent — a failed node substituted a hardcoded "Arkan Homes / 12690 Morningpark Cir" payload, and nil agents shortened the chain without a word. If you reintroduce a fallback, it must be visibly labelled as such in the output.
+- **HITL is structurally present but bypassed.** `Agent.Execute` returns `Approved: false` on every artifact; the API constructs the pipeline with `skipHITL = true`, so approval is auto-granted. The CLI exposes `-skip-hitl`. A genuine yield returns `core.ErrHITLYield`, which `cmd/esad` distinguishes from a real failure (exit 0 vs exit 1) — keep that distinction if you touch the exit paths.
+- `Agent.Execute` retries **any** error, currently 2× with a 5s sleep. `maxRetries` is temporarily lowered for testing; restoring it means the loop should first classify errors so non-retryable ones (bad request, auth) surface immediately.
+- Model IDs are **hardcoded to `gemini-2.5-pro` in Go** (`modelID` in [cmd/api/main.go](cmd/api/main.go)), and disagree with the `model:` frontmatter inside the SKILL.md files. The Go value wins; the frontmatter is decorative.
+- Historical style baselines are transcribed by a dedicated `historical-extractor` agent and cached to `historical/.cache/<sha256>.txt` — see below. Missing baselines degrade the output tone but never fail a request.
 
 ### DOCX templating
 
@@ -72,6 +72,18 @@ Template resolution order: `knowledge/ESA_PHASE_I_Template.docx`, falling back t
 
 `appendix_builder.go` (`BuildCompleteAppendixPDF`) assembles the real deliverable PDF with `gofpdf` + `gofpdi`: cover pages, per-figure Matrix title-block frames, and imported source PDF pages. **It is not wired into the API or CLI yet** — only `scratch/` calls it. Page-count detection works by `recover()`-ing the panic `gofpdi.ImportPage` throws past the last page.
 
+### Historical style baselines (`internal/core/historical.go`)
+
+`historical/` holds completed human-authored reports whose prose the Template Compiler mirrors. They are PDFs, so `core.LoadHistoricalCorpus` transcribes each one via the `historical-extractor` agent and caches the text at `historical/.cache/<sha256-of-file>.txt`.
+
+- The cache key is a **hash of file contents**, not the name: editing or replacing a report re-extracts it, while renaming or duplicating one reuses the existing text.
+- `.txt`, `.md`, and `.docx` are decoded in-process (`core.ExtractDocxText`) and never cost an API call. Only PDFs and images go to the model.
+- An in-process memo keyed on a directory fingerprint (names, sizes, modtimes) stops a long-running server re-reading the cache each request, while still noticing new files.
+- Warm the cache offline with `go run ./cmd/esad -payload . -warm-historical`; the Dockerfile's existing `COPY historical/` then carries it into the image, so containers never pay extraction cost on a customer request. There is no `.dockerignore`, so the cache is included automatically.
+- Files over Vertex's ~20 MB inline blob ceiling cannot be extracted this way and land in `corpus.Failed`. Two current baselines exceed it.
+
+`corpus.PromptBlock()` is a plain string appended to a system prompt, so more than one agent can consume it.
+
 ### HTTP layer & storage
 
 `cmd/api/main.go` registers all routes on `http.DefaultServeMux`; `web/index.html` is a single-file vanilla-JS wizard (upload → pre-screen → generate) served at `/web/`.
@@ -85,7 +97,7 @@ Env: `GOOGLE_CLOUD_PROJECT` (default `matrix-esa-production`), `VERTEX_LOCATION`
 
 ## Runtime file dependencies
 
-The binary reads `.agents/`, `knowledge/`, and `historical/` **relative to the working directory** at request time (hence their explicit `COPY` lines in the Dockerfile). Moving or renaming those directories silently degrades output rather than erroring — `loadSkill` only logs a warning and returns `""`, leaving an agent with no system prompt.
+The binary reads `.agents/`, `knowledge/`, and `historical/` **relative to the working directory** at request time (hence their explicit `COPY` lines in the Dockerfile). `core.LoadSkill` errors on a missing or empty skill file, and `cmd/api` preflights all six at boot and exits 1 — so a bad container layout fails at deploy time instead of yielding prompt-less agents that still return plausible text.
 
 ## Data sensitivity
 
@@ -96,10 +108,15 @@ The binary reads `.agents/`, `knowledge/`, and `historical/` **relative to the w
 
 
 ## Known bugs to fix (in order)
-1. main.go feeds raw .docx bytes (zip binary) from historical/ into the
-   system prompt as "historical context" — must extract real text first.
+1. ~~main.go feeds raw .docx bytes (zip binary) from historical/ into the
+   system prompt as "historical context" — must extract real text first.~~
+   DONE. It was raw *PDF* bytes (no extension filter), while cmd/esad
+   filtered to .txt/.md/.docx and so ingested nothing at all. Both now call
+   `core.LoadHistoricalCorpus`.
 2. Historical context only reaches the Template Compiler agent; the ASTM
    Synthesizer (which writes the actual lingo/rationales) never sees it.
+   `corpus.PromptBlock()` is already shaped for this — append it to the ASTM
+   agent config in both entrypoints.
 3. Template Compiler must emit ~160 exact {{Key}} JSON keys with no
    validation — missing keys silently become blank fields in the report.
    Need a Go-side validate/diff/re-prompt loop before docx injection.

@@ -15,10 +15,8 @@ package main
 
 import (
 	"archive/zip"
-	"bytes"
 	"context"
 	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"flag"
 	"fmt"
@@ -33,47 +31,7 @@ import (
 	"github.com/matrix-engineering/matrix-esa-agent/internal/core"
 )
 
-// extractDocxText reads a docx archive and extracts raw text from document.xml
-func extractDocxText(path string) (string, error) {
-	r, err := zip.OpenReader(path)
-	if err != nil {
-		return "", err
-	}
-	defer r.Close()
-
-	var docXML *zip.File
-	for _, f := range r.File {
-		if f.Name == "word/document.xml" {
-			docXML = f
-			break
-		}
-	}
-	if docXML == nil {
-		return "", fmt.Errorf("word/document.xml not found")
-	}
-
-	rc, err := docXML.Open()
-	if err != nil {
-		return "", err
-	}
-	defer rc.Close()
-
-	decoder := xml.NewDecoder(rc)
-	var text bytes.Buffer
-	for {
-		t, _ := decoder.Token()
-		if t == nil {
-			break
-		}
-		switch se := t.(type) {
-		case xml.CharData:
-			if len(se) > 0 {
-				text.Write(se)
-			}
-		}
-	}
-	return text.String(), nil
-}
+// extractDocxText moved to core.ExtractDocxText so both entrypoints share it.
 
 func replaceFracturedXML(xmlStr, key, val string) string {
 	var pattern strings.Builder
@@ -143,6 +101,9 @@ func main() {
 		location    = flag.String("location", "us-central1", "GCP Location for Vertex AI")
 		skipHITL    = flag.Bool("skip-hitl", false, "1337 TOGGLE: Bypass HITL validation for fully automated runs")
 		skipASTM    = flag.Bool("skip-astm", false, "1337 TOGGLE: Omit the ASTM Synthesizer Agent from the A2A network")
+
+		warmHistorical = flag.Bool("warm-historical", false,
+			"Extract and cache <payload>/historical text, then exit. Run this once offline so deployed containers ship a warm cache.")
 	)
 	flag.Parse()
 
@@ -196,32 +157,42 @@ func main() {
 		SystemPrompt: loadSkill(".agents/skills/site-recon-synthesizer/SKILL.md"),
 		Temperature:  0.2,
 	}
-	// 1.5 Inject Historical Reports into Template Compiler Context
+	// 1.5 Inject Historical Reports into Template Compiler Context.
+	// This previously skipped every PDF, so in practice the CLI ran with no
+	// style baseline at all while the API fed the model raw PDF bytes.
 	historicalDir := filepath.Join(*payloadPath, "historical")
-	if hFiles, err := os.ReadDir(historicalDir); err == nil {
-		for _, hFile := range hFiles {
-			ext := strings.ToLower(filepath.Ext(hFile.Name()))
-			if !hFile.IsDir() && (ext == ".txt" || ext == ".md" || ext == ".docx") {
-				var contentStr string
-				var fileErr error
+	histCfg := core.AgentConfig{
+		Name:         "HistoricalExtractorAgent",
+		Model:        "gemini-2.5-pro",
+		SystemPrompt: loadSkill(".agents/skills/historical-extractor/SKILL.md"),
+		Temperature:  0.0,
+	}
+	histAgent, err := core.NewAgent(ctx, *projectID, *location, histCfg)
+	if err != nil {
+		slog.Error("SYSTEM_FAULT: Historical Extractor Init Failed", "err", err)
+		os.Exit(1)
+	}
 
-				filePath := filepath.Join(historicalDir, hFile.Name())
-				if ext == ".docx" {
-					contentStr, fileErr = extractDocxText(filePath)
-				} else {
-					contentBytes, err := os.ReadFile(filePath)
-					contentStr = string(contentBytes)
-					fileErr = err
-				}
+	corpus, err := core.LoadHistoricalCorpus(ctx, historicalDir, core.AgentExtractor{Agent: histAgent})
+	if err != nil {
+		slog.Error("HISTORICAL CORPUS UNAVAILABLE: proceeding without style baseline", "err", err)
+		corpus = &core.HistoricalCorpus{}
+	}
+	if len(corpus.Failed) > 0 {
+		slog.Error("HISTORICAL DOCS FAILED EXTRACTION", "files", corpus.Failed)
+	}
+	for _, d := range corpus.Docs {
+		slog.Info("/// INGESTING HISTORICAL REPORT (CONTEXT) ///", "file", d.Name, "chars", len(d.Text))
+	}
+	templateCfg.SystemPrompt += corpus.PromptBlock()
 
-				if fileErr == nil {
-					templateCfg.SystemPrompt += "\n\n=== HISTORICAL REPORT BASELINE CONTEXT [" + hFile.Name() + "] ===\n" + contentStr
-					slog.Info("/// INGESTING HISTORICAL REPORT (CONTEXT) ///", "file", hFile.Name())
-				} else {
-					slog.Warn("Failed to read historical report", "file", hFile.Name(), "err", fileErr)
-				}
-			}
+	if *warmHistorical {
+		slog.Info("/// HISTORICAL CACHE WARM /// exiting without running pipeline",
+			"extracted", len(corpus.Docs), "failed", len(corpus.Failed))
+		if len(corpus.Failed) > 0 {
+			os.Exit(1)
 		}
+		os.Exit(0)
 	}
 
 	// 2. Instantiate Agents
