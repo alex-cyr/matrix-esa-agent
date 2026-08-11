@@ -20,6 +20,7 @@ go build -o api.exe ./cmd/api        # HTTP server (Cloud Run entrypoint)
 go run ./cmd/api                     # serve on :8080, UI at http://localhost:8080/web/index.html
 go build -o esad.exe ./cmd/esad      # local CLI variant
 go vet ./cmd/... ./internal/...      # NOTE: scope explicitly — see below
+go run ./tools/fixheader             # one-shot: repair the running-header parts
 docker build -t matrix-esa-agent .
 ```
 
@@ -255,9 +256,35 @@ Format contract, taken from the stamped house reports:
 | line 1 | `Environmental Site Assessment - Phase I` | `[Month D, YYYY]` (generation date) |
 | line 2 | `[Site Address] - [Project Descriptor]` | `MEG  Project No. [number]` |
 
-`ReportDate` is generated in Go (`time.Now`, `"January 2, 2006"`). The model key
-is still accepted and always overwritten — a date the model invents is a date
-nobody chose.
+`ReportDate` is generated in Go (`core.ReportDateNow`, `"January 2, 2006"`, in
+the office time zone). The model key is still accepted and always overwritten —
+a date the model invents is a date nobody chose.
+
+## House conventions
+
+Firm formatting rulings from Elias. They are project truth, not style
+preferences: the historical baselines shipped to the model contain the *older*
+conventions, so anything not pinned deterministically in Go will drift back.
+
+- **Project number prints verbatim, as the user entered it.** The old `.XX`
+  suffix convention is **retired**. Older stamped reports in `historical/` still
+  carry it and are actively present in the prompt context, so the model will
+  imitate it unless the value is pinned. Never synthesize or append a suffix.
+- **The header line-2 project descriptor is sourced, never invented.** It comes
+  from the proposal when one is extracted from the uploads, else from the
+  intake-form value the user typed at generation. If neither supplies one, the
+  line is **address-only**. *Not yet plumbed — see below.*
+- **`MEG  Project No.` keeps its double space.** Intentional house formatting in
+  the stamped template. Do not normalize it. The template carries `<w:noProof/>`
+  on that run so Word's grammar checker cannot draw a squiggle under it — that
+  squiggle, not any `<w:u>` run, was the "stray underline" seen in review.
+
+The header repair itself is in [tools/fixheader](tools/fixheader/main.go), not
+`scratch/`: the template is a committed binary, so without a checked-in tool the
+change to it is unreviewable. It is idempotent and validates the rewritten file
+before replacing the original. Header line 1 and line 2 now position their
+right-hand values with a single right-aligned tab stop at 9360 twips (page width
+12240 less two 1440 margins) instead of seven tab runs plus ten literal spaces.
 
 ## Known bugs to fix (in order)
 1. ~~main.go feeds raw .docx bytes (zip binary) from historical/ into the

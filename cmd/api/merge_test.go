@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -358,6 +359,128 @@ func TestMergeRealTemplateWithHazardousValues(t *testing.T) {
 	if headersChecked == 0 {
 		t.Error("no header parts found; the fractured-tag check did not run")
 	}
+}
+
+// The running header is deterministic: template formatting plus Go-supplied
+// values. The Providence Road draft shipped stamped "July 29, 2026" from an
+// August 5 run because ReportDate was left to the Template Compiler.
+func TestInjectFieldDefaultsOverwritesModelReportDate(t *testing.T) {
+	want := core.ReportDateNow()
+
+	for _, modelKey := range []string{"ReportDate", "{{ReportDate}}"} {
+		t.Run(modelKey, func(t *testing.T) {
+			payload := fmt.Sprintf(`{%q: "July 29, 2026"}`, modelKey)
+
+			var got map[string]interface{}
+			if err := json.Unmarshal([]byte(injectFieldDefaults(payload, nil)), &got); err != nil {
+				t.Fatalf("injectFieldDefaults produced invalid JSON: %v", err)
+			}
+			if got["ReportDate"] != want {
+				t.Errorf("ReportDate = %v, want %v — the model's date must always be overwritten", got["ReportDate"], want)
+			}
+		})
+	}
+}
+
+func TestInjectFieldDefaultsSetsReportDateWhenModelOmitsIt(t *testing.T) {
+	var got map[string]interface{}
+	if err := json.Unmarshal([]byte(injectFieldDefaults(`{"OwnerName":"X"}`, nil)), &got); err != nil {
+		t.Fatalf("injectFieldDefaults produced invalid JSON: %v", err)
+	}
+	if got["ReportDate"] != core.ReportDateNow() {
+		t.Errorf("ReportDate = %v, want %v — an absent model key must still yield a dated header",
+			got["ReportDate"], core.ReportDateNow())
+	}
+}
+
+// Guards the header repair in knowledge/ESA_PHASE_I_Template.docx: the date and
+// project number are positioned by a right-aligned tab stop, not by runs of
+// literal spaces, and "MEG  Project No." keeps its intentional double space.
+func TestRealTemplateHeaderIsCleanlyPositioned(t *testing.T) {
+	tpl := filepath.Join("..", "..", "knowledge", "ESA_PHASE_I_Template.docx")
+	if _, err := os.Stat(tpl); err != nil {
+		t.Skip("firm template not available; skipping header layout check")
+	}
+
+	js, _ := json.Marshal(map[string]string{
+		"ReportDate":        "August 11, 2026",
+		"SiteStreetAddress": "12725 Providence Rd",
+		"ProjectNo":         "303315",
+	})
+	out := filepath.Join(t.TempDir(), "header.docx")
+	if err := mergeDocxLogic(tpl, js, out); err != nil {
+		t.Fatalf("merge failed: %v", err)
+	}
+
+	r, err := zip.OpenReader(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+
+	checked := 0
+	for _, f := range r.File {
+		if !strings.HasPrefix(f.Name, "word/header") {
+			continue
+		}
+		rc, err := f.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		b, _ := io.ReadAll(rc)
+		rc.Close()
+		s := string(b)
+
+		if !strings.Contains(s, "MEG  Project No.") {
+			continue // not one of the two running-header parts
+		}
+		checked++
+
+		text := visibleText(s)
+		if strings.Contains(text, "    ") {
+			t.Errorf("%s: header still positions content with runs of literal spaces: %q", f.Name, text)
+		}
+		if !strings.Contains(s, `<w:tab w:val="right"`) {
+			t.Errorf("%s: header lost its right-aligned tab stop", f.Name)
+		}
+		if strings.Contains(s, "proofErr") {
+			t.Errorf("%s: proofErr markers survived; the grammar squiggle under the project number returns", f.Name)
+		}
+		if !strings.Contains(s, "<w:noProof/>") {
+			t.Errorf("%s: the MEG run lost <w:noProof/>, so Word will squiggle the intentional double space", f.Name)
+		}
+		for _, want := range []string{"August 11, 2026", "12725 Providence Rd", "MEG  Project No. 303315"} {
+			if !strings.Contains(text, want) {
+				t.Errorf("%s: header missing %q; got %q", f.Name, want, text)
+			}
+		}
+	}
+	if checked == 0 {
+		t.Error("no running-header part found; the layout check did not run")
+	}
+}
+
+// visibleText concatenates the <w:t> content of a document part.
+func visibleText(xml string) string {
+	var sb strings.Builder
+	for rest := xml; ; {
+		i := strings.Index(rest, "<w:t")
+		if i < 0 {
+			break
+		}
+		rest = rest[i:]
+		open := strings.Index(rest, ">")
+		if open < 0 {
+			break
+		}
+		close := strings.Index(rest, "</w:t>")
+		if close < 0 {
+			break
+		}
+		sb.WriteString(rest[open+1 : close])
+		rest = rest[close+len("</w:t>"):]
+	}
+	return sb.String()
 }
 
 func TestMergeRejectsMalformedOutput(t *testing.T) {

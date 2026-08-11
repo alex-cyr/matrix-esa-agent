@@ -788,6 +788,13 @@ func injectFieldDefaults(payloadJSON string, answers map[string]string) string {
 		}
 	}
 
+	// ReportDate is deterministic and set last, so it wins regardless of what
+	// the model emitted and regardless of map iteration order -- a model key of
+	// "{{ReportDate}}" normalizes to the same cleaned key above and would
+	// otherwise race this assignment. The header is template formatting plus
+	// Go-supplied values; the model never composes header content.
+	cleanedMap["ReportDate"] = core.ReportDateNow()
+
 	b, _ := json.Marshal(cleanedMap)
 	return string(b)
 }

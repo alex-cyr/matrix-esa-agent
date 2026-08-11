@@ -61,6 +61,10 @@ func mergeDocxLogic(templatePath, jsonPath, outputPath string) error {
 	}
 	var replaceMap map[string]interface{}
 	if err := json.Unmarshal([]byte(jsonStr), &replaceMap); err != nil { return fmt.Errorf("json parse: %v", err) }
+	if replaceMap == nil { replaceMap = make(map[string]interface{}) }
+	// The header date is Go-supplied, never model-composed -- same rule the API
+	// path applies in injectFieldDefaults. See EP-caught error 7.
+	replaceMap["ReportDate"] = core.ReportDateNow()
 
 	r, err := zip.OpenReader(templatePath)
 	if err != nil { return fmt.Errorf("zip open: %v", err) }
