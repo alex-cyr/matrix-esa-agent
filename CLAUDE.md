@@ -213,6 +213,52 @@ dated July 06, 2026.."* — the template lead-in, the restated lead-in, and a
 doubled period. Concrete evidence for the splice rule and trailing-punctuation
 rule in template-compiler SKILL.md.
 
+### 6. Regional gradient reported where the parcel-scale gradient is opposite
+
+Caught in PE/EP review of the Providence Road draft. The pipeline reported
+groundwater flow as **westerly** — the regional/quadrangle-scale direction —
+when flow at the **parcel** is **easterly**. The site sits below a ridge running
+along Providence Road, and water drains east toward the nearer tributary. A
+regional gradient is not wrong in the abstract; it is wrong as an answer to a
+question that is always asked about the subject property. The report reads
+authoritatively either way, so nothing downstream catches it.
+
+**SITE-SCALE GRADIENT RULE — all spatial analysis is subject-property-centric.**
+Determine flow direction at **parcel scale**, by comparing contour elevations at
+the property's own boundaries — not by reading the dominant slope of the
+quadrangle.
+
+Source precedence, in order:
+1. **EDR GeoCheck's computed topographic gradient — primary.** The parser must
+   extract it explicitly rather than leaving it for a downstream agent to
+   infer.
+2. **Contour interpretation at the parcel boundaries — secondary**, used when
+   GeoCheck supplies nothing.
+3. **If the sources disagree, or confidence is low, emit
+   `[EP VERIFY: groundwater flow direction]`.** Never a confident guess. An
+   uncertain flow direction flagged for the EP costs a minute of review; a
+   confident wrong one propagates into the migration-pathway discussion and the
+   Section 10 opinion.
+
+### 7. Model-composed running header
+
+Also from the Providence review. The running header is **entirely
+deterministic** — template formatting plus Go-supplied values. **The model never
+composes header content.** Today's output had a model-guessed `ReportDate`,
+doubled spacing in the date cell (residue from the `header8` fracture repair),
+and a stray underline on the project-number run.
+
+Format contract, taken from the stamped house reports:
+
+| | left | right |
+|---|---|---|
+| line 1 | `Environmental Site Assessment - Phase I` | `[Month D, YYYY]` (generation date) |
+| line 2 | `[Site Address] - [Project Descriptor]` | `MEG  Project No. [number]` |
+
+`ReportDate` is generated in Go (`time.Now`, `"January 2, 2006"`). The model key
+is still accepted and always overwritten — a date the model invents is a date
+nobody chose.
+
 ## Known bugs to fix (in order)
 1. ~~main.go feeds raw .docx bytes (zip binary) from historical/ into the
    system prompt as "historical context" — must extract real text first.~~
