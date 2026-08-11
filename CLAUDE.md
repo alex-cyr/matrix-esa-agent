@@ -109,7 +109,8 @@ Template resolution order: `knowledge/ESA_PHASE_I_Template.docx`, falling back t
 `cmd/api/main.go` registers all routes on `http.DefaultServeMux`; `web/index.html` is a single-file vanilla-JS wizard (upload → pre-screen → generate) served at `/web/`.
 
 - `/api/v1/user`, `/projects`, `/projects/create`, `/upload`, `/prescreen`, `/generate`, `/analyze/bucket`, `/download`
-- Every handler except `/download` calls `enforceDomainAuth`, which reads the IAP header `X-Goog-Authenticated-User-Email` and requires `@matrixengineeringgroup.com`. **With no header present it returns `elias@matrixengineeringgroup.com` and allows the request** — auth relies entirely on Cloud Run/IAP being in front. Locally, everything is open.
+- Every handler calls `enforceDomainAuth`, which reads the IAP header `X-Goog-Authenticated-User-Email` and requires `@matrixengineeringgroup.com`. **With no header present it returns `elias@matrixengineeringgroup.com` and allows the request** — auth relies entirely on Cloud Run/IAP being in front. Locally, everything is open.
+- `/download` serves from exactly two sources: the per-request `matrix-generate-*` temp directory, and `esa_outputs/<project>/<file>` in the bucket (Cloud Run instances are ephemeral, so the local copy is often gone by the time the download arrives). `safeDownloadName` and `safeProjectName` **reject** rather than normalize — a traversal attempt shows up in the logs as `DOWNLOAD REJECTED` instead of quietly succeeding against a neighbouring file. Downloads are limited to `.docx` and `.pdf`.
 - Storage is dual-path: files are written to both `tmp/esa_inputs/<project>/` and `gs://$ESA_INPUT_BUCKET/esa_inputs/<project>/`. Reads prefer local and fall back to GCS. Reports go to `esa_outputs/<project>/` under both a timestamped name and the fixed `Matrix_Cloud_Final_Report.docx`.
 - `/prescreen` currently returns a **hardcoded 4-question list with pre-filled answers**; only the `detected_files` categorization is computed. `/analyze/bucket` likewise hardcodes its answers and re-dispatches into `generateReportHandler`.
 
@@ -435,6 +436,16 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   agents to it** — the digest is a reviewable style asset, not just a prompt.
 
 **PHASE 6 — backlog (each needs its own go-ahead).**
+- **Report title/descriptor in header line 2.** The stamped format is
+  `[Site Address] - [Project Descriptor]`, but the template has no descriptor
+  tag and nothing sources one, so the line is address-only today — which is the
+  correct fallback under the house convention, not a defect. Build it as one
+  unit when Phase 6 lands: an **optional intake field**, prefilled from proposal
+  extraction where available (needs a new parser key for the proposal title),
+  printed after the address with a `" - "` separator and **omitted entirely when
+  blank**. Do not add the template tag before the plumbing — a tag with no
+  source is a mechanism that can only ever resolve to the fallback, which looks
+  like a feature and behaves like nothing.
 - **Dynamic prescreen.** Replace the hardcoded 4 questions with real data-gap
   questions derived from parsing uploads at prescreen time; cache those parse
   results and reuse in `/generate` so parsing isn't paid twice. Remove the
@@ -497,9 +508,9 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   the entire accumulated payload — every parser extract plus the Geospatial
   output. The skill's stated contract and the pipeline's real behavior do not
   match, independent of the token question.
-- `/download`: add `enforceDomainAuth` + sanitize the `file` param
-  (`filepath.Base`, restrict to the generate temp dirs) — it currently serves
-  arbitrary paths with no auth.
+- ~~`/download`: add `enforceDomainAuth` + sanitize the `file` param — it
+  currently serves arbitrary paths with no auth.~~ DONE. See the HTTP layer
+  notes above.
 - Gate or delete `analyzeBucketHandler`'s hardcoded-answers path.
 - **Hidden Hills: split it, or extract only its report body.**
   `5 Hidden Hills Parcels ESA-Phase I Oct 2022.pdf` is the sole extraction

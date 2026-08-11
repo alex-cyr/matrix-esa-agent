@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1009,27 +1010,175 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// esaBucket returns the configured storage bucket.
+func esaBucket() string {
+	if b := os.Getenv("ESA_INPUT_BUCKET"); b != "" {
+		return b
+	}
+	return "matrix-esa-production-vault"
+}
+
+// allowedDownloadExt limits downloads to generated deliverables. Anything else
+// reaching this handler is a caller probing the filesystem.
+var allowedDownloadExt = map[string]bool{".docx": true, ".pdf": true}
+
+// safeDownloadName validates the caller-supplied `file` parameter. It must
+// already be a bare file name: this rejects rather than silently rewrites, so a
+// traversal attempt is visible in the logs instead of being quietly normalized
+// into a successful download of a neighbouring file.
+func safeDownloadName(raw string) (string, error) {
+	name := strings.TrimSpace(raw)
+	if name == "" {
+		return "", fmt.Errorf("empty file name")
+	}
+	// Check backslashes explicitly: filepath.Base does not treat "\" as a
+	// separator on Linux, so `..\..\.env` would survive as one element on
+	// Cloud Run while behaving as a path on a Windows dev box.
+	if strings.ContainsAny(name, `/\:`) || strings.Contains(name, "..") {
+		return "", fmt.Errorf("file name must not contain a path")
+	}
+	if name != filepath.Base(name) || strings.HasPrefix(name, ".") {
+		return "", fmt.Errorf("file name must be a plain file name")
+	}
+	if !allowedDownloadExt[strings.ToLower(filepath.Ext(name))] {
+		return "", fmt.Errorf("file type not downloadable")
+	}
+	return name, nil
+}
+
+// safeProjectName validates the `project` parameter, which becomes part of a
+// GCS object path. Spaces are legitimate ("Properties at Providence Road");
+// separators and parent references are not.
+func safeProjectName(raw string) (string, error) {
+	name := strings.TrimSpace(raw)
+	if name == "" {
+		return "", fmt.Errorf("empty project name")
+	}
+	if strings.ContainsAny(name, `/\:`) || strings.Contains(name, "..") {
+		return "", fmt.Errorf("project name must not contain a path")
+	}
+	return name, nil
+}
+
+// withinDir reports whether target resolves inside dir.
+func withinDir(dir, target string) bool {
+	dirAbs, err := filepath.Abs(dir)
+	if err != nil {
+		return false
+	}
+	targetAbs, err := filepath.Abs(target)
+	if err != nil {
+		return false
+	}
+	rel, err := filepath.Rel(dirAbs, targetAbs)
+	if err != nil {
+		return false
+	}
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+// findInGenerateTempDirs looks for fileName in the per-request directories that
+// /generate writes its merged docx to.
+func findInGenerateTempDirs(fileName string) (string, bool) {
+	matches, err := filepath.Glob(filepath.Join(os.TempDir(), "matrix-generate-*", fileName))
+	if err != nil {
+		return "", false
+	}
+	for _, m := range matches {
+		// fileName is already a bare name, so the glob cannot escape; the
+		// containment check is here so that stays true if the pattern changes.
+		if !withinDir(os.TempDir(), m) {
+			continue
+		}
+		if st, err := os.Stat(m); err == nil && st.Mode().IsRegular() {
+			return m, true
+		}
+	}
+	return "", false
+}
+
+// downloadFileHandler serves a generated report from one of exactly two places:
+// the per-request /generate temp directory, or the GCS esa_outputs prefix that
+// /generate mirrors it to.
+//
+// It previously fell through to os.Stat + http.ServeFile on the raw `file`
+// parameter, with no auth at all -- so anything the process could read was
+// downloadable by anyone who could reach the service, including .env, the
+// service account key, and other clients' reports. It was the only handler
+// without enforceDomainAuth.
 func downloadFileHandler(w http.ResponseWriter, r *http.Request) {
-	projName := r.URL.Query().Get("project")
-	fileName := r.URL.Query().Get("file")
-	if projName == "" || fileName == "" {
-		http.Error(w, "Missing project or file parameter", http.StatusBadRequest)
+	if _, err := enforceDomainAuth(r); err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 
-	tempPattern := filepath.Join(os.TempDir(), "matrix-generate-*", fileName)
-	matches, _ := filepath.Glob(tempPattern)
-	if len(matches) > 0 {
-		http.ServeFile(w, r, matches[0])
+	rawProject := r.URL.Query().Get("project")
+	rawFile := r.URL.Query().Get("file")
+
+	projName, err := safeProjectName(rawProject)
+	if err != nil {
+		slog.Warn("DOWNLOAD REJECTED", "param", "project", "value", rawProject, "reason", err)
+		http.Error(w, "Invalid project parameter", http.StatusBadRequest)
+		return
+	}
+	fileName, err := safeDownloadName(rawFile)
+	if err != nil {
+		slog.Warn("DOWNLOAD REJECTED", "param", "file", "value", rawFile, "reason", err)
+		http.Error(w, "Invalid file parameter", http.StatusBadRequest)
 		return
 	}
 
-	if _, err := os.Stat(fileName); err == nil {
-		http.ServeFile(w, r, fileName)
+	if p, ok := findInGenerateTempDirs(fileName); ok {
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
+		http.ServeFile(w, r, p)
+		return
+	}
+
+	if serveFromGCS(w, r, projName, fileName) {
 		return
 	}
 
 	http.Error(w, "File not found", http.StatusNotFound)
+}
+
+// serveFromGCS streams esa_outputs/<project>/<file> and reports whether it did.
+// Cloud Run instances are ephemeral, so a report generated by one instance is
+// often no longer on local disk when the download arrives at another.
+func serveFromGCS(w http.ResponseWriter, r *http.Request, projName, fileName string) bool {
+	ctx := r.Context()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		slog.Error("DOWNLOAD: storage client unavailable", "err", err)
+		return false
+	}
+	defer client.Close()
+
+	objName := fmt.Sprintf("esa_outputs/%s/%s", projName, fileName)
+	rc, err := client.Bucket(esaBucket()).Object(objName).NewReader(ctx)
+	if err != nil {
+		slog.Warn("DOWNLOAD: object not in bucket", "object", objName, "err", err)
+		return false
+	}
+	defer rc.Close()
+
+	ctype := "application/octet-stream"
+	switch strings.ToLower(filepath.Ext(fileName)) {
+	case ".docx":
+		ctype = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+	case ".pdf":
+		ctype = "application/pdf"
+	}
+	w.Header().Set("Content-Type", ctype)
+	if size := rc.Attrs.Size; size > 0 {
+		w.Header().Set("Content-Length", strconv.FormatInt(size, 10))
+	}
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
+
+	if _, err := io.Copy(w, rc); err != nil {
+		// Headers are already sent; all that is left is to record it.
+		slog.Error("DOWNLOAD: stream from bucket failed", "object", objName, "err", err)
+	}
+	return true
 }
 
 type AnalyzeBucketRequest struct {
