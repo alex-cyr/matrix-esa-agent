@@ -21,6 +21,7 @@ go run ./cmd/api                     # serve on :8080, UI at http://localhost:80
 go build -o esad.exe ./cmd/esad      # local CLI variant
 go vet ./cmd/... ./internal/...      # NOTE: scope explicitly — see below
 go run ./tools/fixheader             # one-shot: repair the running-header parts
+go run ./tools/draftnote             # one-shot: add {{DraftNote}} to the cover
 docker build -t matrix-esa-agent .
 ```
 
@@ -40,14 +41,20 @@ $env:LOG_LEVEL="debug"; go run ./cmd/api   # per-node artifact previews
 
 ### Tests
 
-Coverage is deliberate and narrow — two files, both guarding behavior that previously failed silently. Nothing else is tested.
+Coverage is deliberate and narrow — every test guards behavior that previously failed silently, most of it in a delivered report. Nothing else is tested.
 
 - `internal/core/historical_test.go` — corpus caching: content-hash keying, invalidation on content change, reuse on rename/duplicate, local formats bypassing the model, and per-file failures being recorded without aborting.
-- `cmd/api/merge_test.go` — tag replacement and post-model field injection.
+- `internal/core/baseline_test.go` — baseline coverage and the draft note: cache-coverage counting, coverage never calling the model, the nil extractor recording a failure, failures being retried while successes are reused, and atomic cache writes.
+- `internal/core/retry_test.go` — error classification and both backoff schedules, including the 1000-page `InvalidArgument` classifying permanent through two layers of `fmt.Errorf` wrapping.
+- `internal/core/reportdate_test.go` — the house date format and the UTC-evening rollover, in daylight and standard time.
+- `cmd/api/merge_test.go` — tag replacement, post-model field injection, the deterministic header, and the cover draft note.
+- `cmd/api/download_test.go` — `/download` auth and path-traversal rejection.
 
 **Do not "clean up" `TestInjectFieldDefaultsCarriesNoClientHardcodes`.** It is a deliberate regression tripwire: it fails the build if the strings `Arkan`, `Morningpark`, `Hashem`, `Gwinnett`, or `Roswell` reappear in `injectFieldDefaults` output. Those hardcodes silently pinned every generated report to one client's recipient block and site address regardless of the actual project, and the shape of that function invites their return. `TestReplaceTagOrderIndependent` is likewise load-bearing — it proves colliding keys (`ParcelID` vs `SiteParcelID`) converge on the same document regardless of Go's randomized map order.
 
-**`go build ./...` and `go vet ./...` fail** — `scratch/` holds ~40 standalone `package main` throwaway scripts in one directory, so `main` is redeclared. Always scope commands to `./cmd/...` and `./internal/...`. Don't try to "fix" `scratch/`; it's a junk drawer of one-off template/PDF inspection programs, useful as reference for how to poke at the `.docx` internals.
+**`go build ./...` and `go vet ./...` fail** — `scratch/` holds ~40 standalone `package main` throwaway scripts in one directory, so `main` is redeclared. Always scope commands to `./cmd/... ./internal/... ./tools/...`. Don't try to "fix" `scratch/`; it's a junk drawer of one-off template/PDF inspection programs, useful as reference for how to poke at the `.docx` internals.
+
+`tools/` is different from `scratch/` and is **not** gitignored: it holds one-shot maintenance programs that modify committed binaries. Because the template is a `.docx`, a change to it is unreviewable in a diff — the tool is the diff, which is why it has to be checked in. Each is idempotent and validates the rewritten file before replacing the original.
 
 ## Architecture
 
@@ -314,13 +321,15 @@ right-hand values with a single right-aligned tab stop at 9360 twips (page width
 ## Approved, not yet built
 
 Owner-approved work, in phase order. Do not start a phase without an explicit
-go-ahead. Show diffs before applying anything touching `mergeDocxLogic` or the
-pipeline.
+go-ahead. Show diffs before applying anything touching `mergeDocxLogic`,
+`pipeline.go`, or `agent.go`. Work the queue in order, one commit per numbered
+item, and stop and report between items.
 
-**PHASE 2 — verified run (gate).** A real `/generate` for `Providence_Road`
-through the web UI. Report baseline used/total, prompt tokens, wall time, the
-unreplaced-tag log, and the output docx path. No other code changes until this
-passes and the docx is reviewed externally.
+**PHASE 2 — verified run (gate). PASSED.** Elias confirmed the pipeline
+verified end-to-end on the Providence Road run of 2026-08-10; both the
+Providence and Beavers reports shipped, hand-finalized. That run is also the
+source of the EP-caught errors 6 and 7 recorded above. The gate is cleared —
+subsequent phases no longer wait on it.
 
 **PHASE 3 — robustness. DONE** — all five items shipped as specified; see the
 historical baselines notes above for the resulting behavior.
@@ -538,8 +547,12 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   report proper; the rest is EDR appendix printouts, which the extractor skill
   would discard anyway. It now sits in `historical_excluded/` so strict
   preflight can pass; **this backlog item is its return condition.**
-- Retry loop: classify errors by `googleapi` status, retry only retryables, then
-  restore `maxRetries` to a sane value.
+- ~~Retry loop: classify errors by `googleapi` status, retry only retryables,
+  then restore `maxRetries` to a sane value.~~ DONE — `internal/core/retry.go`
+  classifies gRPC codes, HTTP statuses and transport errors into
+  permanent / throttled (429, 30-60-90s) / transient (5-10-20s); `maxRetries`
+  is back to 3. Unrecognized errors retry as transient and are logged
+  `unclassified` so recurring shapes can be promoted.
 - Consolidate the two docx merge implementations (api vs esad). **Partially
   done:** value sanitization and post-merge validation are now shared via
   `internal/core/docxsafe.go`. What still differs is the matching strategy —
