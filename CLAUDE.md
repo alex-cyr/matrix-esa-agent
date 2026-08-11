@@ -96,7 +96,12 @@ Template resolution order: `knowledge/ESA_PHASE_I_Template.docx`, falling back t
 
 `historical/` holds completed human-authored reports whose prose the Template Compiler mirrors. They are PDFs, so `core.LoadHistoricalCorpus` transcribes each one via the `historical-extractor` agent and caches the text at `historical/.cache/<sha256-of-file>.txt`.
 
-- The cache key is a **hash of file contents**, not the name: editing or replacing a report re-extracts it, while renaming or duplicating one reuses the existing text.
+- The cache key is a **hash of file contents**, not the name: editing or replacing a report re-extracts it, while renaming or duplicating one reuses the existing text. Hashes are memoized on name+size+modtime, so a warm cache costs a stat rather than re-reading 300 MB of PDFs.
+- **Extraction never happens on the request path.** `buildAgents` passes a nil extractor; a cache miss is a recorded failure. Extraction is exclusively `esad -warm-historical`.
+- **Boot refuses to start on a cold or partial cache** (`preflightHistoricalCache` → `core.HistoricalCoverage`, which reads the cache without calling the model). Set `ESA_ALLOW_PARTIAL_BASELINE=1` to downgrade it to a warning — **required today**, because the 1400-page Hidden Hills report cannot be extracted at all, so coverage is permanently 19/20. Remove that file and the override becomes unnecessary.
+- Cache writes are atomic (temp file + `Sync` + rename). They used to go straight to the final path while the read side only checked for non-empty content, so an interrupted write left a truncated transcript that was trusted forever.
+- The in-process memo caches **successes only**. A fingerprint hit with failures present reuses the extracted text and retries just the failures, so a transient quota blip no longer drops a baseline for the whole process lifetime.
+- `/generate` returns `baseline: {used, total, missing}`. When incomplete, `{{DraftNote}}` on the cover page renders `[DRAFT NOTE — INTERNAL: generated against N of M historical baselines — remove before issuance]`. It is a **drafting artifact, not an ASTM data gap** — a thin style baseline says nothing about information required by E1527-21, and recording it as a data gap would put a false regulatory finding in a signed report. The placeholder lives in an existing empty cover paragraph (added by [tools/draftnote](tools/draftnote/main.go)), so a complete baseline costs no layout at all.
 - `.txt`, `.md`, and `.docx` are decoded in-process (`core.ExtractDocxText`) and never cost an API call. Only PDFs and images go to the model.
 - An in-process memo keyed on a directory fingerprint (names, sizes, modtimes) stops a long-running server re-reading the cache each request, while still noticing new files.
 - Warm the cache offline with `go run ./cmd/esad -payload . -warm-historical`; the Dockerfile's existing `COPY historical/` then carries it into the image, so containers never pay extraction cost on a customer request. There is no `.dockerignore`, so the cache is included automatically.
@@ -316,7 +321,12 @@ through the web UI. Report baseline used/total, prompt tokens, wall time, the
 unreplaced-tag log, and the output docx path. No other code changes until this
 passes and the docx is reviewed externally.
 
-**PHASE 3 — robustness (approved as specified).**
+**PHASE 3 — robustness. DONE** — all five items shipped; see the historical
+baselines notes above for the resulting behavior. One deviation, deliberate:
+strict mode has an `ESA_ALLOW_PARTIAL_BASELINE` escape hatch, because Hidden
+Hills cannot be extracted at any cache warmth and strict-without-override makes
+the service permanently unstartable. Original spec retained below.
+
 1. Boot preflight for cache coverage — **strict: refuse to start** on a cold or
    partial cache.
 2. Never extract inline on the request path — nil extractor in `buildAgents`;

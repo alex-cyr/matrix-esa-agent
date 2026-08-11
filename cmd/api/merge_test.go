@@ -139,7 +139,7 @@ func TestFindUnreplacedTags(t *testing.T) {
 func TestInjectFieldDefaultsCarriesNoClientHardcodes(t *testing.T) {
 	// Every generated report was pinned to one client's details regardless of
 	// the actual project. Guard against reintroduction.
-	out := injectFieldDefaults(`{"SiteStreetAddress":"400 Providence Rd"}`, map[string]string{})
+	out := injectFieldDefaults(`{"SiteStreetAddress":"400 Providence Rd"}`, map[string]string{}, "")
 	for _, banned := range []string{"Arkan", "Morningpark", "Hashem", "Gwinnett", "Roswell"} {
 		if strings.Contains(out, banned) {
 			t.Errorf("client hardcode %q leaked back into injectFieldDefaults output: %s", banned, out)
@@ -155,7 +155,7 @@ func TestInjectFieldDefaultsAppliesEPAnswers(t *testing.T) {
 		"project_number": "MEG-302858",
 		"parcel_id":      "11-0022-33",
 		"site_acreage":   "4.2 Acres",
-	})
+	}, "")
 	for _, want := range []string{`"ProjectNo":"302858"`, `"ParcelID":"11-0022-33"`, `"SiteAcreage":"4.2 Acres"`} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %s in %s", want, out)
@@ -169,7 +169,7 @@ func TestInjectFieldDefaultsAppliesEPAnswers(t *testing.T) {
 func TestInjectFieldDefaultsPreservesLetterRecipientBlock(t *testing.T) {
 	out := injectFieldDefaults(
 		`{"Proposal_Letter1":"Ms. Paige Singer","Proposal_Letter2":"DeKalb County Parks","Proposal_Letter3":"3681 Chestnut Street","Proposal_Letter4":"Scottdale, Georgia 30079"}`,
-		map[string]string{})
+		map[string]string{}, "")
 	for _, want := range []string{"Ms. Paige Singer", "DeKalb County Parks", "3681 Chestnut Street", "Scottdale, Georgia 30079"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("letter recipient line %q was wiped: %s", want, out)
@@ -372,7 +372,7 @@ func TestInjectFieldDefaultsOverwritesModelReportDate(t *testing.T) {
 			payload := fmt.Sprintf(`{%q: "July 29, 2026"}`, modelKey)
 
 			var got map[string]interface{}
-			if err := json.Unmarshal([]byte(injectFieldDefaults(payload, nil)), &got); err != nil {
+			if err := json.Unmarshal([]byte(injectFieldDefaults(payload, nil, "")), &got); err != nil {
 				t.Fatalf("injectFieldDefaults produced invalid JSON: %v", err)
 			}
 			if got["ReportDate"] != want {
@@ -384,12 +384,87 @@ func TestInjectFieldDefaultsOverwritesModelReportDate(t *testing.T) {
 
 func TestInjectFieldDefaultsSetsReportDateWhenModelOmitsIt(t *testing.T) {
 	var got map[string]interface{}
-	if err := json.Unmarshal([]byte(injectFieldDefaults(`{"OwnerName":"X"}`, nil)), &got); err != nil {
+	if err := json.Unmarshal([]byte(injectFieldDefaults(`{"OwnerName":"X"}`, nil, "")), &got); err != nil {
 		t.Fatalf("injectFieldDefaults produced invalid JSON: %v", err)
 	}
 	if got["ReportDate"] != core.ReportDateNow() {
 		t.Errorf("ReportDate = %v, want %v — an absent model key must still yield a dated header",
 			got["ReportDate"], core.ReportDateNow())
+	}
+}
+
+// The DraftNote key must always be emitted. An unset key leaves a literal
+// "{{DraftNote}}" on the cover page of every report with a complete baseline.
+func TestInjectFieldDefaultsAlwaysEmitsDraftNote(t *testing.T) {
+	cases := map[string]string{
+		"complete baseline": "",
+		"partial baseline":  "[DRAFT NOTE — INTERNAL: generated against 18 of 19 historical baselines — remove before issuance]",
+	}
+
+	for name, note := range cases {
+		t.Run(name, func(t *testing.T) {
+			var got map[string]interface{}
+			if err := json.Unmarshal([]byte(injectFieldDefaults(`{}`, nil, note)), &got); err != nil {
+				t.Fatalf("invalid JSON: %v", err)
+			}
+			v, present := got["DraftNote"]
+			if !present {
+				t.Fatal("DraftNote key absent; the placeholder would survive into the document")
+			}
+			if v != note {
+				t.Errorf("DraftNote = %q, want %q", v, note)
+			}
+		})
+	}
+}
+
+// End to end against the real template: the cover placeholder is filled in both
+// directions, and an empty note leaves no visible residue.
+func TestRealTemplateDraftNoteRendersOnCover(t *testing.T) {
+	tpl := filepath.Join("..", "..", "knowledge", "ESA_PHASE_I_Template.docx")
+	if _, err := os.Stat(tpl); err != nil {
+		t.Skip("firm template not available; skipping draft note check")
+	}
+
+	note := "[DRAFT NOTE — INTERNAL: generated against 18 of 19 historical baselines — remove before issuance]"
+	for _, tc := range []struct{ name, value string }{
+		{"incomplete baseline shows the note", note},
+		{"complete baseline shows nothing", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			js := []byte(injectFieldDefaults(`{}`, nil, tc.value))
+			out := filepath.Join(t.TempDir(), "draftnote.docx")
+			if err := mergeDocxLogic(tpl, js, out); err != nil {
+				t.Fatalf("merge failed: %v", err)
+			}
+
+			r, err := zip.OpenReader(out)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer r.Close()
+			for _, f := range r.File {
+				if f.Name != "word/document.xml" {
+					continue
+				}
+				rc, _ := f.Open()
+				b, _ := io.ReadAll(rc)
+				rc.Close()
+				s := string(b)
+
+				if strings.Contains(s, "DraftNote") {
+					t.Error("the {{DraftNote}} placeholder survived the merge")
+				}
+				text := visibleText(s)
+				if tc.value == "" {
+					if strings.Contains(text, "DRAFT NOTE") {
+						t.Error("a complete baseline still rendered a draft note")
+					}
+				} else if !strings.Contains(text, "DRAFT NOTE — INTERNAL") {
+					t.Error("the draft note did not render on the cover")
+				}
+			}
+		})
 	}
 }
 

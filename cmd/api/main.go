@@ -296,10 +296,53 @@ var requiredSkills = []string{skillParser, skillGeo, skillSiteRecon, skillASTM, 
 // historicalDir holds completed human-authored reports used as a style baseline.
 const historicalDir = "historical"
 
+// allowPartialBaselineEnv downgrades the strict cache preflight to a warning.
+// It exists for one real case: a baseline that cannot be extracted at all (the
+// 1400-page Hidden Hills report exceeds Vertex's 1000-page limit), which would
+// otherwise make the service permanently unstartable. Set it deliberately, not
+// as a habit -- it is the difference between "we know that one is missing" and
+// "nobody noticed the cache was cold".
+const allowPartialBaselineEnv = "ESA_ALLOW_PARTIAL_BASELINE"
+
+// preflightHistoricalCache refuses to start on a cold or partial baseline cache.
+//
+// Extraction is exclusively an offline `-warm-historical` operation. If the
+// cache is incomplete at boot, the alternative is discovering it mid-request,
+// where it presents as a Cloud Run timeout rather than as the missing-data
+// problem it actually is.
+func preflightHistoricalCache() {
+	status, err := core.HistoricalCoverage(historicalDir)
+	if err != nil {
+		slog.Error("STARTUP ABORTED: historical baseline directory unreadable",
+			"dir", historicalDir, "err", err)
+		os.Exit(1)
+	}
+
+	if status.Complete() {
+		slog.Info("/// HISTORICAL CACHE PREFLIGHT OK ///", "baselines", status.String())
+		return
+	}
+
+	if os.Getenv(allowPartialBaselineEnv) != "" {
+		slog.Warn("HISTORICAL CACHE INCOMPLETE — starting anyway because "+allowPartialBaselineEnv+" is set",
+			"baseline", status.String(), "missing_count", len(status.Missing))
+		return
+	}
+
+	slog.Error("STARTUP ABORTED: historical baseline cache is cold or partial",
+		"baseline", status.String(),
+		"missing", status.Missing,
+		"fix", "go run ./cmd/esad -payload . -warm-historical",
+		"override", allowPartialBaselineEnv+"=1")
+	os.Exit(1)
+}
+
 // buildAgents constructs the parser plus the sequential pipeline. Every failure
 // is fatal to the request: these errors used to be discarded into `_`, leaving
 // nil agents that NewPipeline then dropped from the chain without a word.
-func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, *core.Pipeline, error) {
+func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, *core.Pipeline, core.BaselineStatus, error) {
+	var status core.BaselineStatus
+
 	newAgent := func(name, skillPath string, temp float32) (*core.Agent, error) {
 		prompt, err := core.LoadSkill(skillPath)
 		if err != nil {
@@ -313,32 +356,32 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 
 	parserAgent, err := newAgent("ParserAgent", skillParser, 0.0)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, status, err
 	}
 	geoAgent, err := newAgent("GeospatialEvaluatorAgent", skillGeo, 0.1)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, status, err
 	}
 	srAgent, err := newAgent("SiteReconSynthesizerAgent", skillSiteRecon, 0.2)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, status, err
 	}
-	// Historical reports are PDFs. They used to be concatenated into the prompt
-	// as raw file bytes; now they are transcribed once and cached on disk.
-	// Loaded before the downstream agents because both of them consume it.
-	histAgent, err := newAgent("HistoricalExtractorAgent", skillHistorical, 0.0)
-	if err != nil {
-		return nil, nil, err
-	}
-	corpus, err := core.LoadHistoricalCorpus(ctx, historicalDir, core.AgentExtractor{Agent: histAgent})
+	// The extractor is deliberately nil on the request path: extraction is
+	// exclusively a `esad -warm-historical` operation. A cold cache here would
+	// mean ~19 sequential Vertex transcriptions of 300 MB of PDFs inside one
+	// HTTP request, which blows the Cloud Run timeout and surfaces as a generic
+	// one. A cache miss is now a recorded failure, never an inline extraction.
+	corpus, err := core.LoadHistoricalCorpus(ctx, historicalDir, nil)
 	if err != nil {
 		// Style baselines are advisory: a report still generates without them,
 		// so this degrades loudly rather than failing the request.
 		slog.Error("HISTORICAL CORPUS UNAVAILABLE: proceeding without style baseline", "err", err)
 		corpus = &core.HistoricalCorpus{}
 	}
+	status = corpus.Status()
 	if len(corpus.Failed) > 0 {
-		slog.Error("HISTORICAL DOCS FAILED EXTRACTION", "files", corpus.Failed)
+		slog.Error("HISTORICAL DOCS FAILED EXTRACTION", "files", corpus.Failed,
+			"hint", "run: go run ./cmd/esad -payload . -warm-historical")
 	}
 	if len(corpus.Docs) == 0 {
 		slog.Warn("NO HISTORICAL STYLE BASELINE: output tone will be unanchored", "dir", historicalDir)
@@ -349,7 +392,7 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 	// so it needs the same style baseline as the Template Compiler.
 	astmPrompt, err := core.LoadSkill(skillASTM)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, status, err
 	}
 	astmAgent, err := core.NewAgent(ctx, projectID, location, core.AgentConfig{
 		Name: "ASTMSynthesizerAgent", Model: modelID,
@@ -357,12 +400,12 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 		MaxOutputTokens: maxOutputTokens,
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, status, err
 	}
 
 	templatePrompt, err := core.LoadSkill(skillTemplate)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, status, err
 	}
 	templateCfg := core.AgentConfig{
 		Name: "TemplateCompilerAgent", Model: modelID,
@@ -374,14 +417,14 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 	}
 	templateAgent, err := core.NewAgent(ctx, projectID, location, templateCfg)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, status, err
 	}
 
 	pipeline, err := core.NewPipeline(projectID, location, true, geoAgent, srAgent, astmAgent, templateAgent)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, status, err
 	}
-	return parserAgent, pipeline, nil
+	return parserAgent, pipeline, status, nil
 }
 
 func listProjectsHandler(w http.ResponseWriter, r *http.Request) {
@@ -733,7 +776,7 @@ func cleanBracketsAndPunctuation(s string) string {
 // be hardcoded here to one client's details (Arkan Homes / Morningpark Cir /
 // Gwinnett County), which silently overwrote correct model output and pinned
 // every generated report to that client regardless of the actual project.
-func injectFieldDefaults(payloadJSON string, answers map[string]string) string {
+func injectFieldDefaults(payloadJSON string, answers map[string]string, draftNote string) string {
 	var m map[string]interface{}
 	_ = json.Unmarshal([]byte(payloadJSON), &m)
 	if m == nil {
@@ -795,6 +838,11 @@ func injectFieldDefaults(payloadJSON string, answers map[string]string) string {
 	// otherwise race this assignment. The header is template formatting plus
 	// Go-supplied values; the model never composes header content.
 	cleanedMap["ReportDate"] = core.ReportDateNow()
+
+	// DraftNote renders as an empty paragraph when the baseline is complete, so
+	// the key is always emitted -- an unset tag would survive into the document
+	// as a literal "{{DraftNote}}".
+	cleanedMap["DraftNote"] = draftNote
 
 	b, _ := json.Marshal(cleanedMap)
 	return string(b)
@@ -885,12 +933,13 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	parserAgent, pipeline, err := buildAgents(ctx, projectID, location)
+	parserAgent, pipeline, baselineStatus, err := buildAgents(ctx, projectID, location)
 	if err != nil {
 		slog.Error("AGENT INIT FAILED", "err", err)
 		http.Error(w, "agent initialization failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	slog.Info("/// BASELINE COVERAGE ///", "project", req.ProjectName, "baseline", baselineStatus.String())
 
 	var fullExtractedData string
 	var parsed, parseFailed int
@@ -960,7 +1009,7 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 
 	// No brace-hunting: the compiler runs with ResponseMIMEType
 	// "application/json", so its yield is a JSON object by construction.
-	finalPayload = injectFieldDefaults(finalPayload, req.Answers)
+	finalPayload = injectFieldDefaults(finalPayload, req.Answers, baselineStatus.DraftNote())
 
 	templatePath := "knowledge/ESA_PHASE_I_Template.docx"
 	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
@@ -1003,6 +1052,7 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":          "success",
+		"baseline":        baselineStatus,
 		"file_name":       finalFilename,
 		"gcs_output_path": fmt.Sprintf("gs://%s/esa_outputs/%s/Matrix_Cloud_Final_Report.docx", bucketName, req.ProjectName),
 		"download_url":    fmt.Sprintf("/api/v1/download?project=%s&file=%s", req.ProjectName, finalFilename),
@@ -1249,6 +1299,8 @@ func main() {
 			os.Exit(1)
 		}
 	}
+
+	preflightHistoricalCache()
 
 	http.HandleFunc("/api/v1/user", authUserHandler)
 	http.HandleFunc("/api/v1/projects", listProjectsHandler)

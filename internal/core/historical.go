@@ -158,6 +158,11 @@ var (
 	corpusMu    sync.Mutex
 	corpusKey   string
 	corpusValue *HistoricalCorpus
+
+	// hashMemo caches content hashes keyed by name+size+modtime. The corpus is
+	// ~300 MB of PDFs; without this, every retry of a failed document would
+	// re-read and re-hash the whole file just to look up its cache entry.
+	hashMemo = map[string]string{}
 )
 
 // LoadHistoricalCorpus returns extracted text for every document in dir.
@@ -168,21 +173,10 @@ var (
 // avoids re-reading the cache on every call while still noticing when the
 // directory changes underneath a long-running server.
 func LoadHistoricalCorpus(ctx context.Context, dir string, ex TextExtractor) (*HistoricalCorpus, error) {
-	entries, err := os.ReadDir(dir)
+	entries, names, err := historicalSources(dir)
 	if err != nil {
-		return nil, fmt.Errorf("read historical dir %q: %w", dir, err)
+		return nil, err
 	}
-
-	var names []string
-	for _, e := range entries {
-		if e.IsDir() || strings.HasPrefix(e.Name(), ".") {
-			continue
-		}
-		if isHistoricalSource(e.Name()) {
-			names = append(names, e.Name())
-		}
-	}
-	sort.Strings(names)
 
 	fp, err := dirFingerprint(dir, entries, names)
 	if err != nil {
@@ -191,8 +185,22 @@ func LoadHistoricalCorpus(ctx context.Context, dir string, ex TextExtractor) (*H
 
 	corpusMu.Lock()
 	defer corpusMu.Unlock()
+
+	// Successes are memoized; failures are not. A document that failed on a
+	// transient quota blip used to be dropped for the whole process lifetime,
+	// because the memo stored Failed alongside Docs. Now a fingerprint hit
+	// reuses the extracted text and retries only what failed -- which keeps the
+	// retry from re-reading 300 MB of PDFs on every request.
+	memoized := map[string]HistoricalDoc{}
 	if corpusKey == fp && corpusValue != nil {
-		return corpusValue, nil
+		if len(corpusValue.Failed) == 0 {
+			return corpusValue, nil
+		}
+		for _, d := range corpusValue.Docs {
+			memoized[d.Name] = d
+		}
+		slog.Info("HISTORICAL CORPUS: retrying previously failed documents",
+			"reusing", len(memoized), "retrying", len(corpusValue.Failed))
 	}
 
 	cacheDir := filepath.Join(dir, HistoricalCacheDir)
@@ -202,6 +210,10 @@ func LoadHistoricalCorpus(ctx context.Context, dir string, ex TextExtractor) (*H
 
 	corpus := &HistoricalCorpus{}
 	for _, name := range names {
+		if d, ok := memoized[name]; ok {
+			corpus.Docs = append(corpus.Docs, d)
+			continue
+		}
 		text, err := loadOne(ctx, dir, cacheDir, name, ex)
 		if err != nil {
 			slog.Error("HISTORICAL EXTRACTION FAILED", "file", name, "err", err)
@@ -214,6 +226,62 @@ func LoadHistoricalCorpus(ctx context.Context, dir string, ex TextExtractor) (*H
 	slog.Info("/// HISTORICAL CORPUS READY ///", "dir", dir, "extracted", len(corpus.Docs), "failed", len(corpus.Failed))
 	corpusKey, corpusValue = fp, corpus
 	return corpus, nil
+}
+
+// historicalSources lists the extractable documents in dir, sorted.
+func historicalSources(dir string) ([]os.DirEntry, []string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, nil, fmt.Errorf("read historical dir %q: %w", dir, err)
+	}
+	var names []string
+	for _, e := range entries {
+		if e.IsDir() || strings.HasPrefix(e.Name(), ".") {
+			continue
+		}
+		if isHistoricalSource(e.Name()) {
+			names = append(names, e.Name())
+		}
+	}
+	sort.Strings(names)
+	return entries, names, nil
+}
+
+// HistoricalCoverage reports which baselines are already extracted, without
+// extracting anything or calling the model. The boot preflight uses it to
+// refuse to start on a cold or partial cache: extraction on the request path
+// would mean ~19 sequential Vertex transcriptions inside one HTTP request,
+// which blows the Cloud Run timeout and presents as a generic timeout.
+func HistoricalCoverage(dir string) (BaselineStatus, error) {
+	_, names, err := historicalSources(dir)
+	if err != nil {
+		return BaselineStatus{}, err
+	}
+
+	cacheDir := filepath.Join(dir, HistoricalCacheDir)
+	status := BaselineStatus{Total: len(names)}
+
+	corpusMu.Lock()
+	defer corpusMu.Unlock()
+
+	for _, name := range names {
+		// Locally decodable formats never need the cache.
+		if !needsModelExtraction(name) {
+			status.Used++
+			continue
+		}
+		hash, err := contentHashLocked(filepath.Join(dir, name))
+		if err != nil {
+			status.Missing = append(status.Missing, name)
+			continue
+		}
+		if b, err := os.ReadFile(filepath.Join(cacheDir, hash+".txt")); err == nil && len(bytes.TrimSpace(b)) > 0 {
+			status.Used++
+			continue
+		}
+		status.Missing = append(status.Missing, name)
+	}
+	return status, nil
 }
 
 func loadOne(ctx context.Context, dir, cacheDir, name string, ex TextExtractor) (string, error) {
@@ -231,12 +299,13 @@ func loadOne(ctx context.Context, dir, cacheDir, name string, ex TextExtractor) 
 		return ExtractDocxText(path)
 	}
 
-	data, err := os.ReadFile(path)
+	// Hash first and read the bytes only on a cache miss: the corpus is ~300 MB
+	// and a warm cache should cost a stat and a small read, not 300 MB of I/O.
+	hash, err := contentHashLocked(path)
 	if err != nil {
 		return "", err
 	}
-	sum := sha256.Sum256(data)
-	cachePath := filepath.Join(cacheDir, hex.EncodeToString(sum[:])+".txt")
+	cachePath := filepath.Join(cacheDir, hash+".txt")
 
 	if b, err := os.ReadFile(cachePath); err == nil && len(bytes.TrimSpace(b)) > 0 {
 		return string(b), nil
@@ -249,17 +318,77 @@ func loadOne(ctx context.Context, dir, cacheDir, name string, ex TextExtractor) 
 		return "", fmt.Errorf("cache miss and no extractor configured (run: esad -warm-historical)")
 	}
 
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
 	slog.Info("HISTORICAL CACHE MISS: extracting via model", "file", name, "bytes", len(data))
 	text, err := ex.ExtractText(ctx, name, data, MimeTypeFor(name))
 	if err != nil {
 		return "", err
 	}
-	if err := os.WriteFile(cachePath, []byte(text), 0o644); err != nil {
+	if err := writeCacheAtomic(cachePath, text); err != nil {
 		// Extraction succeeded; a cache write failure only costs us the work
 		// next time, so continue rather than discarding a good result.
 		slog.Error("HISTORICAL CACHE WRITE FAILED", "file", name, "cache", cachePath, "err", err)
 	}
 	return text, nil
+}
+
+// writeCacheAtomic writes via a temp file in the same directory and renames it
+// into place. Writes used to go straight to the final path while the read side
+// only checked for non-empty content, so an interrupted write left a truncated
+// transcript that would be trusted forever.
+func writeCacheAtomic(cachePath, text string) error {
+	tmp, err := os.CreateTemp(filepath.Dir(cachePath), ".tmp-cache-*")
+	if err != nil {
+		return err
+	}
+	tmpName := tmp.Name()
+	defer os.Remove(tmpName) // no-op once the rename has succeeded
+
+	if _, err := tmp.WriteString(text); err != nil {
+		tmp.Close()
+		return err
+	}
+	// Flush to disk before the rename, so a crash cannot leave the final path
+	// pointing at an empty file.
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmpName, cachePath)
+}
+
+// contentHashLocked returns the SHA-256 of a file's contents, memoized on
+// name+size+modtime. Callers must hold corpusMu.
+func contentHashLocked(path string) (string, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return "", err
+	}
+	key := fmt.Sprintf("%s\x00%d\x00%d", path, info.Size(), info.ModTime().UnixNano())
+	if h, ok := hashMemo[key]; ok {
+		return h, nil
+	}
+
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	sum := hex.EncodeToString(h.Sum(nil))
+	hashMemo[key] = sum
+	return sum, nil
 }
 
 // dirFingerprint builds a cheap change-detector over the source documents.
