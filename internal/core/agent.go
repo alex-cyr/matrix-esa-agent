@@ -74,29 +74,43 @@ func (a *Agent) Execute(ctx context.Context, parts ...genai.Part) (*Artifact, er
 
 	var resp *genai.GenerateContentResponse
 	var err error
-	// TEMPORARY: lowered from 10 while testing the loud-failure changes. A
-	// non-retryable error (bad request, auth) burns every attempt before
-	// surfacing, so keep this low until the retry loop classifies errors.
-	maxRetries := 2
 
-	for i := 0; i <= maxRetries; i++ {
+	// Retries are classified (see retry.go): permanent errors surface on the
+	// first attempt, quota errors get 30/60/90s, transport blips 5/10/20s.
+	for attempt := 1; ; attempt++ {
 		resp, err = model.GenerateContent(ctx, parts...)
 		if err == nil {
 			break
 		}
 
-		if i < maxRetries {
-			slog.Warn("/// NODE CALL FAILED /// retrying", "agent", a.Cfg.Name,
-				"attempt", i+1, "of", maxRetries+1, "err", err)
-			time.Sleep(5 * time.Second)
-			continue
-		}
-		break
-	}
+		class, reason := classifyRetry(err)
 
-	if err != nil {
-		slog.Error("/// NODE CALL EXHAUSTED RETRIES ///", "agent", a.Cfg.Name, "err", err)
-		return nil, fmt.Errorf("generation failed for %s: %w", a.Cfg.Name, err)
+		if class == retryNever {
+			slog.Error("/// NODE CALL FAILED — NOT RETRYABLE ///",
+				"agent", a.Cfg.Name, "attempt", attempt, "reason", reason, "err", err)
+			return nil, fmt.Errorf("generation failed for %s (%s, not retryable): %w",
+				a.Cfg.Name, reason, err)
+		}
+
+		if attempt > maxRetries {
+			slog.Error("/// NODE CALL EXHAUSTED RETRIES ///", "agent", a.Cfg.Name,
+				"attempts", attempt, "class", class.String(), "reason", reason, "err", err)
+			return nil, fmt.Errorf("generation failed for %s after %d attempts (%s, %s): %w",
+				a.Cfg.Name, attempt, class, reason, err)
+		}
+
+		delay := retryDelay(class, attempt)
+		slog.Warn("/// NODE CALL FAILED /// retrying", "agent", a.Cfg.Name,
+			"attempt", attempt, "of", maxRetries+1, "class", class.String(),
+			"reason", reason, "backoff", delay.String(), "err", err)
+
+		// A 90s sleep must not outlive a canceled request.
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("generation for %s abandoned during %s backoff: %w",
+				a.Cfg.Name, delay, ctx.Err())
+		case <-time.After(delay):
+		}
 	}
 
 	if len(resp.Candidates) == 0 {

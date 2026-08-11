@@ -6,7 +6,11 @@ require (
 	cloud.google.com/go/storage v1.61.3
 	cloud.google.com/go/vertexai v0.17.0
 	github.com/joho/godotenv v1.5.1
+	github.com/jung-kurt/gofpdf v1.16.2
+	github.com/pdfcpu/pdfcpu v0.14.0
+	github.com/phpdave11/gofpdi v1.0.16
 	google.golang.org/api v0.272.0
+	google.golang.org/grpc v1.79.2
 )
 
 require (
@@ -38,15 +42,9 @@ require (
 	github.com/googleapis/gax-go/v2 v2.18.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hhrutter/tiff v1.0.6 // indirect
-	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/jung-kurt/gofpdf v1.16.2 // indirect
 	github.com/mattn/go-runewidth v0.0.27 // indirect
-	github.com/pdfcpu/pdfcpu v0.14.0 // indirect
-	github.com/phpdave11/gofpdi v1.0.16 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
-	github.com/spf13/cobra v1.10.2 // indirect
-	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.39.0 // indirect
@@ -70,6 +68,5 @@ require (
 	google.golang.org/genproto v0.0.0-20260217215200-42d3e9bedb6d // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260226221140-a57be14db171 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c // indirect
-	google.golang.org/grpc v1.79.2 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
