@@ -98,14 +98,15 @@ Template resolution order: `knowledge/ESA_PHASE_I_Template.docx`, falling back t
 
 - The cache key is a **hash of file contents**, not the name: editing or replacing a report re-extracts it, while renaming or duplicating one reuses the existing text. Hashes are memoized on name+size+modtime, so a warm cache costs a stat rather than re-reading 300 MB of PDFs.
 - **Extraction never happens on the request path.** `buildAgents` passes a nil extractor; a cache miss is a recorded failure. Extraction is exclusively `esad -warm-historical`.
-- **Boot refuses to start on a cold or partial cache** (`preflightHistoricalCache` → `core.HistoricalCoverage`, which reads the cache without calling the model). Set `ESA_ALLOW_PARTIAL_BASELINE=1` to downgrade it to a warning — **required today**, because the 1400-page Hidden Hills report cannot be extracted at all, so coverage is permanently 19/20. Remove that file and the override becomes unnecessary.
+- **Boot refuses to start on a cold or partial cache** (`preflightHistoricalCache` → `core.HistoricalCoverage`, which reads the cache without calling the model). The corpus is **19 files, fully cached — coverage is 19/19 and strict mode is the production posture.** `ESA_ALLOW_PARTIAL_BASELINE=1` downgrades the abort to a warning; it is a **dev-only escape hatch and is never set on Cloud Run.** If a deploy needs it, the cache is wrong — fix the cache, don't set the variable.
 - Cache writes are atomic (temp file + `Sync` + rename). They used to go straight to the final path while the read side only checked for non-empty content, so an interrupted write left a truncated transcript that was trusted forever.
 - The in-process memo caches **successes only**. A fingerprint hit with failures present reuses the extracted text and retries just the failures, so a transient quota blip no longer drops a baseline for the whole process lifetime.
 - `/generate` returns `baseline: {used, total, missing}`. When incomplete, `{{DraftNote}}` on the cover page renders `[DRAFT NOTE — INTERNAL: generated against N of M historical baselines — remove before issuance]`. It is a **drafting artifact, not an ASTM data gap** — a thin style baseline says nothing about information required by E1527-21, and recording it as a data gap would put a false regulatory finding in a signed report. The placeholder lives in an existing empty cover paragraph (added by [tools/draftnote](tools/draftnote/main.go)), so a complete baseline costs no layout at all.
 - `.txt`, `.md`, and `.docx` are decoded in-process (`core.ExtractDocxText`) and never cost an API call. Only PDFs and images go to the model.
 - An in-process memo keyed on a directory fingerprint (names, sizes, modtimes) stops a long-running server re-reading the cache each request, while still noticing new files.
 - Warm the cache offline with `go run ./cmd/esad -payload . -warm-historical`; the Dockerfile's existing `COPY historical/` then carries it into the image, so containers never pay extraction cost on a customer request. There is no `.dockerignore`, so the cache is included automatically.
-- The real extraction limit is **page count, not bytes**: Vertex rejects documents over **1000 pages** (`InvalidArgument`). Byte size has not proven to be a practical constraint — baselines of 48.8 MB and 20.1 MB both extracted fine. Of 20 baselines, 19 extract; only the 1400-page Hidden Hills report fails. Extraction failures land in `corpus.Failed` rather than aborting, whatever the cause.
+- The real extraction limit is **page count, not bytes**: Vertex rejects documents over **1000 pages** (`InvalidArgument`). Byte size has not proven to be a practical constraint — baselines of 48.8 MB and 20.1 MB both extracted fine. Extraction failures land in `corpus.Failed` rather than aborting, whatever the cause.
+- **`historical_excluded/` holds stamped reports held out of the corpus.** Currently one: `5 Hidden Hills Parcels ESA-Phase I Oct 2022.pdf`, at **1400 pages against Vertex's 1000-page limit**, which no amount of cache warming can fix — with it present, coverage was pinned at 19/20 and strict preflight could never pass. It is **moved, never deleted**: it is a stamped house report and **returns to `historical/` once the page-split lands** (Phase 6 backlog — only ~20 of its 1400 pages are the report proper; the rest is EDR appendix printouts the extractor would discard anyway). Same client-material rules as `historical/`: gitignored, never committed, never pasted into external services.
 
 `corpus.PromptBlock()` is a plain string appended to a system prompt, so more than one agent can consume it.
 
@@ -127,7 +128,7 @@ The binary reads `.agents/`, `knowledge/`, and `historical/` **relative to the w
 
 ## Data sensitivity
 
-`edr_source/`, `output/`, and `.env` are gitignored as client M&A material. `historical/` and `tmp/` hold real client reports and generated drafts — do not commit their contents or paste them into external services.
+`edr_source/`, `output/`, and `.env` are gitignored as client M&A material. `historical/`, `historical_excluded/`, and `tmp/` hold real client reports and generated drafts — do not commit their contents or paste them into external services.
 
 
 
@@ -321,11 +322,16 @@ through the web UI. Report baseline used/total, prompt tokens, wall time, the
 unreplaced-tag log, and the output docx path. No other code changes until this
 passes and the docx is reviewed externally.
 
-**PHASE 3 — robustness. DONE** — all five items shipped; see the historical
-baselines notes above for the resulting behavior. One deviation, deliberate:
-strict mode has an `ESA_ALLOW_PARTIAL_BASELINE` escape hatch, because Hidden
-Hills cannot be extracted at any cache warmth and strict-without-override makes
-the service permanently unstartable. Original spec retained below.
+**PHASE 3 — robustness. DONE** — all five items shipped as specified; see the
+historical baselines notes above for the resulting behavior.
+
+The one deviation has since been resolved rather than kept. An
+`ESA_ALLOW_PARTIAL_BASELINE` escape hatch was added because Hidden Hills cannot
+be extracted at any cache warmth, which made strict mode permanently
+unstartable. Hidden Hills has now been moved to `historical_excluded/`, so
+coverage is **19/19 and strict mode runs unconditionally in production**. The
+variable remains in the code as a dev-only convenience and is **never set on
+Cloud Run**. Original spec retained below.
 
 1. Boot preflight for cache coverage — **strict: refuse to start** on a cold or
    partial cache.
@@ -522,14 +528,16 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   currently serves arbitrary paths with no auth.~~ DONE. See the HTTP layer
   notes above.
 - Gate or delete `analyzeBucketHandler`'s hardcoded-answers path.
-- **Hidden Hills: split it, or extract only its report body.**
-  `5 Hidden Hills Parcels ESA-Phase I Oct 2022.pdf` is the sole extraction
-  failure: `InvalidArgument: The document contains 1400 pages which exceeds the
-  supported page limit of 1000`. The cap is on **page count, not bytes** —
-  Cross Keys extracted fine at 48.8 MB. A `genai.FileData`/GCS URI would
-  therefore **not** fix it; the page limit applies however the document is
-  passed. Only ~20 of the 1400 pages are the report proper; the rest is EDR
-  appendix printouts, which the extractor skill would discard anyway.
+- **Hidden Hills: split it, or extract only its report body — then move it back
+  into `historical/`.** `5 Hidden Hills Parcels ESA-Phase I Oct 2022.pdf` was
+  the sole extraction failure: `InvalidArgument: The document contains 1400
+  pages which exceeds the supported page limit of 1000`. The cap is on **page
+  count, not bytes** — Cross Keys extracted fine at 48.8 MB. A
+  `genai.FileData`/GCS URI would therefore **not** fix it; the page limit
+  applies however the document is passed. Only ~20 of the 1400 pages are the
+  report proper; the rest is EDR appendix printouts, which the extractor skill
+  would discard anyway. It now sits in `historical_excluded/` so strict
+  preflight can pass; **this backlog item is its return condition.**
 - Retry loop: classify errors by `googleapi` status, retry only retryables, then
   restore `maxRetries` to a sane value.
 - Consolidate the two docx merge implementations (api vs esad). **Partially

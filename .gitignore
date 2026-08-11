@@ -13,6 +13,11 @@ output/*
 historical/*
 !historical/.gitkeep
 
+# Stamped reports held out of the corpus (see CLAUDE.md). Same client material,
+# same rules — moved here rather than deleted so they can return.
+historical_excluded/*
+!historical_excluded/.gitkeep
+
 # Per-project working dirs: client inputs and generated draft reports
 tmp/
 
