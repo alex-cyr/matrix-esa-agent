@@ -245,3 +245,72 @@ re-attachment as rollback.
 3. Wire both agents, delete the corpus attachment.
 4. Comparison Providence generate vs the 2026-08-12 confirmation run.
 5. Report per-node tokens + validator block.
+
+---
+
+## 8. Assembly result (Stage B)
+
+Built by [tools/builddigest](../tools/builddigest/main.go), deterministic, zero
+model calls.
+
+| File | Consumer | Exemplar | ≈ tokens |
+|---|---|---|---|
+| `knowledge/style_baseline_astm.md` | ASTM Synthesizer | 1080 Moreland (REC-present) | **21k** |
+| `knowledge/style_baseline_compiler.md` | Template Compiler | Old Field Road (clean/vacant) | **15k** |
+| | | **per run** | **≈ 36k** |
+
+**658k → 36k, a 95% cut**, inside the ~45k target.
+
+### Filter results
+
+| Stage | Count |
+|---|---|
+| Tier-1 mined | 156 |
+| — template already prints it (Filter 1) | 66 |
+| — qualifications/résumé | 26 |
+| — questionnaire form | 37 |
+| — vendor boilerplate (EDR/Sanborn licence text) | 7 |
+| — letterhead/contact | 2 |
+| **Survivors** | **18** |
+| **Kept after tag verification** | **6** |
+
+**Filter 1 removed 42% of Tier 1** — text the template already prints. That
+alone justifies the ruling: every one of those 66 would have been restatement
+fuel aimed at the tag it sits next to.
+
+Of the 18 survivors, 12 were dropped at the tag check. Two deserve naming
+because intuition would have kept them: the **title-records default** ("we are
+unaware that a title records search is planned…") and the **aerial-photograph
+lead-in** read exactly like house voice, but Section 4.2 is *entirely static in
+the template* and the aerial tags are per-row table cells — **neither fills a
+tag**, so neither belongs. That is the ruling's test doing work intuition would
+have got wrong.
+
+The surviving 6 all name the tag they feed: data-gap significance, the VEC
+search-requirements sentence, the radon 4 pCi/L recommendation, and three
+tank-related negatives.
+
+**Tier 1 is small, and that is the finding.** The verbatim-identical material
+that actually fills tags is ~1k tokens. The house voice lives in the Tier-2
+formulas and the exemplars, not in repeated sentences.
+
+### Contamination — the scan must be broader than the masker
+
+The first build reported **clean** while `Old Field Road NW` and
+`Adairsville, GA` sat in the output. Both the masker and the scan assumed a
+street number and a known city list, so the scan confirmed the masker's
+assumptions instead of testing them.
+
+Fixed by making the scan **deliberately wider** than the masker: street names
+without numbers, any `City, ST` pair, any `X County`, facility names. It
+immediately earned it — the widened scan caught an occupant address in
+**Knoxville, TN** that the Georgia-only masker had missed. Both files now scan
+clean under the wider patterns.
+
+Known cosmetic over-masking: the exemplar title line reads
+`ENVIRONMENTAL SITE ASSESSMENT - [FACILITY] #[SITE ADDRESS]`, where the facility
+pattern swallowed "PHASE I At". Over-masking is the safe direction and body
+prose is unaffected, but it is recorded rather than hidden.
+
+**HARD STOP.** Files are for review. No agent is wired; `corpus.PromptBlock()`
+is still attached.

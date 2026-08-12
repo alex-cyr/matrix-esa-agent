@@ -27,633 +27,97 @@ counts are the evidence. Review decides what reaches the digest.
 
 ---
 
-## Tier 1 — verbatim across the corpus
+## Tier 1 — after editorial filters
 
-Candidates for *"canonical blocks, stated once each"*. Ranked by length × frequency.
+| Stage | Count |
+|---|---|
+| Mined (verbatim in ≥7 of 9) | 156 |
+| — excluded, **template already prints it** | 66 |
+| — excluded, qualifications/resume | 26 |
+| — excluded, letterhead/contact | 2 |
+| — excluded, vendor boilerplate | 7 |
+| — excluded, questionnaire form | 37 |
+| — excluded, signature/seal block | 0 |
+| **Survivors** | **18** |
 
-### T1-01 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+**Filter 1** is mechanical: any candidate whose opening words the template
+already prints is dropped. Template-owned text in a digest is restatement
+fuel — rule 10's defect at corpus scale, aimed at every tag at once.
 
-> 4.3 Specialized or Actual Knowledge of User If the user, or party seeking to use Practice E 1527 to perform an environmental site assessment of a property, has any specialized knowledge or experience in connection with a recognized environmental condition(s) in connection with the subject site or any actual knowledge of an environmental lien in connection with the subject site, the user should communicate this information to the environmental professional
+**Filter 2** drops static appendix and exhibit text the model never composes
+into a tag. The test is: *does the model write this into a `{{tag}}`?*
 
-### T1-02 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> A controlled recognized environmental condition (CREC) is a recognized environmental condition resulting from a past release of hazardous substances or petroleum products that has been addressed to the satisfaction of the applicable regulatory authority with hazardous substances or petroleum products allowed to remain in place subject to the implementation of required controls (such as property use restrictions, activity and use limitations, institutional controls, or engineering controls)
-
-### T1-03 · 7/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
-
-> Please provide all available environmental information from yours or your Client's records including, but not limited to, documentation in connection with any pending or threatened public or private proceedings or litigation with respect to environmental liability, environmental permits and permit applications, underground and above ground tank registration and information (including removal and testing of such tanks), environmental reports, asbestos, lead-based paint or indoor air quality studies, spill information and compliance information and programs
-
-### T1-04 · 8/9 — 4962 Rockbridge ESA phase 1; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 1.1 Purpose In coordination with ASTM E1527-21 Standard Practice for Site Assessments: Phase I Environmental Site Assessment Process, Matrix inquired on the current and historical condition of the subject property with the intention to identify Recognized Environmental Conditions (RECs), Historical Recognized Environmental Conditions (HRECs), or Controlled Recognized Environmental Conditions (CRECs), that exceed de minimus conditions
-
-### T1-05 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Reliance on the information contained within this assessment by any other person or entity is not authorized without the expressed written consent of Matrix Engineering Group, Inc. 2.6 Disclaimers 2.6.1 Limitations Matrix Engineering Group performed an Environmental Site Assessment in general accordance with ASTM E1527-21 and contains all limitations inherent with this protocol
-
-### T1-06 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> We declare that, to the best of our professional knowledge and belief, we meet the definition of Environmental Professional as defined in 312.10 of 40 CFR 312 and we have the specific qualifications based on education, training, and experience to assess a property of the nature, history, and setting of the subject property
-
-### T1-07 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The project included the largest international concourse in the nation, aprons, tunnels, roadways, steel structures, fuel farm, deep excavations, permanent and construction dewatering, deep foundation system, high reinforced retaining walls, soil stabilization, settlement evaluation of the foundations and effects of drag forces on piles
-
-### T1-08 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Although this assessment has attempted to identify the potential for contamination of the subject property, potential sources of contamination may have escaped detection due to the lack of, or inaccuracy of, public records, and/or the presence of undetected and unreported environmental accidents
-
-### T1-09 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The work consisted of aerial structures, parking decks, tunnels, cut-and-cover sections, shallow, mat, and deep foundation system, construction and permanent slopes, settlement analysis, field instrumentations, failure investigations, engineering analysis, and engineering report preparation
-
-### T1-10 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> In addition to being NICET, AWS & ACI certified, he is a Master ICC Special Inspector (holding at least 4 ICC certifications), as well as being an accredited Inspector/Assessor and Management Planner for Asbestos in Buildings (meeting EPA/AHERA/ASHARA TSCA Title II and NESHAP regulations)
-
-### T1-11 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> A search of available environmental records was conducted by Environmental Data Resources, Inc (EDR) in order to perform a Vapor Encroachment Screening which is intended to aid in the determination of whether possible Vapor Encroachment Conditions (VEC) exist or are likely to exist
-
-### T1-12 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Additionally, Mr. Taylor has also worked on several wetland delineations for various projects and is instrumental in nearly all of the environmental projects which are performed by Matrix Engineering Group, Inc. Mr. Taylor is also a GSWCC Level 1B Certified (NPDES) Inspector
-
-### T1-13 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Fire Insurance Maps began their coverage in 1867 and continued through the 1990s and often contain information relating to uses of individual structures, location of certain petroleum and chemical storage tanks, and the storage of other potentially toxic substances
-
-### T1-14 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The term is not intended to include de minimis conditions that generally do not present a threat to human health or the environment and that generally would not be the subject of an enforcement action if brought to the attention of appropriate governmental agencies
-
-### T1-15 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> As the Chief Engineer of R&D Testing Drilling, I supervised the engineering and technical staff for the Quality Control/Quality Assurance services, including earthwork, deep and shallow foundations, concrete, reinforcing steel, and structural steel
-
-### T1-16 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Metropolitan Atlanta Rapid Transit Authority (MARTA): Geotechnical Engineer, responsible for coordinating the engineering staff for geotechnical exploration, engineering analysis, review of design submittals, and field inspections of foundations
-
-### T1-17 · 7/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Do you have any knowledge of previously prepared Environmental Site Assessment Reports, asbestos surveys, lead-based paint studies or testing (soil, groundwater, tank tightness testing, lead-based paint testing, asbestos testing, indoor air quality, mold (bacteria and fungi testing), etc.) conducted on the site
-
-### T1-18 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 2.3 Significance of Use The objective of the Phase I Environmental Site Assessment is to identify obvious, actual and potential environmental conditions that may be discerned by visual observation and information-gathering procedures
-
-### T1-19 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 2.0 CONSIDERATIONS 2.1 Scope of Services The protocol used to perform this assessment was in general accordance with ASTM E1527-21 (Standard Practice for Environmental Site Assessments: Phase I Environmental Site Assessment Process)
-
-### T1-20 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
+### T1-01 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
 
 > However, the significance of this gap is considered low and not likely to alter the report's conclusions due to the limited information obtained during interviews, as well as during our search of standard historical sources of information such as aerial photographs, and historic topographic maps
 
-### T1-21 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-02 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > The report was designed to assist parties seeking to meet the search requirements of the ASTM Standard Practice for Assessment of Vapor Encroachment into Structures on Property Involved in Real Estate Transactions (E 2600-10)
 
-### T1-22 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-03 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > If radon levels within a structure are greater than the 4 pCi/L level, the EPA recommends that construction or renovation processes be in compliance with the EPA's Radon Prevention in the Design and Construction Guidelines
 
-### T1-23 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The maps were originally created to assist insurance underwriters in understanding the potential fire risk of structures requiring insurance; however, they are also useful in determining the previous uses of a property
-
-### T1-24 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-04 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > For example, are you involved in the same line of business as the current or former occupants of the property or an adjoining property so that you would have specialized knowledge of the chemicals and processes used by this type of business
 
-### T1-25 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Services included Phase I and Phase II Site Assessments, Hazardous Materials Surveys (asbestos, lead, radon, mold, etc.), and Hazard Risk Analysis for School Sites in accordance with GA Department of Education
-
-### T1-26 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Projects include: Dunwoody Station, Medical Center Station, Sandy Spring (North Line), Doraville Station, Lorado Maintenance Facility, Brownsmille Maintenance Facility, Brady Bus Facility, and several others
-
-### T1-27 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 4.2 Title Records and Environmental Liens The purpose of the Title Record and Environmental Lien search is to identify the possibility of recognized environmental conditions in connection with the property
-
-### T1-28 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Other sources of information include but are not limited to the Federal Emergency Management Agency (FEMA), US Department of Interior-Fish and Wildlife Service (FWS), Site reconnaissance, and Google Earth
-
-### T1-29 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Experience Environmental Site Assessment – Phase 1 (Staff Engineer) Mr. Taylor performed and/or managed the site reconnaissance, interviews and regulatory review as part of the ESA – Phase 1 protocol
-
-### T1-30 · 7/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are you aware of any Activity and Use Limitations (AULs), such as engineering controls, land use restrictions or institutional controls that are in place at the site and/or have been filed or recorded in a registry under federal, tribal, slate or local law
-
-### T1-31 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Data gaps may result from incompleteness in any of the activities required by the ASTM Standard or incorrect or lack of readily available data from regulatory agencies, and state or federal databases
-
-### T1-32 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 2.6.2 Data Gaps According to § 3.2.21 of ASTM Standard E 1527-21, a data gap is a lack of or inability to obtain information required by the ASTM Standard despite good faith efforts to gather same
-
-### T1-33 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 9.0 FINDINGS The following summarizes the information that was gathered during this study, our field reconnaissance, topographical and hydrological setting of the subject site, and our evaluation
-
-### T1-34 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Typically, however, vapor intrusion may result in human exposure to vapor-forming chemicals, such as volatile organic compounds (VOC), which may lead to health risks after continued exposure
-
-### T1-35 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Sections 1 to 8 introduce the site information, considerations, regulatory review, and site reconnaissance which formed the basis of our findings and opinions presented in Sections 9 and 10
-
-### T1-36 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> On select projects, he was also responsible for the coordination and directing of drilling activities, sampling of soil and groundwater, and the reporting for ESA-Phase 2 activities
-
-### T1-37 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> “Geophysical Surveying & Simulation Application to Geotechnical Investigations – A Cost Effective Approach for Developing Economical Foundation Engineering Design Criteria”
-
-### T1-38 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Per ASTM E1527-21, items such as asbestos testing, lead testing, mold testing, radon testing, endangered species and wetlands determination are excluded from the scope of work
-
-### T1-39 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 5.0 HISTORICAL USE INFORMATION 5.1 Aerial Photographs Historical aerial photographs generally provide visual documentation of site conditions at the time of the photographs
-
-### T1-40 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Concourse “E” Expansion projects-Hartsfield Atlanta International Airport: Senior Project Manager, performed the geotechnical exploration and foundation recommendations
-
-### T1-41 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Mr. Alyateem worked on several large projects in the Southeast including airports, water treatment plants, land developments, tunnels, and aerial structures, to name a few
-
-### T1-42 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 5.2 Fire Insurance Maps Fire Insurance Maps, such as Sanborn Maps, constitute a source of prior site uses of real property for many cities and towns in the United States
-
-### T1-43 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> For projects in which suspect wetland areas were identified, Mr. Taylor assisted with the delineation of wetlands and was responsible for the reporting of the findings
-
-### T1-44 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> “Applications of Surface Waves to Enhance Subsurface Boring Exploration into the Delineation of Undocumented Landfill Cells” SAGEEP – Tuscon, Arizona, March 2012
-
-### T1-45 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The findings and opinions expressed within this study are relevant to the date of our site observations and may not represent the site at a substantially later date
-
-### T1-46 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> From 1973 through 1978, legislation was passed which banned various ACM, such as friable spray-on and trowel-on materials used in fireproofing, insulation and acoustical applications
-
-### T1-47 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> This practice is intended to reduce, but not eliminate, uncertainty regarding the potential for recognized environmental conditions in connection with a property
-
-### T1-48 · 7/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are you aware of commonly known or reasonably ascertainable information about the properly that would help the environmental professional to identify conditions indicative of releases or threatened releases
-
-### T1-49 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The parent rocks in the region are primarily comprised of the unconsolidated mass of quartz, feldspar, mica, and a wide variety of dark minerals such as hornblende and amphibole
-
-### T1-50 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 6.0 REGULATORY REVIEW A reasonably ascertainable search of state and federal environmental records was obtained from Environmental Data Resources, Inc. (EDR)
-
-### T1-51 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Developed the first quality control/quality assurance program that complied with ACOG's project requirements and was later used as a sample program for the other Olympic venues
-
-### T1-52 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-05 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > Based on your knowledge and experience related to the property are there any obvious indicators that point to the presence or likely presence of contamination at the property
 
-### T1-53 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 22 Fax: 770-448-5324 Email: Sam@matrixengineeringgroup.com Mr. Alyateem is a registered civil engineer and a founding member of Matrix Engineering Group
-
-### T1-54 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Our environmental professionals assessed all readily available information to report all relevant findings, observations, and overall recommendations
-
-### T1-55 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The purpose of the Phase I Environmental Site Assessment is not to establish the actual presence, degree or extent of contamination, if any, on site
-
-### T1-56 · 7/9 — 4962 Rockbridge ESA phase 1; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-06 · 7/9 — 4962 Rockbridge ESA phase 1; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > No evidence of USTs was identified on the subject property and no common indicators of USTs, such as vent pipes, fill ports, manways, pavement cuts, fuel gauges or dispensers, were observed
 
-### T1-57 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Performed investigation on structural failures of foundations, retaining walls, and other structural members to determine the cause of the failures
-
-### T1-58 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The proportion of felsic and mafic minerals in these parent rocks, as well as of quartz that is very resistant to weathering, limits the amount of clay in the soils
-
-### T1-59 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The findings of this investigation are intended to assess the potential for property owner liabilities resulting from present or past land use of the subject site
-
-### T1-60 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> “The Use of MASW to Improve the Geotechnical Site Characterization of the 18.5 km (11.5 Miles) long Augusta Levee – Preliminary Findings”
-
-### T1-61 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Finally, in the more advanced stages of chemical weathering, the material is changed into a red or reddish-brown silty clay (CL or CH) or clayey silt (ML or MH)
-
-### T1-62 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> With further weathering, the individual crystals other than quartz are attacked and the mass becomes a micaceous silty sand (SM) or micaceous sandy silt (ML)
-
-### T1-63 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
-
-> Only Environmental Data Resources Inc. (EDR) is authorized to grant rights for commercial reproduction of maps by the Sanborn Library LLC, the copyright holder for the collection
-
-### T1-64 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 7.2 Site Geology The subject site is located in the Piedmont Geologic Province, which contains the oldest rock formations in the southeastern United States
-
-### T1-65 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Evidence of activities, such as dumping or industrial use of a site, can often be discerned through the examination of aerial photographs
-
-### T1-66 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> PCBs have also been used in flexible PVC coatings of electrical wiring and electronic components, sealants (used in caulking, etc), adhesives, and paints
-
-### T1-67 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> According to the Environmental Protection Agency (www.epa.gov/radon on June 29, 2007), there is no known safe exposure level for radon
-
-### T1-68 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> We have developed and performed the appropriate inquiries in conformance with the standards and practices set forth in 40 CFR Part 312
-
-### T1-69 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Was/is the purchase price of the Subject property significantly less than the purchase price of comparable properties due to environmental conditions
-
-### T1-70 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Is or has the property been used for industrial or agricultural purposes, or as a gasoline station, auto repair, dry cleaner, junkyard, or landfill
-
-### T1-71 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Reflecting the composition of the original rock, mica flakes, rather than the quartz grains, often comprise the majority of the sand-size particles
-
-### T1-72 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Has any adjoining properties been used for industrial purposes, or as a gasoline station, auto repair shop, junkyard, dry cleaner or landfill
-
-### T1-73 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> This assessment should not be interpreted as conclusive evidence that the subject site has or has not been adversely impacted
-
-### T1-74 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are you aware of any hydraulic fluid leaks or evidence of leakage such as unexplained fluid loss in connection with the hydraulic equipment
-
-### T1-75 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Has there been any formal or informal citizen or tenant complaints regarding environmental or health matters in connection with the Subject
-
-### T1-76 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are you aware of any environmental cleanup liens against the property that are filed or recorded under federal, tribal, state or local law
-
-### T1-77 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are there any hazardous or medical waste or fluids generated or used that employ an outside service for their periodic supply and removal
-
-### T1-78 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> 2.2 Referenced Documents Matrix sourced archives through Environmental Data Resources Inc. (EDR) of Milford, Connecticut
-
-### T1-79 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Has there been any employee or tenant reports of symptoms consistent with mold contamination or other indoor air quality concerns
-
-### T1-80 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> EDR searches government databases for published records from federal and state environmental regulatory agencies
-
-### T1-81 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL
-
-> 7.5 Vapor Intrusion Vapor intrusion occurs when volatile chemicals from contaminated groundwater or soil “intrude" into an overlying building
-
-### T1-82 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Represented the City of Atlanta (DOA) during the Owner's weekly meetings regarding inspections and materials testing issues
-
-### T1-83 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> In this stage, the original banding of the parent rock is apparent, but the original crystalline structure is not observed
-
-### T1-84 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are you in possession of a title report, site drawings, building drawings and specifications and/or a survey for the site
-
-### T1-85 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-07 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > If additional pages for responses are necessary, please attach hereto and reference it to the appropriate question number
 
-### T1-86 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> However, much of this rule was later overturned and established a maximum legal limit of asbestos content in a substance
-
-### T1-87 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The term includes hazardous substances or petroleum products even under conditions in compliance with laws
-
-### T1-88 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> In 1970, the Clean Air Act authorized the EPA to set National Emissions Standards for Hazardous Air Pollutants (NESHAP)
-
-### T1-89 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Any exceptions to, or deletions from, this practice are described in Sections 2.1 and 2.2 of this report
-
-### T1-90 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are there any (active or inactive) Underground Storage Tanks ("UST") or Aboveground Storage Tanks ("AST") on the site
-
-### T1-91 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are you aware of any active or former waste treatment or disposal pits, ponds, or lagoons on adjacent or nearby sites
-
-### T1-92 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Served as the Chief Project Manager for the construction team quality control/quality assurance concerns
-
-### T1-93 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Purple shading was used on older maps indicating feature changes but is no longer used on current maps
-
-### T1-94 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Has the property ever been subject to any environmental enforcement action by the federal, state local government
-
-### T1-95 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are there currently or has there previously been waste treatment or disposal pits, ponds, or lagoons on the site
-
-### T1-96 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Do you have knowledge of any materials or substances on the site that are known or suspected to contain asbestos
-
-### T1-97 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Mr. Taylor has performed several Environmental Site Assessments including both Phase 1 and Phase 2
-
-### T1-98 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are there any children younger than 7 years old residing at the site or frequenting the site on a daily basis
-
-### T1-99 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Despite the various bans and regulations, some contractors were using ACM illegally on some of their projects
-
-### T1-100 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Is any neighboring property engaged in the storing, transporting or disposal of hazardous waste, or chemicals
-
-### T1-101 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Lead has been proven to cause damage to the nervous system as well as brain disorders, primarily in children
-
-### T1-102 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Therefore, these soils are sandy and have faint horizons, and in small-scattered areas, hard rock is exposed
-
-### T1-103 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Does/Did the purchase price paid for this property reasonably reflect the fair market value of the property
-
-### T1-104 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Have there been any reported incidences of children with elevated blood lead levels residing at the site
-
-### T1-105 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-08 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > Matrix reviewed historic aerial photographs provided by EDR, TerraServer, and Google Earth
 
-### T1-106 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
-
-> Any environmental liens or activity and use limitations so identified shall be reported to Matrix Engineering Group
-
-### T1-107 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Were there any buildings or other improvements on the property prior to the existing improvements
-
-### T1-108 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> If you have any questions concerning this report, please do not hesitate to contact us
-
-### T1-109 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> These vapors could, in extreme circumstances, cause safety hazards, such as explosions
-
-### T1-110 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Do you have any specialized knowledge or experience related to the property or nearby properties
-
-### T1-111 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Did any on-site transformers formerly contain PCBs, but later had the dielectric fluid replaced
-
-### T1-112 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-09 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > The subject site was not identified on the Georgia list of registered UST facilities
 
-### T1-113 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
+### T1-10 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
 
 > At this time, we are unaware that a title records search is planned as a result of the proposed development
 
-### T1-114 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> He has over 30 years of experience in Engineering and Construction Materials fields
-
-### T1-115 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Therrell High School: Project Manager and Consultant for the Environmental Services
-
-### T1-116 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Upon completing this form, please return it via electronic mail or facsimile, as listed below
-
-### T1-117 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Chemical decomposition initially occurs along the boundaries of individual mineral crystals
-
-### T1-118 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> In this weathered stage, the banding and crystalline structure of the parent rocks is lost
-
-### T1-119 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-11 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > This document and your written response will be included as an exhibit in the final report
 
-### T1-120 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Consideration of this report should be taken wholly with thorough consideration
-
-### T1-121 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-12 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > If you have any questions about how to answer any of the questions, please contact us
 
-### T1-122 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
-
-> The collection includes maps from Sanborn, Bromley, Perris & Browne, Hopkins, Barlow, and others
-
-### T1-123 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> A copy of this report, the Radius Map Report, can be found in Appendix C
-
-### T1-124 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The search meets or exceeds the regulatory requirements of ASTM E1527-21
-
-### T1-125 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are you aware of any contamination conditions on adjoining or nearby properties
-
-### T1-126 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> As a result, partially weathered rock has the appearance of dense sand (SM, SP)
-
-### T1-127 · 7/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Do you have any knowledge of tanks that were either removed or closed in-place at the site
-
-### T1-128 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Is there any hydraulic equipment such as elevators or automotive lifts on-site
-
-### T1-129 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
-
-> This report accesses all maps in the collection as of the day this report was generated
-
-### T1-130 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Areas shaded in white indicate areas which are generally clear of vegetation
-
-### T1-131 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Due to the high toxicity of most PCB mixtures, PCBs were banned in the 1970s
-
-### T1-132 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
+### T1-13 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
 
 > If such a search occurs, we request that Matrix be provided with copies of the records
 
-### T1-133 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> This report was prepared in general accordance with ASTM E-1527-21
-
-### T1-134 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
-
-> The Sanborn Library is the largest, most complete collection of fire insurance maps
-
-### T1-135 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The Olympic Equestrian Venue, Conyers, Georgia: Project Manager
-
-### T1-136 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are you aware of any lead-based paint ("LBP") applications on the site
-
-### T1-137 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-14 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > ASTs are not required to be registered in the state of Georgia
 
-### T1-138 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Results are based, in part, on information provided by others
-
-### T1-139 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
-
-> The Sanborn Library is continually enhanced with newly identified map archives
-
-### T1-140 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are there any open surface waters or wetlands adjacent to the site
-
-### T1-141 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Has an inspection for asbestos ever been conducted on the Subject
-
-### T1-142 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-15 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > How long has the preparer been familiar with the site or facility
 
-### T1-143 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023
-
-> 4358 Chamblee Tucker Rd. - Ste 3 Tucker, GA 30084 Office: 770-448-3124 ext
-
-### T1-144 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Have strong mold odors and/or mold staining been observed onsite
-
-### T1-145 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are hazardous materials or chemicals stored or used on-site
-
-### T1-146 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-16 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > Describe the size (square foot) of the existing building(s)
 
-### T1-147 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-17 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > For example: (a.) Do you know the past uses of the property
 
-### T1-148 · 8/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> In 1989, the EPA issued the Asbestos Ban and Phase-Out Rule
-
-### T1-149 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are you aware of elevated radon gas concentrations on-site
-
-### T1-150 · 7/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Depending on the quartz content, a sandy fraction will be present
-
-### T1-151 · 9/9 — 4962 Rockbridge ESA phase 1; Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> The HREC may or may not be considered to be a REC
-
-### T1-152 · 7/9 — 4962 Rockbridge ESA phase 1; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Typically, LBP are encountered in older residential structures
-
-### T1-153 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are there any surface waters or wetlands on the site
-
-### T1-154 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
+### T1-18 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
 
 > (Yes/No) | Does the Tank Have Leak Detection
-
-### T1-155 · 7/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; Early Learning Center March 13 202
-
-> Was or is there a septic system on the property
-
-### T1-156 · 8/9 — Clayton County Schools - 6630 Camp; 1078 Moreland Ave May 2023; Rockdale Judicial Admin Complex Fe; 4127_Plunkett_Nov_2025; Homestead Properties 9 10 23; Old Field Road October 2023; 1080_Moreland_October_2025_FINAL; Early Learning Center March 13 202
-
-> Are there any floor drains on the site
 
 ---
 
@@ -726,4 +190,4 @@ Same sentence shape, different values. The **skeleton** is the formula; the
 
 ---
 
-_Tier 1 material is ≈5k tokens as mined, before editorial selection._
+_Tier 1 material is ≈0k tokens as mined, before editorial selection._

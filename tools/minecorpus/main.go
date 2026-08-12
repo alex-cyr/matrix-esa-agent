@@ -25,9 +25,11 @@
 package main
 
 import (
+	"archive/zip"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -172,7 +174,18 @@ func main() {
 		}
 	}
 
+	templateText, err := loadTemplateText()
+	if err != nil {
+		log.Fatalf("read template %s: %v", templatePath, err)
+	}
+
 	tier1 := collectTier1(exact)
+	for i := range tier1 {
+		tier1[i].TemplateOwned = isTemplateOwned(templateText, tier1[i].Text)
+		if !tier1[i].TemplateOwned {
+			tier1[i].ClassExcluded = excludedClass(tier1[i].Text)
+		}
+	}
 	tier2 := collectTier2(skeletons, exact)
 
 	if err := writeReport(outPath, texts, tier1, tier2); err != nil {
@@ -315,11 +328,121 @@ func skeleton(s string) string {
 	return s
 }
 
+// --- editorial filters --------------------------------------------------------
+
+// FILTER 1, mechanical: text the template already prints must never enter the
+// digest. A digest that repeats template-owned prose is restatement fuel --
+// rule 10's defect at corpus scale, aimed at every tag at once.
+const templatePath = "knowledge/ESA_PHASE_I_Template.docx"
+
+// templatePrefixWords is how much of a candidate must appear in the template
+// verbatim to count as template-owned. Long enough not to fire on a shared
+// stock phrase, short enough to catch a candidate the template interrupts with
+// a {{tag}}.
+const templatePrefixWords = 8
+
+// loadTemplateText returns the template's static prose, tags stripped.
+func loadTemplateText() (string, error) {
+	zr, err := zip.OpenReader(templatePath)
+	if err != nil {
+		return "", err
+	}
+	defer zr.Close()
+
+	var sb strings.Builder
+	wt := regexp.MustCompile(`<w:t[^>]*>([^<]*)</w:t>`)
+	for _, f := range zr.File {
+		if !strings.HasPrefix(f.Name, "word/document.xml") &&
+			!strings.HasPrefix(f.Name, "word/header") && !strings.HasPrefix(f.Name, "word/footer") {
+			continue
+		}
+		rc, err := f.Open()
+		if err != nil {
+			return "", err
+		}
+		b, err := io.ReadAll(rc)
+		rc.Close()
+		if err != nil {
+			return "", err
+		}
+		for _, m := range wt.FindAllStringSubmatch(string(b), -1) {
+			sb.WriteString(m[1])
+		}
+		sb.WriteString("\n")
+	}
+	// Drop the placeholders themselves; what matters is the prose around them.
+	text := regexp.MustCompile(`\{\{[^}]*\}\}`).ReplaceAllString(sb.String(), " ")
+	return normalizeForMatch(text), nil
+}
+
+var nonAlnum = regexp.MustCompile(`[^a-z0-9 ]+`)
+
+func normalizeForMatch(s string) string {
+	s = strings.ToLower(s)
+	s = nonAlnum.ReplaceAllString(s, " ")
+	return whitespace.ReplaceAllString(s, " ")
+}
+
+// isTemplateOwned slides an 8-word window across the candidate rather than
+// testing only its opening. A transcript sentence often carries a heading
+// prefix the template stores separately -- "9.0 FINDINGS The following
+// summarizes..." -- so a prefix-only test misses prose the template plainly
+// owns. Any 8-word run in common is enough.
+func isTemplateOwned(templateText, candidate string) bool {
+	words := strings.Fields(normalizeForMatch(candidate))
+	if len(words) < templatePrefixWords {
+		return false
+	}
+	for i := 0; i+templatePrefixWords <= len(words); i++ {
+		if strings.Contains(templateText, strings.Join(words[i:i+templatePrefixWords], " ")) {
+			return true
+		}
+	}
+	return false
+}
+
+// FILTER 2, class-based: static appendix and exhibit text the model never
+// composes into a tag. The test for every candidate is "does the model write
+// this into a {{tag}}?" -- if not, it is ballast in every prompt forever.
+var excludedClasses = []struct {
+	name string
+	re   *regexp.Regexp
+}{
+	// Résumé and project-experience bullets from the personnel appendix. These
+	// dominated the first survivor list: nineteen of the first fifty were CV
+	// content, which is static exhibit text the model never composes.
+	{"qualifications/resume", regexp.MustCompile(`(?i)(\b(b\.?s\.?|m\.?s\.?|ph\.?d|p\.?e\.?|p\.?g\.?|nicet|icc|aws|aci)\b|years of experience|resume|curriculum|qualifications of|registered professional|certified professional|has been employed|environmental professional as defined|\bmr\.\s|\bms\.\s|senior project manager|staff engineer|chief engineer|geotechnical engineer|project include|projects include|services included|responsible for (coordinat|the|managing)|performed and/or managed|represented the|developed the first|served as the|the work consisted|project manager|performed investigation|[“"][^”"]{25,}[”"])`)},
+	{"letterhead/contact", regexp.MustCompile(`(?i)(www\.|https?://|@[a-z0-9.-]+\.(com|org|net)|\(\d{3}\)\s*\d{3}|\b\d{3}-\d{3}-\d{4}\b|fax\b|telephone\b)`)},
+	// EDR and Sanborn licence, copyright and collection-description text. It
+	// recurs in all nine reports because every report embeds the same vendor
+	// exhibit -- it is not Matrix's voice, and no tag is composed from it.
+	{"vendor boilerplate", regexp.MustCompile(`(?i)(sanborn library|the collection includes|maps in the collection|commercial reproduction|copyright holder|continually enhanced|purple shading|areas shaded|as of the day this report was generated|environmental data resources,? inc\.? \(edr\) is)`)},
+	// Owner questionnaire items. Many arrive without their question mark, so
+	// match the interrogative openers as well.
+	{"questionnaire form", regexp.MustCompile(`(?i)(\?\s*$|^\s*(yes|no)\b.*\b(yes|no)\s*$|please (complete|answer|provide|return)|check the appropriate|if yes,|if no,|to the best of your knowledge|^(are|is|has|have|do|does|was|were|did)\b|^(is or has|was/is|has any|are there any|are you aware|do you have any)\b)`)},
+	{"signature/seal block", regexp.MustCompile(`(?i)(respectfully submitted|sincerely,|prepared by:|reviewed by:|signature|seal\b)`)},
+}
+
+func excludedClass(s string) string {
+	for _, c := range excludedClasses {
+		if c.re.MatchString(s) {
+			return c.name
+		}
+	}
+	return ""
+}
+
 type candidate struct {
 	Text    string
 	Sources []string
 	Score   int
+
+	// Filter outcome.
+	TemplateOwned bool
+	ClassExcluded string
 }
+
+func (c candidate) Survives() bool { return !c.TemplateOwned && c.ClassExcluded == "" }
 
 func collectTier1(exact map[string]map[string]bool) []candidate {
 	var out []candidate
@@ -426,15 +549,42 @@ func writeReport(path string, texts map[string]string, tier1 []candidate, tier2 
 		fmt.Fprintf(&b, "| %s | %dk |\n", shortName(n), len(texts[n])/4000)
 	}
 
-	b.WriteString("\n---\n\n## Tier 1 — verbatim across the corpus\n\n")
-	b.WriteString("Candidates for *\"canonical blocks, stated once each\"*. Ranked by length × frequency.\n\n")
+	// Filter accounting.
+	var survivors []candidate
+	byClass := map[string]int{}
+	templateOwned := 0
+	for _, c := range tier1 {
+		switch {
+		case c.TemplateOwned:
+			templateOwned++
+		case c.ClassExcluded != "":
+			byClass[c.ClassExcluded]++
+		default:
+			survivors = append(survivors, c)
+		}
+	}
+
+	b.WriteString("\n---\n\n## Tier 1 — after editorial filters\n\n")
+	fmt.Fprintf(&b, "| Stage | Count |\n|---|---|\n| Mined (verbatim in ≥%d of %d) | %d |\n", tier1Quorum, len(tier1Sources), len(tier1))
+	fmt.Fprintf(&b, "| — excluded, **template already prints it** | %d |\n", templateOwned)
+	for _, c := range excludedClasses {
+		fmt.Fprintf(&b, "| — excluded, %s | %d |\n", c.name, byClass[c.name])
+	}
+	fmt.Fprintf(&b, "| **Survivors** | **%d** |\n\n", len(survivors))
+
+	b.WriteString("**Filter 1** is mechanical: any candidate whose opening words the template\n")
+	b.WriteString("already prints is dropped. Template-owned text in a digest is restatement\n")
+	b.WriteString("fuel — rule 10's defect at corpus scale, aimed at every tag at once.\n\n")
+	b.WriteString("**Filter 2** drops static appendix and exhibit text the model never composes\n")
+	b.WriteString("into a tag. The test is: *does the model write this into a `{{tag}}`?*\n\n")
+
 	t1tok := 0
-	for i, c := range tier1 {
+	for i, c := range survivors {
 		t1tok += len(c.Text) / 4
 		fmt.Fprintf(&b, "### T1-%02d · %s\n\n> %s\n\n", i+1, provenance(c.Sources), c.Text)
 	}
-	if len(tier1) == 0 {
-		b.WriteString("_None met quorum._\n\n")
+	if len(survivors) == 0 {
+		b.WriteString("_No candidate survived both filters._\n\n")
 	}
 
 	b.WriteString("---\n\n## Tier 2 — recurring skeletons with variant families\n\n")
