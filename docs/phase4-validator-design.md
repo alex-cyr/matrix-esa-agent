@@ -647,3 +647,18 @@ unreplaced tags, header clean, 8.13 populated.
    and proper nouns, never restatements. That drops all 8 remaining false
    positives and keeps both true positives, since `The topography suggests` and
    `The site is presently…` are multi-word.
+
+### Addendum — both next-pass findings ratified and applied
+
+`{{FloodZone}}` now carries the same fragment contract as `{{SiteAcres}}` and
+`{{SiteCounty}}`: skill rule 11 plus a Go normalizer, with the shared principle
+stated once — *where the template prints a label or unit next to a tag, the
+value supplies only the part the template does not.*
+
+Signal B requires a value of **at least two words**. A single-word value is a
+table cell or a proper noun, never a restatement. Both true positives are pinned
+by test: `The topography suggests…` and `The site is presently The site is
+currently developed with…`.
+
+Expected effect on the next run: splice findings 14 → ~5, with the surviving
+signal-B findings being real.

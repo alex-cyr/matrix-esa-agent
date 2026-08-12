@@ -150,6 +150,10 @@ You MUST use Matrix Engineering Group's exact standard phrasing derived from his
 
 10. **County name (`{{SiteCounty}}`)**: the **bare county name**, with no "County" suffix. The template supplies the word: *"According to the `{{SiteCounty}}` County Tax Assessor's website"*. A value of `Fulton County` delivers *"the Fulton County County Tax Assessor's website"*, which a live run produced. Correct value: `Fulton`.
 
+11. **Flood zone (`{{FloodZone}}`)**: the **bare zone designation**, with no "Zone" label. The template supplies it: *"designates the site as zone `{{FloodZone}}`"*. A value of `Zone X` delivers *"designates the site as zone Zone X"*, which a live run produced. Correct value: `X`, or `X (unshaded)`, or `AE`.
+
+**The pattern behind rules 10 and 11, and the acreage contract:** where the template prints a label or unit next to a tag, the value supplies **only the part the template does not**. Before writing any value, read the words on both sides of its tag.
+
 ## Verification
 Before outputting final content:
 1. Check every edited section against the Blank Template and Static Report Template.

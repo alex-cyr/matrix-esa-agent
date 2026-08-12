@@ -103,6 +103,20 @@ var modelValueNormalizers = map[string]func(string) string{
 	// website". A value of "Fulton County" delivered "the Fulton County County
 	// Tax Assessor's website".
 	"SiteCounty": stripCountySuffix,
+
+	// Template: "designates the site as zone {{FloodZone}}." A value of
+	// "Zone X" delivered "designates the site as zone Zone X."
+	"FloodZone": stripZoneLabel,
+}
+
+// zoneLabelPrefix matches a leading "Zone" label on a flood zone designation.
+var zoneLabelPrefix = regexp.MustCompile(`(?i)^\s*zone\s+`)
+
+// stripZoneLabel enforces the {{FloodZone}} fragment contract: the bare
+// designation, because the template supplies the word "zone" before it.
+// "Zone X (unshaded)" becomes "X (unshaded)".
+func stripZoneLabel(s string) string {
+	return strings.TrimSpace(zoneLabelPrefix.ReplaceAllString(strings.TrimSpace(s), ""))
 }
 
 func stripCountySuffix(s string) string {

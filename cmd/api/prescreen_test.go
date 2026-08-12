@@ -137,6 +137,25 @@ func TestSiteCountyFragmentContract(t *testing.T) {
 	}
 }
 
+// Third of the same kind, found by signal C in the confirmation run: the
+// template reads "designates the site as zone {{FloodZone}}" and the value was
+// "Zone X", delivering "as zone Zone X".
+func TestFloodZoneFragmentContract(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"X", "X"},
+		{"Zone X", "X"},
+		{"zone X", "X"},
+		{"ZONE AE", "AE"},
+		{"Zone X (unshaded)", "X (unshaded)"},
+		{"AE", "AE"},
+	}
+	for _, tc := range cases {
+		if got := stripZoneLabel(tc.in); got != tc.want {
+			t.Errorf("stripZoneLabel(%q) = %q, want %q — the template supplies \"zone\"", tc.in, got, tc.want)
+		}
+	}
+}
+
 func TestModelValueNormalizersApplyThroughInjection(t *testing.T) {
 	var got map[string]interface{}
 	out := injectFieldDefaults(`{"SiteCounty":"Fulton County","OwnerName":"Acme County Holdings"}`, nil, "")

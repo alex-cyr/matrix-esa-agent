@@ -41,11 +41,18 @@ func TestSpliceDetectsTopographyRestatement(t *testing.T) {
 // almost all proper nouns; the lexical-echo condition silences those without
 // losing the one catch that mattered.
 func TestSpliceSentenceStartRequiresLexicalEcho(t *testing.T) {
+	// Both true positives observed in live runs. Neither may be lost to a
+	// noise-reduction change.
 	fires := []struct{ name, before, value, after string }{
 		{
 			"topography restatement still fires",
 			"Based on the topographical information obtained from USGS Historical Topographic Maps, the topography of the site ",
 			"The topography suggests the site slopes to the east.", ".",
+		},
+		{
+			"site-is-presently restatement still fires",
+			"The site was accessed from Providence Road via a gravel drive. The site is presently ",
+			"The site is currently developed with two single-family residences.", ".",
 		},
 	}
 	for _, tc := range fires {
@@ -63,6 +70,11 @@ func TestSpliceSentenceStartRequiresLexicalEcho(t *testing.T) {
 		{"client entity", "User_ClientName", "appreciates the opportunity to work with ", "Arkan Homes LLC", " on this project"},
 		{"month and year", "ReportMonthYear", "Project Number MEG 303315 ", "August 2026", ""},
 		{"county name", "SiteCounty", "The subject site is located at 272 Lantern Ridge Court. According to the ", "Fulton", " County Tax Assessor"},
+		// The eight remaining false positives from the confirmation run: a
+		// one-word table cell whose value echoes nearby template prose.
+		{"adjacent-use table cell", "North_AdjUse",
+			"Surrounding properties consist primarily of residential use as tabulated below: Direction Adjacent Properties Surrounding Properties North ",
+			"Residential", ""},
 	}
 	for _, tc := range silent {
 		t.Run(tc.name, func(t *testing.T) {

@@ -110,16 +110,21 @@ func echoesPrecedingText(beforeWords, valueWords []string) bool {
 		present[w] = true
 	}
 
-	need := echoWords
-	if len(valueWords) < need {
-		need = len(valueWords)
+	// A single-word value is never a restatement. Confirmed against a live run:
+	// the eight remaining false positives were all one-word table cells
+	// (North_AdjUse, East_SurrUse, ...) whose value "Residential" happens to
+	// echo the word "residential" in nearby template prose. Both real catches
+	// -- "The topography suggests..." and "The site is presently The site is
+	// currently developed with..." -- run to several words.
+	if len(valueWords) < echoWords {
+		return false
 	}
-	for i := 0; i < need; i++ {
+	for i := 0; i < echoWords; i++ {
 		if !present[valueWords[i]] {
 			return false
 		}
 	}
-	return need > 0
+	return true
 }
 
 // suffixPrefixOverlap returns the length of the longest suffix of a that is
