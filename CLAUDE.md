@@ -293,6 +293,21 @@ conventions, so anything not pinned deterministically in Go will drift back.
   on that run so Word's grammar checker cannot draw a squiggle under it — that
   squiggle, not any `<w:u>` run, was the "stray underline" seen in review.
 
+- **Skill exemplars are fabrication vectors.** Template-compiler rule 7 once
+  gave `{{USGS_TopoSummary}}` the example wording *"gently slopes to the south
+  with surface water runoff directed toward municipal drainage features"*. That
+  string was copied **verbatim** into a delivered report for a parcel that
+  drains **east** — the example became the finding. To a model filling a slot,
+  an example is indistinguishable from a default, and the result reads exactly
+  like a real observation.
+
+  So: every exemplar in `.agents/skills/` must either be **marked
+  illustrative-only** or use **obviously-placeholder values** (`[Month D,
+  YYYY]`, `[Quadrangle]`, `[Year]`). And any **directional or factual site
+  claim** — flow direction, slope, distance, date, owner — routes from agent
+  output, carrying `[EP VERIFY: ...]` or `[MEG DATAGAP: ...]` where applicable.
+  Never from example text.
+
 The header repair itself is in [tools/fixheader](tools/fixheader/main.go), not
 `scratch/`: the template is a committed binary, so without a checked-in tool the
 change to it is unreviewable. It is idempotent and validates the rewritten file

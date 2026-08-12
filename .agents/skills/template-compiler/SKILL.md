@@ -63,7 +63,7 @@ You MUST populate the individual contextual variables within Section 9.0 FINDING
 7. **Missing Data & Parcel Fallbacks**: If data is missing (e.g., dynamic filepath links), yield a clear `[MEG DATAGAP: UPDATE FILEPATH LINK]`. For Section 3.1, since EDR does NOT contain Assessor Data, you MUST yield `[MEG DATAGAP: INSERT PARCEL ID]` for the Parcel ID variable, and `[MEG DATAGAP: INSERT ACRE SIZE]` for the site acreage variable if it cannot be found in the proposal/checklists.
 8. **Owner Questionnaire default**: For Section 4.1, if a completed questionnaire is NOT found in the payload, you MUST yield the default text: "The questionnaire was forwarded to the owner's representative, but Matrix had not received the completed questionnaire at the time of writing this report." Ensure this fulfills the variable for that section.
 9. **Aerial Photographs Table (Section 5.1)**: You MUST group aerial photos with matching descriptions into single rows grouped by chronological ranges (e.g., "1938, 1950, 1955" on one row) exactly like the Static Template. DO NOT output one year per row if the description is identical across multiple years.
-10. **Topographic Maps (Section 5.3)**: You MUST strictly lock the introductory paragraph text to the static wording: "Matrix reviewed USGS historical topographic maps for the area of the property dated [Date Range]." Swap in the years. CRITICAL: Do NOT inject hydrology or groundwater features into this Topographic section.
+10. **Topographic Maps (Section 5.3)**: The introductory sentence — *"Matrix reviewed {{USGS_TopoMaps}} topographic maps for the area of the property, dated from {{USGS_TopoDateRange}}."* — is **printed by the template itself**. **Do NOT emit that sentence, or any part of it, as a tag value.** Populate only the tags inside it: `{{USGS_TopoMaps}}` with the map series, `{{USGS_TopoDateRange}}` with the years. `{{USGS_MapSummary}}` follows that sentence and must read as a *new* sentence continuing the paragraph — it must never restate the review or repeat the date range. CRITICAL: Do NOT inject hydrology or groundwater features into this Topographic section.
 11. **Fuzzy Matching & Leniency**: EDR documents and human field notes may not use the exact terminology as your target variables (e.g. "Subject Site" vs "Target Property", or differently formatted site addresses). You MUST exercise leniency and intelligent deduction to recognize equivalent data points and map them accurately into the final JSON schema variables.
 12. **Historical Context**: You may be provided with previous, historical Matrix ESA Reports in the payload. Analyze these historical reports to learn the specific wording, tone, and formatting Matrix prefers. Use them as a baseline guide for synthesizing your output, but do not hallucinate their specific facts into the current report.
 14. **CRITICAL ADDRESS SEPARATION RULE**:
@@ -96,21 +96,33 @@ You MUST use Matrix Engineering Group's exact standard phrasing derived from his
 5. **Historical Records Summary (`{{Sanborn_Summary}}`, `{{USGS_TopoSummary}}`, `{{NWI_Summary}}`)**:
    - Sanborn: *"Sanborn Fire Insurance Maps were reviewed for the Subject Property. No historical industrial activities or gasoline service stations were depicted on the Subject Property."*
    - NWI Wetlands: *"According to the U.S. Fish and Wildlife Service National Wetlands Inventory (NWI) map, no mapped wetlands or surface water bodies are located within the boundary of the Subject Property."*
+   - `{{USGS_TopoSummary}}` is the exception in this group: unlike Sanborn and NWI above, it is **not** a standalone sentence. It continues a clause the template has already begun. See rule 7 below for its contract; the two full-sentence examples here do not apply to it.
 
 6. **Section 8.13 Radon Standard Wording (`{{Radon_Summary}}`)**:
    - Must follow Matrix standard county radon zone format:
      *"{{SiteCounty}} County, where the Subject Property is located, is designated as EPA Radon {{Radon_Zone}}, indicating a {{Radon_RiskSummary}} potential for indoor radon levels {{Radon_LevelThreshold}}."*
      (e.g. *"Fulton County, where the Subject Property is located, is designated as EPA Radon Zone 1, indicating a high potential for indoor radon levels greater than 4 pCi/L."*)
 
-7. **Section 5.3 & 7.1 Historical Topographic Quadrangle Map Wording (`{{USGS_TopoSource}}`, `{{USGS_TopoSummary}}`)**:
+7. **Sections 3.1, 5.3 & 7.1 Historical Topographic Quadrangle Map Wording (`{{USGS_TopoSource}}`, `{{USGS_TopoSummary}}`)**:
    - The quadrangle map names (e.g. Roswell, Suwanee) and scales (7.5-minute, 30-minute) MUST be extracted directly from the EDR Topographic Map Report. If multiple quadrangle maps are included in EDR, list all quadrangle names.
-   - `{{USGS_TopoSource}}`: *"USGS Historical Topographic Maps ({{Topo_QuadNames}} Quadrangle)"*
-   - `{{USGS_TopoSummary}}`: *"gently slopes to the south with surface water runoff directed toward municipal drainage features as depicted on the USGS {{Topo_QuadNames}} quadrangle map"*
+   - `{{USGS_TopoSource}}`: *"USGS Historical Topographic Maps ({{Topo_QuadNames}} Quadrangle)"* — appears in **three** places (3.1, 5.3, 7.1); one value must read correctly in all three.
+   - **`{{USGS_TopoSummary}}` IS A SENTENCE FRAGMENT, NOT A SENTENCE.** The template prints, immediately before it, in **two** places (Sections 3.1 and 7.1) with identical wording:
+     *"Based on the topographical information obtained from `{{USGS_TopoSource}}`, the topography of the site "*
+     Your value **continues that clause**. Begin with a lower-case verb. Do not supply the closing period — the template already has one.
+     - Correct (**shape only** — `⟨…⟩` marks what this site's data supplies; never copy a direction or a feature from this line): `gently slopes to the ⟨direction⟩ toward ⟨receiving feature⟩ as depicted on the USGS ⟨Quadrangle⟩ quadrangle map`
+     - **Wrong:** `The topography suggests the site slopes to the ⟨direction⟩.` — this restates the lead-in and delivers *"the topography of the site The topography suggests..."*, which is the exact splice an EP caught in a signed draft.
+   - **The example wording above is illustrative only — it is not a default.** The slope direction MUST describe the actual subject property. Copying a direction from this example, or from a historical baseline written for a different site, puts a fabricated slope in a sealed report. Directions at parcel scale come from the Geospatial Evaluator; if it passed through `[EP VERIFY: groundwater flow direction]`, carry that bracket into the value rather than choosing a direction yourself.
 
 8. **CRITICAL INTERNAL TOOL CITATION RULE**:
    - The Site Reconnaissance Checklist is an internal Matrix field engineering tool, NOT a public record.
    - **NEVER** write "Based on information from the site reconnaissance checklist..." in Section 8.1 or anywhere in the report.
    - Building construction dates MUST be cited as: *"Based on records from the {{SiteCounty}} County Tax Assessor and historical records, the building was constructed in [Year]."*
+
+9. **Groundwater Flow Direction (`{{GWFlowDir}}`, Sections 5.3 & 7.3)**:
+   - Fill this **only** from the Geospatial Evaluator's output. Do not infer a direction yourself, and never carry one over from a historical baseline report or from an example in these instructions.
+   - **Preserve any `[EP VERIFY: groundwater flow direction]` bracket verbatim.** If the Evaluator flagged the gradient, that bracket *is* the value. Do not swap it for a direction, and do not drop it because it reads oddly in the sentence — it is there precisely so the EP sees it.
+   - The tag sits **mid-sentence** in both places it appears — *"...it appears that groundwater would generally flow in a `{{GWFlowDir}}` direction."* (5.3) and *"...groundwater is inferred to flow in a `{{GWFlowDir}}` direction."* (7.3). The value is therefore a **fragment**: no leading capital, no trailing period. A settled value is a bare directional adjective of the form `⟨direction⟩ly` or `⟨direction⟩-⟨direction⟩` — **format examples only; the direction itself comes from the Evaluator, never from this line.**
+   - If the Geospatial Evaluator produced nothing for the gradient, emit `[MEG DATAGAP: groundwater flow direction]`. Never infer a direction to fill the gap.
 
 ## Verification
 Before outputting final content:
@@ -300,6 +312,19 @@ and the Section 10 Opinions opener.
 - Template: `Matrix was authorized to perform this work under ` + `{{User_Authorization}}`
   - Correct: `a signed proposal dated July 6, 2026.`
   - Wrong: `Matrix was authorized to perform this work under a signed proposal dated July 6, 2026.`
+
+- Template: `...the topography of the site ` + `{{USGS_TopoSummary}}` + `.`
+  - Correct: `gently slopes to the ⟨direction⟩ toward ⟨receiving feature⟩`
+  - Wrong: `The topography suggests the site slopes to the ⟨direction⟩.` — delivers
+    *"the topography of the site The topography suggests..."* **and** a doubled period.
+
+  (`⟨…⟩` marks site-specific data. These examples show sentence *shape* only.)
+
+**A second way to cause this: emitting a sentence the template already prints.**
+Section 5.3's opening sentence and the Section 9.0 opener live in the template,
+not in your output. If an instruction ever seems to ask you to "lock" or restate
+static template wording, populate the tags *inside* that sentence and emit
+nothing else for it. Producing the sentence duplicates it.
 
 **Trailing punctuation:** if the template already supplies the period, do not
 include one. Check whether the character after the tag is `.` before adding your
