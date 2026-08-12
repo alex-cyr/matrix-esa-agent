@@ -1083,6 +1083,12 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	slog.Info("/// BASELINE COVERAGE ///", "project", req.ProjectName, "baseline", baselineStatus.String())
 
+	// The parser loop is what bursts through the regional input-tokens-per-minute
+	// quota: 13 files and ~72 MB of media on a Providence generate, sent back to
+	// back. Pacing here keeps a single generate under the ceiling; the pipeline
+	// nodes are ~16k and ~19k tokens after Phase 5 and are not the pressure.
+	pacer := core.NewDefaultPacer()
+
 	var fullExtractedData string
 	var parsed, parseFailed int
 	for _, localPath := range downloadedFiles {
@@ -1099,8 +1105,16 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 		} else if ext == ".jpg" || ext == ".jpeg" {
 			mimeType = "image/jpeg"
 		}
+
+		if err := pacer.Reserve(ctx, core.EstimateMediaTokens(len(fileBytes)), filepath.Base(localPath)); err != nil {
+			slog.Error("PARSER PACING ABANDONED", "file", filepath.Base(localPath), "err", err)
+			http.Error(w, "request cancelled: "+err.Error(), http.StatusRequestTimeout)
+			return
+		}
+
 		slog.Info("PARSER NODE ENGAGED", "file", filepath.Base(localPath),
-			"bytes", len(fileBytes), "mime", mimeType)
+			"bytes", len(fileBytes), "mime", mimeType,
+			"est_tokens", core.EstimateMediaTokens(len(fileBytes)))
 		res, err := parserAgent.Execute(ctx, genai.Text("Extract text and tables from this document: "+filepath.Base(localPath)), genai.Blob{MIMEType: mimeType, Data: fileBytes})
 		if err != nil {
 			// A dropped file used to vanish from the payload with no trace,

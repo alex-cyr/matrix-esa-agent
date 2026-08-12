@@ -129,6 +129,18 @@ Template resolution order: `knowledge/ESA_PHASE_I_Template.docx`, falling back t
 
 Env: `GOOGLE_CLOUD_PROJECT` (default `matrix-esa-production`), `VERTEX_LOCATION` (`us-central1`), `ESA_INPUT_BUCKET` (`matrix-esa-production-vault`), `PORT`. The CLI reads `.env` via godotenv and `GCP_PROJECT`. Auth is Application Default Credentials.
 
+### Vertex quota — the binding limit is per-minute, per-region
+
+**Region is `us-central1`.** `VERTEX_LOCATION` is unset in `.env`, the Dockerfile and every yaml, so the hardcoded default applies. A quota increase is filed against that region's row. *(If the deployed Cloud Run service sets `VERTEX_LOCATION` in its own service config, confirm there too — the repo cannot see it.)*
+
+The ceiling that fails runs is **1,000,000 input tokens per minute, regional**. The daily budget is 1B and barely touched, so a `ResourceExhausted` here is almost never "out of quota for the day" — it is a burst.
+
+**The parser loop is what bursts.** It walks every uploaded file with the bytes attached as a `Blob`; a Providence generate is 13 files and ~72 MB. On 2026-08-12 it pushed ~40 MB into the single minute 12:39:47–12:40:47 — four large PDFs plus a 19 MB PNG — and the region rejected the rest of the run. The pipeline nodes are **not** the pressure: after Phase 5 their prompts are ~16k and ~19k tokens.
+
+`core.Pacer` holds a rolling one-minute total under a budget (`VERTEX_TOKENS_PER_MINUTE`, default 800k for headroom), charging each parser call an estimate of `bytes / 25` (`VERTEX_BYTES_PER_TOKEN`). The estimate deliberately runs **high**: over-estimating costs a short wait, under-estimating costs the whole run. For Providence that projects ~3.0M tokens and a parser stage of ~3.8 minutes.
+
+A single file bigger than the whole budget cannot be paced under it — the 19 MB PNG alone estimates ~760k tokens. The pacer logs that case and proceeds rather than stalling forever, because no wait can help it.
+
 ## Runtime file dependencies
 
 The binary reads `.agents/`, `knowledge/`, and `historical/` **relative to the working directory** at request time (hence their explicit `COPY` lines in the Dockerfile). `core.LoadSkill` errors on a missing or empty skill file, and `cmd/api` preflights all six at boot and exits 1 — so a bad container layout fails at deploy time instead of yielding prompt-less agents that still return plausible text.
