@@ -30,27 +30,27 @@ Verbatim across the corpus. Each names the tag it feeds.
 
 **`DataGaps_Text / Sec9_Item8_DataGaps`**
 
-> However, the significance of this gap is considered low and not likely to alter the report's conclusions due to the limited information obtained during interviews.
+> However, the significance of this gap is considered low and not likely to alter the report's conclusions due to the limited information obtained during interviews, as well as during our search of standard historical sources of information such as aerial photographs, and historic topographic maps
 
 **`VEC_Summary / Sec9_Item5_VEC`**
 
-> The report was designed to assist parties seeking to meet the search requirements of the ASTM Standard Practice for Assessment of Vapor Encroachment into Structures.
+> The report was designed to assist parties seeking to meet the search requirements of the ASTM Standard Practice for Assessment of Vapor Encroachment into Structures on Property Involved in Real Estate Transactions (E 2600-10)
 
 **`Sec8_13_Radon`**
 
-> If radon levels within a structure are greater than the 4 pCi/L level, the EPA recommends that construction or renovation processes be in compliance with the EPA recommendations.
+> If radon levels within a structure are greater than the 4 pCi/L level, the EPA recommends that construction or renovation processes be in compliance with the EPA's Radon Prevention in the Design and Construction Guidelines
 
 **`Sec8_12_Tanks`**
 
-> No evidence of USTs was identified on the subject property and no common indicators of USTs, such as vent pipes, fill ports, manways, pavement cuts, fuel gauges or stained soils, were observed.
+> No evidence of USTs was identified on the subject property and no common indicators of USTs, such as vent pipes, fill ports, manways, pavement cuts, fuel gauges or dispensers, were observed
 
 **`Sec8_12_Tanks`**
 
-> The subject site was not identified on the Georgia list of registered UST facilities.
+> The subject site was not identified on the Georgia list of registered UST facilities
 
 **`Sec8_12_Tanks`**
 
-> ASTs are not required to be registered in the state of Georgia.
+> ASTs are not required to be registered in the state of Georgia
 
 ---
 
@@ -115,7 +115,7 @@ Submitted to
 
 [CONTACT]
 [COUNTY] [CLIENT], Recreation, and Cultural Affairs
-1950 West Exchange, Suite 400
+[SITE ADDRESS], Suite 400
 [PLACE], [STATE] [ZIP]
 
 PROJECT NUMBER: [PROJECT NO]
@@ -129,7 +129,7 @@ October 14, 2025
 [CONTACT]
 Project Manager
 [COUNTY] [CLIENT], Parks and Cultural Affairs
-1950 West Exchange, Suite 400
+[SITE ADDRESS], Suite 400
 [PLACE], [STATE] [ZIP]
 
 Re: Environmental Site Assessment - [SITE ADDRESS] Easement
@@ -159,7 +159,7 @@ Principal
 Sam@MatrixEngineeringGroup.com
 
 [SITE ADDRESS], Suite 3
-[PLACE], [STATE] [ZIP]|t: 770.448.3124|f: 770.448.5324
+[PLACE], [STATE] [ZIP]|t: [PHONE]|f: [PHONE]
 
 GLOSSARY OF ABBREVIATIONS
 
@@ -206,7 +206,7 @@ SECTION | Page Number
 2.6 Disclaimers | 4
 3.0 SITE LOCATION AND SURROUNDING PROPERTIES | 5
 3.1 Site Description and Location | 5
-3.2 [CLIENT] | 5
+3.2 Surrounding Properties | 5
 4.0 USER PROVIDED INFORMATION | 6
 4.1 Interviews | 6
 4.2 Title Records and Environmental Liens | 6
@@ -333,20 +333,20 @@ The following data gaps were noted while performing the ESA-Phase I for the subj
 
 3.1 Site Description and Location
 
-The subject site is located primarily within the limits of [SITE ADDRESS], [PLACE], [STATE], and consists of an easement that runs along Entrenchment Creek (Parcel ID [PARCEL ID]). The subject site also transects the westernmost portion of the parcels located at [SITE ADDRESS] (Parcel ID [PARCEL ID]) and [SITE ADDRESS] (Parcel ID [PARCEL ID]). According to [COUNTY] County property tax records, each of the properties that make up the easement are presently owned by [CLIENT] The majority of the easement is located adjacent to Phases 2 through 4 of the former [SITE ADDRESS] Landfills, which is a former C&D landfill that was closed in 1998. A portion of the easement is located within the limits of Phase I of the former [SITE ADDRESS] Landfill. The former landfill is currently in post-closure care. The limits of the proposed easement are provided in Figure 1, which is a site plan that was provided by [COUNTY] County.
+The subject site is located primarily within the limits of [SITE ADDRESS], [PLACE], [STATE], and consists of an easement that runs along [WATERCOURSE] (Parcel ID [PARCEL ID]). The subject site also transects the westernmost portion of the parcels located at [SITE ADDRESS] (Parcel ID [PARCEL ID]) and [SITE ADDRESS] (Parcel ID [PARCEL ID]). According to [COUNTY] County property tax records, each of the properties that make up the easement are presently owned by [CLIENT] The majority of the easement is located adjacent to Phases 2 through 4 of the former [SITE ADDRESS] Landfills, which is a former C&D landfill that was closed in 1998. A portion of the easement is located within the limits of Phase I of the former [SITE ADDRESS] Landfill. The former landfill is currently in post-closure care. The limits of the proposed easement are provided in Figure 1, which is a site plan that was provided by [COUNTY] County.
 
-The entrance of the site was accessed from the remnants of [SITE ADDRESS], but the subject site was primarily traversed by foot. The site is currently vacant and is heavily wooded. Entrenchment Creek runs along the boundary of the easement.
+The entrance of the site was accessed from the remnants of [SITE ADDRESS], but the subject site was primarily traversed by foot. The site is currently vacant and is heavily wooded. [WATERCOURSE] runs along the boundary of the easement.
 
-Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately 870 feet MSL along eastern areas of the subject site to an approximate elevation of 830 feet MSL near Entrenchment Creek along the western boundary of the site. The elevation change at the site is on the order of 40 feet.
+Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately 870 feet MSL along eastern areas of the subject site to an approximate elevation of 830 feet MSL near [WATERCOURSE] along the western boundary of the site. The elevation change at the site is on the order of 40 feet.
 
-3.2 [CLIENT]
+3.2 Surrounding Properties
 
 Surrounding properties consist primarily of commercial and residential use, as tabulated below:
 
 Direction | [CLIENT] | [CLIENT]
 North | [SITE ADDRESS] and Undeveloped Land | [CLIENT]
-South | APAC Parcel | Undeveloped and Vacant Land
-East | Former Donzi Landfill | [CLIENT]
+South | [ENTITY] Parcel | Undeveloped and Vacant Land
+East | Former [LANDFILL] | [CLIENT]
 West | Mechanical Contractor/Warehouse facility | [CLIENT]
 
 4.0 USER-PROVIDED INFORMATION
@@ -355,7 +355,7 @@ West | Mechanical Contractor/Warehouse facility | [CLIENT]
 
 4.1.1 Site Contact, Property Owner or Owner's Representative
 
-Based on property tax records and information obtained from the [COUNTY] County Tax Assessor's website, the property is presently owned by the APAC-Georgia. A Phase I Property Owner/Owner Representative interview questionnaire was forwarded to the owner's representative and completed by [CONTACT], PE. [CONTACT] been familiar with the property since February 2006. Based on [CONTACT] to the questionnaire, portions of the property extend over of permitted, closed C&D landfill. He also indicated that he is unaware of any obvious indicators that point to the presence of likely presence of contamination at the property. The completed questionnaire is provided in Appendix D of this report.
+Based on property tax records and information obtained from the [COUNTY] County Tax Assessor's website, the property is presently owned by the [ENTITY]. A Phase I Property Owner/Owner Representative interview questionnaire was forwarded to the owner's representative and completed by [CONTACT], PE. [CONTACT] been familiar with the property since February 2006. Based on [CONTACT] to the questionnaire, portions of the property extend over of permitted, closed C&D landfill. He also indicated that he is unaware of any obvious indicators that point to the presence of likely presence of contamination at the property. The completed questionnaire is provided in Appendix D of this report.
 
 4.2 Title Records and Environmental Liens
 
@@ -371,7 +371,7 @@ This Environmental Site Assessment – Phase I was conducted to determine the po
 
 4.5 Prior Environmental Reports
 
-Previous environmental studies have been performed at the subject site and adjacent properties in relation to the former landfill. These studies include ESA – Phase I assessments, methane testing and groundwater and surface water testing in connection with the former landfill. [COUNTY] County provided Matrix staff with two (2) previous ESA-Phase I reports. Both reports were issued by United Consulting. One of the reports, dated May 4, 2022, was performed for the adject property to the north of the subject site. The other report, dated July 7, 2017, was performed for the subject site. Neither of the reports identified any RECs, HRECs, or CRECs in connection with the sites. Additional reports provided by [COUNTY] County consisted of a Hydrologic Assessment of the [SITE ADDRESS] Landfill and a Report of Groundwater and Methane Gas Monitoring Well Installation.
+Previous environmental studies have been performed at the subject site and adjacent properties in relation to the former landfill. These studies include ESA – Phase I assessments, methane testing and groundwater and surface water testing in connection with the former landfill. [COUNTY] County provided Matrix staff with two (2) previous ESA-Phase I reports. Both reports were issued by [ENTITY]. One of the reports, dated May 4, 2022, was performed for the adject property to the north of the subject site. The other report, dated July 7, 2017, was performed for the subject site. Neither of the reports identified any RECs, HRECs, or CRECs in connection with the sites. Additional reports provided by [COUNTY] County consisted of a Hydrologic Assessment of the [SITE ADDRESS] Landfill and a Report of Groundwater and Methane Gas Monitoring Well Installation.
 
 5.0 HISTORICAL USE INFORMATION
 
@@ -446,11 +446,11 @@ Based on the EDR Radius Map Report, the target property was not listed within an
 There were 9 properties identified in the EDR Radius Map Report (Appendix C) at a maximum 1/2-mile distance from the nearest property boundary at higher elevations than the subject site. The identified sites are presented in the table below. Additional information is available in Appendix C.
 
 SITE NAME | ADDRESS | DATABASES | DISTANCE/DIRECTION | [SITE ADDRESS] Landfill | [SITE ADDRESS] | SWF/LF, PFAS Echo | 981 feet, SW | REC
-McKenney's Management | [SITE ADDRESS] | LUST, UST, Financial Assurance, UST Finder, UST Finder Release, RCRA-SQG | 1060 feet, WSW |
-APAC-GA | [SITE ADDRESS] | SWF/LF, Financial Assurance, RCRA NonGen | 1293 feet, N | CREC
-A&B Discount | [SITE ADDRESS] | UST Finder, UST Finder Release, LUST, UST Finds, Financial Assurance | 1801 feet, NNW |
-Continental Trucking | [SITE ADDRESS] | LUST, UST, Finds, UST Finder, UST Release Finder, Brownfields, Financial Assurance | 1835 feet, WNW |
-Grant Automotive Service | [SITE ADDRESS] | LUST, UST, Finds, UST Finder, UST Release Finder, Financial Assurance | 2128 feet, NW |
+[ENTITY] | [SITE ADDRESS] | LUST, UST, Financial Assurance, UST Finder, UST Finder Release, RCRA-SQG | 1060 feet, WSW |
+[ENTITY] | [SITE ADDRESS] | SWF/LF, Financial Assurance, RCRA NonGen | 1293 feet, N | CREC
+[ENTITY] | [SITE ADDRESS] | UST Finder, UST Finder Release, LUST, UST Finds, Financial Assurance | 1801 feet, NNW |
+[ENTITY] | [SITE ADDRESS] | LUST, UST, Finds, UST Finder, UST Release Finder, Brownfields, Financial Assurance | 1835 feet, WNW |
+[ENTITY] | [SITE ADDRESS] | LUST, UST, Finds, UST Finder, UST Release Finder, Financial Assurance | 2128 feet, NW |
 
 6.1.3 Surrounding Areas- Cross-gradient, Down gradient & Lower Elevations
 
@@ -462,7 +462,7 @@ The Georgia Environmental Protection Division (EPD) offices were visited to revi
 
 According to the reviewed reports, methane gas levels have fluctuated between 0 and 66 percent over the past several years. Spikes within the methane levels have occurred in 2013 and 2015 of which the facility attributed elevated groundwater levels and possibly the result of sewer improvements by the County. The most recent report in 2017 indicated that the levels of methane had been zero since September 2016.
 
-A quarterly monitoring report dated June 25, 2013, indicated that Entrenchment Creek serves as a barrier to off-site methane migration and that methane monitoring within the subject site was unnecessary as it presents no threat to human health via potential offsite migration. Based on a methane monitoring report dated March 3, 2016, a phase active methane recovery system was previously installed to address the elevated methane levels associated with the former landfill. To our knowledge, the phase active methane recovery system is still operational since we found no records to indicate that it was inactive.
+A quarterly monitoring report dated June 25, 2013, indicated that [WATERCOURSE] serves as a barrier to off-site methane migration and that methane monitoring within the subject site was unnecessary as it presents no threat to human health via potential offsite migration. Based on a methane monitoring report dated March 3, 2016, a phase active methane recovery system was previously installed to address the elevated methane levels associated with the former landfill. To our knowledge, the phase active methane recovery system is still operational since we found no records to indicate that it was inactive.
 
 Groundwater and surface water levels were tested for various contaminants. Based on the test results, low levels of barium, cobalt, copper, chlorobenzene, lead, and nickel were noted within the samples. Based on the test results, the encountered levels were below the media target concentrations for the state of Georgia.
 
@@ -470,7 +470,7 @@ Groundwater and surface water levels were tested for various contaminants. Based
 
 7.1 Site Topography
 
-Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately 870 feet MSL along eastern areas of the subject site to an approximate elevation of 830 feet MSL near Entrenchment Creek along the western boundary of the site. The elevation change at the site is on the order of 40 feet.
+Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately 870 feet MSL along eastern areas of the subject site to an approximate elevation of 830 feet MSL near [WATERCOURSE] along the western boundary of the site. The elevation change at the site is on the order of 40 feet.
 
 7.2 Site Geology
 
@@ -488,7 +488,7 @@ Under natural, undisturbed conditions, shallow groundwater flow generally follow
 
 Wetland maps prepared by the Department of Interior-Fish and Wildlife Service were reviewed to determine the presence of wetland areas within the site boundary. Based on the Wetland map, no wetlands have been identified on the subject site.
 
-The National Flood Insurance Rate Map (FIRM) for the area of the subject property was reviewed to determine flood zone areas. FIRM Panels 13089C0128J and 13089C0129J, effective May 16, 2013, designate much of the subject site within Zone X, which is not identified as a flood-prone area. Along Entrenchment Creek, the maps show areas within Zone AE, which are identified as areas within a 100-year flood plain. It is possible that portions of the subject site lie within areas designated within the 100-year flood plain.
+The National Flood Insurance Rate Map (FIRM) for the area of the subject property was reviewed to determine flood zone areas. FIRM Panels [FIRM PANEL] and [FIRM PANEL], effective May 16, 2013, designate much of the subject site within Zone X, which is not identified as a flood-prone area. Along [WATERCOURSE], the maps show areas within Zone AE, which are identified as areas within a 100-year flood plain. It is possible that portions of the subject site lie within areas designated within the 100-year flood plain.
 
 7.5 Vapor Intrusion
 
@@ -498,11 +498,11 @@ A search of available environmental records was conducted by Environmental Data 
 
 8.0 SITE RECONNAISSANCE
 
-The reconnaissance of the subject site, beginning at Station 7+00 up to Station 42+70 (per Kaizen Collaborative plans dated 3/31/2022), was performed on September 12th, 2024, and September 25, 2025. The site was visually inspected to examine the field conditions and to evaluate the recognized environmental conditions identified in the EDR Report as well as our records review of previous reports and assessments.
+The reconnaissance of the subject site, beginning at Station 7+00 up to Station 42+70 (per [ENTITY] plans dated 3/31/2022), was performed on September 12th, 2024, and September 25, 2025. The site was visually inspected to examine the field conditions and to evaluate the recognized environmental conditions identified in the EDR Report as well as our records review of previous reports and assessments.
 
-The site within the explored segment (Station 7+00 to 42+70) is currently vacant and is heavily wooded. Entrenchment Creek runs along the western and/or southern boundaries of the easement.
+The site within the explored segment (Station 7+00 to 42+70) is currently vacant and is heavily wooded. [WATERCOURSE] runs along the western and/or southern boundaries of the easement.
 
-The surfaces are covered with gravel roadbeds and pathways covered with topsoil, leaf litter, and weeds. Large boulders and concrete pieces were noted at various locations within the easement. Sewer manholes, as well as underground and above-ground sewer lines, were evident within and around the easement. The site slopes generally in a westerly and southern direction towards Entrenchment Creek with a topographical relief ranging between 10 feet to greater than 30 feet.
+The surfaces are covered with gravel roadbeds and pathways covered with topsoil, leaf litter, and weeds. Large boulders and concrete pieces were noted at various locations within the easement. Sewer manholes, as well as underground and above-ground sewer lines, were evident within and around the easement. The site slopes generally in a westerly and southern direction towards [WATERCOURSE] with a topographical relief ranging between 10 feet to greater than 30 feet.
 
 Based on our site visits, we did not observe any trash dumping, stockpiles, or deleterious materials of concern. A few tires were noted along the boundaries of the easement, which do not appear to be of concern upon removal and appropriate disposal. Additionally, due to the presence of a landfill adjacent to the easement, a flame ionization detector (Thermo TVA 2020 FID) was used to detect the methane levels. The levels were taken inside shallow augered bore holes as well as ambient readings. The levels detected were lower than 0.1% and deemed to be insignificant. Based on the levels of methane detected during our field visits and our observations of the site, it is our opinion that, at the current site conditions, there are no issues that would make the property unsafe or unsuitable for public use.
 
@@ -585,15 +585,15 @@ During our site visit, there was no evidence of distressed vegetation, pools of 
 9.0 FINDINGS
 
 The following summarizes the information that was gathered during this study, our field reconnaissance, topographical and hydrological setting of the subject site, and our evaluation. The items may include Recognized Environmental Conditions (RECs), Historical Recognized Conditions (HRECS), Controlled Recognized Environmental Conditions (CRECs), and de minimis conditions.
-1. The subject site is located primarily within the limits of [SITE ADDRESS], [PLACE], [STATE], and consists of an easement that runs along Entrenchment Creek (Parcel ID [PARCEL ID]). The subject site also transects the westernmost portion of the parcels located at [SITE ADDRESS] (Parcel ID [PARCEL ID]) and [SITE ADDRESS] (Parcel ID [PARCEL ID]). According to [COUNTY] County property tax records, each of the properties that make up the easement are presently owned by [CLIENT] The easement is located within the limits of the former [SITE ADDRESS] Landfill – Phase I and on property adjacent to the former [SITE ADDRESS] Landfills – Phases 2 through 4, which is a former C&D landfill that was closed in 1998. The former landfill is currently in post-closure care. The limits of the proposed easement are provided in Figure 1, which is a site plan that was provided by [COUNTY] County.
-2. Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately 870 feet MSL along eastern areas of the subject site to an approximate elevation of 830 feet MSL near Entrenchment Creek along the western boundary of the site. The elevation change at the site is on the order of 40 feet.
+1. The subject site is located primarily within the limits of [SITE ADDRESS], [PLACE], [STATE], and consists of an easement that runs along [WATERCOURSE] (Parcel ID [PARCEL ID]). The subject site also transects the westernmost portion of the parcels located at [SITE ADDRESS] (Parcel ID [PARCEL ID]) and [SITE ADDRESS] (Parcel ID [PARCEL ID]). According to [COUNTY] County property tax records, each of the properties that make up the easement are presently owned by [CLIENT] The easement is located within the limits of the former [SITE ADDRESS] Landfill – Phase I and on property adjacent to the former [SITE ADDRESS] Landfills – Phases 2 through 4, which is a former C&D landfill that was closed in 1998. The former landfill is currently in post-closure care. The limits of the proposed easement are provided in Figure 1, which is a site plan that was provided by [COUNTY] County.
+2. Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately 870 feet MSL along eastern areas of the subject site to an approximate elevation of 830 feet MSL near [WATERCOURSE] along the western boundary of the site. The elevation change at the site is on the order of 40 feet.
 3. Wetland maps prepared by the Department of Interior-Fish and Wildlife Service were reviewed to determine the presence of wetland areas within the site boundary. Based on the Wetland map, no wetlands exist in the subject site.
-4. The National Flood Insurance Rate Map (FIRM) for the area of the subject property was reviewed to determine flood zone areas. FIRM Panels 13089C0128J and 13089C0129J, effective May 16, 2013, designate much of the subject site within Zone X, which is not identified as a flood-prone area. Along Entrenchment Creek, the maps show areas within Zone AE, which are identified as areas within a 100-year flood plain. It is possible that portions of the subject site lie within areas designated within the 100-year flood plain.
+4. The National Flood Insurance Rate Map (FIRM) for the area of the subject property was reviewed to determine flood zone areas. FIRM Panels [FIRM PANEL] and [FIRM PANEL], effective May 16, 2013, designate much of the subject site within Zone X, which is not identified as a flood-prone area. Along [WATERCOURSE], the maps show areas within Zone AE, which are identified as areas within a 100-year flood plain. It is possible that portions of the subject site lie within areas designated within the 100-year flood plain.
 5. A search of available environmental records was conducted by Environmental Data Resources, Inc (EDR) in order to perform a Vapor Encroachment Screening which is intended to aid in the determination of whether possible Vapor Encroachment Conditions (VEC) exist or are likely to exist. Based on the search, there were no properties identified at which a VEC is likely to exist.
 6. Based on the EDR Radius Map Report, the target property was not listed within any of the searched databases.
 7. Nearby facilities located within the ASTM-specified minimum distances searched for each database were identified. There were nine (9) properties identified in the EDR Radius Map Report at a maximum 1/2-mile distance from the nearest property boundary at higher elevations than the subject site. Matrix reviewed the property in relation to distance, topography, and estimated groundwater flow to determine potential impact. Matrix has determined that two (2) of the listed properties should be considered RECs, HRECs, or CRECs in connection with the subject site at this time.
 8. Based on the available maps, the extent of waste from the previous landfill encroaches upon the northern area of the site in the vicinity of where the pile of used automobile tires was noted. The extent of waste buried in this area is unknown.
-9. Based on a review of available records for the former landfill, several environmental studies have been performed in the vicinity of the subject site. Based on our review of these records, fluctuating levels of methane were noted ranging from 0 to 66.5 percent. One of the reports dated June 25, 2013, indicated that Entrenchment Creek serves as a barrier to off-site methane migration and that methane monitoring within the subject site was unnecessary as it presents no threat to human health via potential offsite migration. Based on a methane monitoring report dated March 3, 2016, a phase active methane recovery system was previously installed to address the elevated methane levels associated with the former landfill.
+9. Based on a review of available records for the former landfill, several environmental studies have been performed in the vicinity of the subject site. Based on our review of these records, fluctuating levels of methane were noted ranging from 0 to 66.5 percent. One of the reports dated June 25, 2013, indicated that [WATERCOURSE] serves as a barrier to off-site methane migration and that methane monitoring within the subject site was unnecessary as it presents no threat to human health via potential offsite migration. Based on a methane monitoring report dated March 3, 2016, a phase active methane recovery system was previously installed to address the elevated methane levels associated with the former landfill.
 10. Groundwater and surface water levels were tested for various contaminants. Based on the test results, low levels of barium, cobalt, copper, chlorobenzene, lead, and nickel were noted within the samples. Based on the test results, the encountered levels were below the media target concentrations for the state of Georgia.
 
 10.0 OPINIONS
@@ -608,695 +608,4 @@ Matrix Engineering Group, Inc.has performed a Phase I Environmental Site Assessm
 Based on these findings and conclusions, we recommend that a Limited Phase II Environmental Study be performed in order to evaluate environmental conditions at the subject property.
 
 We declare that, to the best of our professional knowledge and belief, we meet the definition of Environmental Professional as defined in 312.10 of 40 CFR 312 and we have the specific qualifications based on education, training, and experience to assess a property of the nature, history, and setting of the subject property. We have developed and performed the appropriate inquiries in conformance with the standards and practices set forth in 40 CFR Part 312.
-
-APPENDIX A
-
-2020 USGS Topographic Maps
-Site Plan
-Flood Insurance Rate Map
-National Wetland Inventory Map
-Historical Aerial Photographs: 1940, 1949, 1955, 1960, 1968, 1972, 1978, 1981, 1988, 1993, 1999, 2007, 2010, 2019
-Most Recent Aerial Photograph: 2019
-
-[FIGURE: Site Plan]
-[FIGURE: USGS 2020 Topographic Map]
-[FIGURE: Flood Insurance Rate Map]
-[FIGURE: National Wetland Inventory Map]
-[FIGURE: Historical Aerial Photograph 1940]
-[FIGURE: Historical Aerial Photograph 1949]
-[FIGURE: Historical Aerial Photograph 1955]
-[FIGURE: Historical Aerial Photograph 1960]
-[FIGURE: Historical Aerial Photograph 1968]
-[FIGURE: Historical Aerial Photograph 1972]
-[FIGURE: Historical Aerial Photograph 1978]
-[FIGURE: Historical Aerial Photograph 1981]
-[FIGURE: Historical Aerial Photograph 1988]
-[FIGURE: Historical Aerial Photograph 1993]
-[FIGURE: Historical Aerial Photograph 1999]
-[FIGURE: Historical Aerial Photograph 2007]
-[FIGURE: Historical Aerial Photograph 2010]
-[FIGURE: Historical Aerial Photograph 2019]
-
-Appendix B
-
-Photographs
-
-[FIGURE: Site Photo Location Map]
-Project Name: Donzi Landfill
-Project Location: [SITE ADDRESS], [PLACE], [STATE] [ZIP], USA
-Client: N/A | Project Code: N/A
-Preparer: Eric Taylor | Reviewer: Sam Alyateem, PE
-Report Date: 2024-11-05 | Page Number: 1 of 35
-
-[FIGURE: Site Photo 1]
-Media 1:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: NW | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 2]
-Media 2:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: SE | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 3]
-Media 3:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: N | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 4]
-Media 4:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: S | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 5]
-Media 5:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: N | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 6]
-Media 6:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: SW | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 7]
-Media 7:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: SW | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 8]
-Media 8:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: W | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 9]
-Media 9:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: S | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 10]
-Media 10:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: S | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 11]
-Media 11:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: W | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 12]
-Media 12:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: SW | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 13]
-Media 13:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: W | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 14]
-Media 14:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: SW | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 15]
-Media 15:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: NE | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 16]
-Media 16:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: SW | Date Taken: 09/12/2024
-Weather: Moderate rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 17]
-Media 17:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: E | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 18]
-Media 18:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: NW | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 19]
-Media 19:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: S | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 20]
-Media 20:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: SE | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 21]
-Media 21: Limits of permanent landfill
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: E | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 22]
-Media 22:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: NW | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 23]
-Media 23:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: SE | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 24]
-Media 24:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: S | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 25]
-Media 25:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: SW | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 26]
-Media 26:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: SW | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 27]
-Media 27:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: N | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 28]
-Media 28:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: NW | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 29]
-Media 29:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: W | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 30]
-Media 30:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: W | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 31]
-Media 31:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: W | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 32]
-Media 32:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: SE | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 33]
-Media 33:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: W | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-[FIGURE: Site Photo 34]
-Media 34:
-Lat: 33.[ZIP] | Lng: -84.[ZIP] | Bearing: NW | Date Taken: 09/12/2024
-Weather: Light rain | Taken By: Eric Taylor
-Tags:
-
-APPENDIX C
-
-[CLIENT] (EDR)
-Radius Map Report
-
-[OMITTED: 180 pages of EDR radius map database listings]
-
-Appendix D
-
-Phase I Property Owner/Owner Representative (User)
-Interview Questionnaire and Owner Provided Information
-
-Phase I Environmental Site Assessment
-Pre-Survey Questionnaire
-
-Someone familiar with the site should complete this questionnaire for the Phase I Environmental Site Assessment, as part of the ASTM E1527-13 Guidelines. For those questions that are not applicable, please respond "N/A” or “U/K” for those questions in which the answer is not known. If you have any questions about how to answer any of the questions, please contact us. If additional pages for responses are necessary, please attach hereto and reference it to the appropriate question number. Upon completing this form, please return it via electronic mail or facsimile, as listed below. This document and your written response will be included as an exhibit in the final report.
-
-Project Manager: | Eric Taylor
-Email: | etaylor@matrixengineeringgroup.com
-Telephone: | 770-448-3124
-Fax: |
-Project Name: | [SITE ADDRESS]: | [SITE ADDRESS]
-City/State: | [PLACE], [STATE]
-Key Site Contact: | Michael Boyer, PE
-Telephone: | 770.380.1471
-Fax: |
-
-A. GENERAL
-
-PREPARER
-1. Name, title and telephone number of person completing this questionnaire:
-Name: Michael J Boyer
-Title: Manager
-Signature: [SIGNATURE]
-Telephone Number: 770.380.1471
-
-2. How long has the preparer been familiar with the site or facility?
-If less than five years, who held the position prior? Since February 2006
-
-3. Property Owner/Occupant Information
-Owner’s Name: CRH Americas, Inc
-Owner’s Address:
-Occupant’s Name: CRH/Southern Atlantic Aggregates
-Occupant’s Address: [SITE ADDRESS] Suite 100 [PLACE], [STATE] [ZIP]
-
-VALUATION REDUCTION
-4. Was/is the purchase price of the Subject property significantly
-less than the purchase price of comparable properties due to
-environmental conditions? Yes [] No [] U/K [X]
-If yes, please explain below.
-
-B. Property Description
-1. Land
-a. Size of Parcel? 2.18, see email explanation Acres
-b. Shape of Parcel? [] Rectangular [X] Irregular [] Other
-c. Are there any surface waters or wetlands on the site? Yes [] No [X] U/K []
-d. Is there a well on the site? Yes [X] No [] U/K []
-If so, what type of well is it?:
-Drinking Water []
-Irrigation []
-Monitoring [X]
-Dry Well []
-e. Have contaminants in excess of governmental
-guidelines been identified in the water? Yes [X] No []
-Was or is there a septic system on the property? Yes [] No [X] U/K []
-If so, is the septic system currently in use? Yes [] No []
-f. Has fill been imported onto the Subject? Yes [] No [X] U/K []
-g. Are there currently or has there previously been
-waste treatment or disposal pits, ponds, or lagoons
-on the site? Yes [] No [X] U/K []
-h. Where is the site's stormwater discharged to? Entrenchment Creek to South River
-
-B. PROPERTY DESCRIPTION – continued
-2. Site Improvements This includes all buildings [X] N/A
-a. Describe the size (square foot) of the existing building(s).
-b. How old is the building(s)?
-c. Describe the heating and cooling system.
-d. Who provides the following utilities?
-Water:
-Sanitary Sewer:
-Storm Drainage:
-Natural Gas:
-Electric:
-e. Are there any floor drains on the site? Yes [] No [X] U/K []
-If so, where do they discharge to?
-
-3. Site History
-a. Were there any buildings or other improvements on
-the property prior to the existing improvements? Yes [] No [] U/K [X]
-If so, what were they?
-b. Is or has the property been used for industrial or
-agricultural purposes, or as a gasoline station,
-auto repair, dry cleaner, junkyard, or landfill? Yes [X] No [] U/K []
-If so, please describe.
-Portions of the easement run on a permitted closed C&D landfill
-
-B. PROPERTY DESCRIPTION – continued
-4. Site Operations
-To the best of your knowledge, do any of the following operations take place on the Subject or have ever taken place on the Subject:
-- Dry Cleaning: Yes [] No [X]
-- Battery Storage/Sales: Yes [] No [X]
-- Paint Storage/Sales: Yes [] No [X]
-- Petroleum Storage/Sales: Yes [] No [X]
-- Photo or X-Ray Finishing: Yes [] No [X]
-- Electronic Equipment Assembly or Manufacturing: Yes [] No [X]
-- Solvent Storage or Sales: Yes [] No [X]
-- Chemical Manufacturing/Sales: Yes [] No [X]
-- Automobile Storage, Repair, or Disposal: Yes [] No [X]
-- Agriculture: Yes [] No [X]
-- Medical or Dental Offices: Yes [] No [X]
-
-5. Previous Studies/Documentation
-a. Do you have any knowledge of previously prepared Environmental Site Assessment Reports, asbestos surveys, lead-based paint studies or testing (soil, groundwater, tank tightness testing, lead-based paint testing, asbestos testing, indoor air quality, mold (bacteria and fungi testing), etc.) conducted on the site? If so, please either provide copies of the reports or list the title, date, preparer and recipient of such report(s) below:
-[] I have no knowledge of any environmental related studies or reports prepared on the Subject.
-b. Are you in possession of a title report, site drawings, building drawings and specifications and/or a survey for the site? Yes [X] No []
-If so, please provide copies of same. See email explanation; county has been apprised of all data, reports, drawings, reasonably available, all is public record at EPD offices
-
-Please provide all available environmental information from yours or your Client's records including, but not limited to, documentation in connection with any pending or threatened public or private proceedings or litigation with respect to environmental liability, environmental permits and permit applications, underground and above ground tank registration and information (including removal and testing of such tanks), environmental reports, asbestos, lead-based paint or indoor air quality studies, spill information and compliance information and programs.
-
-C. SURROUNDING PROPERTIES
-1. Has any adjoining properties been used for industrial purposes, or as
-a gasoline station, auto repair shop, junkyard, dry cleaner or landfill? Yes [X] No [] U/K []
-If so, please explain.
-2. Are you aware of any contamination conditions on adjoining or
-nearby properties? Yes [] No [] U/K [X]
-3. Are there any open surface waters or wetlands adjacent
-to the site? Yes [X] No [] U/K []
-4. Are you aware of any active or former waste treatment or
-disposal pits, ponds, or lagoons on adjacent or nearby sites? Yes [X] No [] U/K []
-5. Is any neighboring property engaged in the storing, transporting
-or disposal of hazardous waste, or chemicals? Yes [] No [] U/K [X]
-
-D. REGULATORY
-1. Has the property ever been subject to any environmental enforcement
-action by the federal, state local government? Yes [] No [X] U/K []
-If so, please explain.
-2. Do you have any knowledge of pending or contemplated environmental
-actions against the Subject or neighborhood properties Yes [] No [X] U/K []
-If so, please state the circumstances.
-3. Has there been any formal or informal citizen or tenant complaints regarding environmental or health matters in
-connection with the Subject? Yes [] No [X] U/K []
-If so, please explain.
-
-E. ASBESTOS
-1. Do you have knowledge of any materials or substances on the site
-that are known or suspected to contain asbestos? Yes [] No [] U/K [X]
-If so, what materials and where are they located?
-
-E. ASBESTOS – continued
-2. Has an inspection for asbestos ever been conducted on the Subject? Yes [] No [] U/K [X]
-3. Has asbestos been removed from the Subject? Yes [] No [] U/K [X]
-4. Does the building have:
-- Spray-on or troweled-on fireproofing, insulation or finishes? Yes [] No [] U/K [X]
-- Insulation on piping, boilers, tanks, chillers, or other
-mechanical equipment? Yes [] No [] U/K [X]
-- Transite used in cooling towers, exterior walls,
-ceilings fascia panels, etc.? Yes [] No [] U/K [X]
-- Resilient floor tile? Yes [] No [] U/K [X]
-- Suspended acoustical ceiling tiles? Yes [] No [] U/K [X]
-- A built-up or rolled roofing system? Yes [] No [] U/K [X]
-
-F. PCBs
-1. Are there any on-site electrical transformers? Yes [] No [X] U/K []
-If so, do any of the transformers contain PCBs? Yes [] No [X] U/K []
-Who owns the transformers and where are they located?
-2. Did any on-site transformers formerly contain PCBs,
-but later had the dielectric fluid replaced? Yes [] No [X] U/K []
-3. Is there any hydraulic equipment such as elevators or automotive
-lifts on-site? Yes [] No [X] U/K []
-If so, who services the equipment?
-Are you aware of any hydraulic fluid leaks or evidence of leakage such
-as unexplained fluid loss in connection with the hydraulic equipment? Yes [] No [X] U/K []
-
-F. Storage Tanks
-1. Are there any (active or inactive) Underground Storage Tanks ("UST")
-or Aboveground Storage Tanks ("AST") on the site? Yes [] No [X] U/K []
-If so, please fill out the following schedule:
-Active or Inactive Tanks
-Location of Tank | Size of Tank (Gallons) | AST or UST | Tank Contents | Age of Tank (Years) | Does the Tank Have Corrosion Protection? (Yes/No) | Does the Tank Have Leak Detection? (Yes/No) | Is the Tank In-Use? (Yes/No)
-
-Have any of the tanks been tightness tested? Yes [] No [] U/K []
-1. Do you have any knowledge of tanks that were either
-removed or closed in-place at the site? Yes [] No [] U/K []
-If so, please fill out the following schedule:
-Tanks Removed or Closed In-Place
-Location of Former Tank | Size of Tank (Gallons) | AST or UST | Tank Contents | Tank Removal Company | Year Tank Was Removed
-
-H. LEAD
-1. Are you aware of any lead-based paint ("LBP") applications on the site? Yes [] No [X] U/K []
-2. Has LBP testing been conducted? Yes [] No [] U/K [X]
-3. Have there been any reported incidences of children with elevated
-blood lead levels residing at the site? Yes [] No [X] U/K []
-4. Are there any children younger than 7 years old residing at the site
-or frequenting the site on a daily basis? Yes [] No [X] U/K []
-5. Have any LBP abatements been conducted? Yes [] No [X] U/K []
-6. Has the water been tested for lead? Yes [X] No [] U/K []
-If so, please provide a copy of the results see note relating to files, data, etc
-
-I. HAZARDOUS MATERIALS
-1. Are hazardous materials or chemicals stored or used on-site? Yes [] No [X] U/K []
-If so, please fill out the following schedule (attach separate page if more room is required):
-Schedule of Hazardous or Toxic Substances Stored On-Site
-Material Type | Quantity (Gallons) | Location
-
-2. Are there any hazardous or medical waste or fluids generated or used
-that employ an outside service for their periodic supply and removal? Yes [] No [X] U/K []
-If so, please provide the name, address, & telephone number of the disposal company and the facility generating the waste.
-
-J. INDOOR AIR QUALITY
-1. Have strong mold odors and/or mold staining been observed onsite? Yes [] No [] U/K [X]
-2. Has there been any employee or tenant reports of symptoms consistent
-with mold contamination or other indoor air quality concerns? Yes [] No [] U/K [X]
-3. Are you aware of elevated radon gas concentrations on-site? Yes [] No [] U/K [X]
-
-K. AAI USER QUESTIONNAIRE
-In order to qualify for one of the Landowner Liability Protections (LLPs) offered by the Small Business Liability Relief and Brownfield's Revitalization Act of 2001 (the “Brownfield's Amendments"), the user must provide the following information (if available) to the environmental professional. Failure to provide this information could result in a determination that “all appropriate inquiry" is not complete.
-1. Are you aware of any environmental cleanup liens against the property
-that are filed or recorded under federal, tribal, state or local law? Yes [] No [X] U/K []
-2. Are you aware of any Activity and Use Limitations (AULs),
-such as engineering controls, land use restrictions or institutional
-controls that are in place at the site and/or have been filed or
-recorded in a registry under federal, tribal, slate or local law? Yes [] No [X] U/K []
-3. Do you have any specialized knowledge or experience related to the
-property or nearby properties? For example, are you involved in the
-same line of business as the current or former occupants of the property
-or an adjoining property so that you would have specialized knowledge
-of the chemicals and processes used by this type of business? Yes [] No [X] U/K []
-4. Does/Did the purchase price paid for this property reasonably reflect
-the fair market value of the property? Yes [] No [] U/K [X]
-If you conclude that there is a difference, have you considered whether
-the lower purchase price is because contamination is known or
-believed to be present at the property? Yes [] No [] U/K [X]
-5. Are you aware of commonly known or reasonably ascertainable information about the properly that would help the
-environmental professional to identify conditions indicative of releases or threatened releases? For example:
-(a.) Do you know the past uses of the property? Yes [X] No [] U/K []
-(b.) Do you know of specific chemicals that are present
-or once were present at the property? Yes [] No [X] U/K []
-(c.) Do you know of spills or other chemical releases that
-have taken place at the property? Yes [] No [X] U/K []
-(d.) Do you know of any environmental cleanups that have
-taken place at the property? Yes [] No [X] U/K []
-6. Based on your knowledge and experience related to the property
-are there any obvious indicators that point to the presence or
-likely presence of contamination at the property? Yes [] No [X] U/K []
-
-Appendix E
-
-Sanborn Map Report
-
-[OMITTED: Sanborn Map Report indicating no coverage found]
-
-Appendix F
-
-Vapor Encroachment Screen Report
-
-[OMITTED: EDR Vapor Encroachment Screen report indicating no sites found]
-
-APPENDIX G
-
-[CLIENT] (EDR)
-Environmental Lien and AUL Search 1980 Report
-
-EDR Environmental Lien and AUL Search 1980
-
-TARGET PROPERTY INFORMATION
-ADDRESS
-Donzi Old Castle Property
-[SITE ADDRESS]
-[PLACE], [STATE], [ZIP]
-
-PROPERTY DESCRIPTION
-Parcel ID: [PARCEL ID]
-Current Owner: [CLIENT]
-Legal Description: See attached Deed Exhibit.
-
-FINDINGS SUMMARY
-The following is a summary of information contained in the report. Additional details may be found in the Findings Detail section.
-Parcel: [PARCEL ID]
-Environmental Lien: Found [] Not Found [X]
-Other Activity and Use Limitations (AULs): Found [] Not Found [X]
-
-HISTORICAL CHAIN of TITLE FROM 1980
-RECORDED | INSTRUMENT | GRANTEE | GRANTOR
-March 18, 2020 | [ZIP]/178 | [CLIENT] | [CLIENT]
-August 17, 1988 | 6216/75 | [CLIENT] | Jonathan Woodner Co.
-May 17, 1988 | 6135/651 | Jonathan Woodner Co. | [CLIENT]
-January 30, 1973 | 2950/11 | [CLIENT] | [CLIENT]
-
-RESEARCH SOURCE(S)
-The following research sources were reviewed from January 01, 1980, to January 16, 2025.
-Source 1: [COUNTY] County Assessor
-[COUNTY] [PLACE], [STATE]
-Source 2: [COUNTY] County Clerk of Court
-[COUNTY] [PLACE], [STATE]
-Source 3: Georgia Judicial Branch
-
-FINDINGS DETAIL
-Parcel: [PARCEL ID]
-
-ENVIRONMENTAL LIEN
-Environmental Lien: Found [] Not Found [X]
-
-OTHER ACTIVITY AND USE LIMITATIONS (AULs)
-Other AULs: Found [] Not Found [X]
-
-MISCELLANEOUS DOCUMENTS
-None
-
-HISTORICAL CHAIN OF TITLE FROM 1980
-Parcel ID: [PARCEL ID]
-DEED TYPE: Deed of Gift
-GRANTEE: [CLIENT]
-GRANTOR: [CLIENT]
-DATE EXECUTED: March 12, 2020
-DATE RECORDED: March 18, 2020
-BOOK / PAGE: [ZIP]/178
-
-DEED TYPE: Warranty Deed
-GRANTEE: [CLIENT]
-GRANTOR: Jonathan Woodner Co.
-DATE EXECUTED: August 17, 1988
-DATE RECORDED: August 17, 1988
-BOOK / PAGE: 6216/75
-
-DEED TYPE: Warranty Deed
-GRANTEE: Jonathan Woodner Co.
-GRANTOR: [CLIENT]
-DATE EXECUTED: May 17, 1988
-DATE RECORDED: May 17, 1988
-BOOK / PAGE: 6135/651
-
-DEED TYPE: Deed
-GRANTEE: [CLIENT]
-GRANTOR: [CLIENT]
-DATE EXECUTED: January 30, 1973
-DATE RECORDED: January 30, 1973
-BOOK / PAGE: 2950/11
-
-CURRENT DEED EXHIBIT(S)
-
-[FIGURE: Deed of Gift, Page 1]
-[FIGURE: Exhibit A Legal Description, Page 1]
-[FIGURE: Exhibit A Legal Description, Page 2]
-[FIGURE: Exhibit A Legal Description, Page 3]
-[FIGURE: Exhibit A Legal Description, Page 4]
-[FIGURE: Exhibit A Legal Description, Page 5]
-[FIGURE: Exhibit A Legal Description, Page 6]
-[FIGURE: Exhibit A Legal Description, Page 7]
-[FIGURE: Exhibit A Legal Description, Page 8]
-[FIGURE: Exhibit B Exceptions to Title]
-
-APPENDIX H
-
-Qualifications
-
-Sam Alyateem, P.E.
-[SITE ADDRESS] - Ste 3 [PLACE], [STATE] [ZIP]
-Office: 770-448-3124 - ext. 22 Fax: 770-448-5324
-Email: Sam@matrixengineeringgroup.com
-
-[CONTACT] a registered civil engineer and a founding member of Matrix Engineering Group, Inc.. He has over 30 years of experience in Engineering and Construction Materials fields. [CONTACT] on several large projects in the Southeast including airports, water treatment plants, land developments, tunnels, and aerial structures, to name a few.
-
-Education
-- University of North Carolina at Charlotte
-  - Master of Science, Civil Engineering
-  - Bachelor of Science, Civil Engineering
-
-Experience
-- Geotechnical and Construction Materials Testing Principal Engineer: Principal Engineer and Senior Consultant for the Geotechnical, Environmental, and Materials testing projects from 1994 to present time covering projects in the following area:
-  - Large commercial and institutional buildings
-  - Industrial and warehousing projects
-  - Educational Facilities
-  - Medical Buildings
-  - Airports and Tunnel Projects
-  - Infra-structure and Transportation projects
-  - Water/wastewater Infra-structure projects
-- Environmental Engineering and Hazard Risk Analysis: Project Manager and Consultant for the Environmental Services. Services included Phase I and Phase II Site Assessments, Hazardous Materials Surveys (asbestos, lead, radon, mold, etc.), and Hazard Risk Analysis for School Sites in accordance with GA Department of Education.
-- [FACILITY]: Project Manager and Consultant for the Environmental Services. Services included Phase I and Phase II Site Assessments and Hazard Risk Analysis
-- [COUNTY] County Annual Contract:: Principal Engineer and Consultant to the various [COUNTY] County Departments (i.e. Parks & Recreation, Transportation, and Infrastructure) for geotechnical, environmental, materials testing as well as design services from 1997 with contract renewal up to 2016.
-- Concourse “E” Expansion projects-[FACILITY]: Senior Project Manager, performed the geotechnical exploration and foundation recommendations. Supervised the construction materials testing plan implementation. The project included the largest international concourse in the nation, aprons, tunnels, roadways, steel structures, fuel farm, deep excavations, permanent and construction dewatering, deep foundation system, high reinforced retaining walls, soil stabilization, settlement evaluation of the foundations and effects of drag forces on piles. Represented the City of [PLACE] (DOA) during the Owner's weekly meetings regarding inspections and materials testing issues.
-- Metropolitan [PLACE] Rapid Transit Authority (MARTA): Geotechnical Engineer, responsible for coordinating the engineering staff for geotechnical exploration, engineering analysis, review of design submittals, and field inspections of foundations. Projects include: Dunwoody Station, Medical Center Station, Sandy Spring (North Line), Doraville Station, Lorado Maintenance Facility, Brownsmille Maintenance Facility, Brady Bus Facility, and several others. The work consisted of aerial structures, parking decks, tunnels, cut-and-cover sections, shallow, mat, and deep foundation system, construction and permanent slopes, settlement analysis, field instrumentations, failure investigations, engineering analysis, and engineering report preparation.
-- The [PLACE] Olympic Venues Projects: [FACILITY], Archery & Cycling, Aquatic Center and Warming Facilities. [PLACE], [STATE]: Senior Engineer and Consultant for the various Olympic Venues. As the Chief Engineer of R&D Testing Drilling, I supervised the engineering and technical staff for the Quality Control/Quality Assurance services, including earthwork, deep and shallow foundations, concrete, reinforcing steel, and structural steel.
-- The Olympic Equestrian Venue, [PLACE], [STATE]: Project Manager. Served as the Chief Project Manager for the construction team quality control/quality assurance concerns. Developed the first quality control/quality assurance program that complied with ACOG's project requirements and was later used as a sample program for the other Olympic venues.
-- Forensic Engineering: Consultant and expert witness. Performed investigation on structural failures of foundations, retaining walls, and other structural members to determine the cause of the failures. Represented clients in litigation as an expert witness
-
-Publications/Presentations
-- Modeling Hydraulically Significant Subsurface Features Utilizing MASW for Environmental Application” SAGEEP – Tuscon, Arizona, March 2012.
-- “Applications of Surface Waves to Enhance Subsurface Boring Exploration into the Delineation of Undocumented Landfill Cells” SAGEEP – Tuscon, Arizona, March 2012.
-- “The Use of MASW to Improve the Geotechnical Site Characterization of the 18.5 km (11.5 Miles) long Augusta Levee – Preliminary Findings”. GeoFlorida Conference 2010 – ASCE, February 2010.
-- “Geophysical Surveying & Simulation Application to Geotechnical Investigations – A Cost Effective Approach for Developing Economical Foundation Engineering Design Criteria”. Geocongress 2006 – ASCE, February 2006.
-
-[CLIENT]
-- Registered Professional Engineer in the States of Georgia, North Carolina, Alabama, and Mississippi.
-- SBCCI Building Inspector Certification
-- ICC Residential Building Inspector Certification
-- Nuclear Gauge Instrument Training and Certification
-- Level II Certified Design Professional – GSWCC (issued 2/2/2007)
-
-Eric Taylor
-Environmental Project Manager
-[SITE ADDRESS] - Ste 3 [PLACE], [STATE] [ZIP]
-Office: 770-448-3124 Fax: 770-448-5324
-Email: ETaylor@matrixengineeringgroup.com
-
-[CONTACT] 17 years of experience in the fields of construction materials testing, geotechnical explorations, and environmental studies. In addition to being NICET, AWS & ACI certified, he is a Master ICC Special Inspector (holding at least 4 ICC certifications), as well as being an accredited Inspector/Assessor and Management Planner for Asbestos in Buildings (meeting EPA/AHERA/ASHARA TSCA Title II and NESHAP regulations). [CONTACT] performed several Environmental Site Assessments including both Phase 1 and Phase 2. Additionally, [CONTACT] also worked on several wetland delineations for various projects and is instrumental in nearly all of the environmental projects which are performed by Matrix Engineering Group, Inc. [CONTACT] also a GSWCC Level 1B Certified (NPDES) Inspector.
-
-Education
-- Kennesaw State College, 1992 to 1994
-  - Undergraduate studies in Civil Engineering
-- Southern Polytechnic State University, 1996 to 2001
-  - Civil Engineering Technology Program.
-
-Experience
-Environmental Site Assessment – Phase 1 (Staff Engineer)
-[CONTACT] and/or managed the site reconnaissance, interviews and regulatory review as part of the ESA – Phase 1 protocol. On select projects, he was also responsible for the coordination and directing of drilling activities, sampling of soil and groundwater, and the reporting for ESA-Phase 2 activities. For projects in which suspect wetland areas were identified, [CONTACT] with the delineation of wetlands and was responsible for the reporting of the findings. A sample of the project in which [CONTACT] performed the afore-mentioned duties/responsibilities are as follows:
-- Westbrook Creek Property ([COUNTY] County Middle & High School Sites), [COUNTY] [PLACE], [STATE]
-- Holy Innocents Episcopal School – Proposed Math & Science Building, [COUNTY] [PLACE], [STATE]
-- [FACILITY] Charter School, [COUNTY] [PLACE], [STATE]
-- [FACILITY] Replacement, [COUNTY] [PLACE], [STATE]
-- [FACILITY], [COUNTY] [PLACE], [STATE]
-- [FACILITY], [COUNTY] [PLACE], [STATE]
-- Benjamin E. [FACILITY], [COUNTY] [PLACE], [STATE]
-- [FACILITY], [COUNTY] [PLACE], [STATE]
-- [SITE ADDRESS], [PLACE], [STATE]
-- 33-Acre Parcel, [PLACE], [STATE]:
-- [FACILITY], [COUNTY] [PLACE], [STATE]
-- Mount Vernon Presbyterian School, [PLACE], [STATE]
-- [CLIENT] Site, [COUNTY] [PLACE], [STATE]
-- Executive Square Office Complex, [COUNTY] [PLACE], [STATE]
-- Tuskegee University, Tuskegee, Alabama
-- Library Processing Center in [COUNTY] [PLACE], [STATE]
-- Esfan Condos, [COUNTY] [PLACE], [STATE]
-- Oglethorpe University, [COUNTY] [PLACE], [STATE]
-- [FACILITY], [COUNTY] [PLACE], [STATE]
-
-Certifications
-- Accredited Inspector/Management Planner meeting all criteria required for EPA/AHERA/ASHARA
-- (TSCA Title II) and NESHAP regulations Training. Certificate No. 3158.
-- ICC certified as a Structural Welding Special Inspector
-- ICC certified as a Reinforced Concrete Special Inspector
-- ICC certified as a Structural Masonry Special Inspector
-- ICC certified as a Structural Steel & Bolting Special Inspector
-- American Concrete Institute (ACI): Certified member – Level I (Field)
-- American Concrete Institute (ACI): Certified member – Level I (Laboratory)
-- NPDES: Level 1B Certified Inspector – GSWCC
-- NICET Certification – Level II (Asphalt), Level IV (Soil, Concrete)
-- AWS Associates Certification
 ```

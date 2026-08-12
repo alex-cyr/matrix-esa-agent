@@ -30,27 +30,27 @@ Verbatim across the corpus. Each names the tag it feeds.
 
 **`DataGaps_Text / Sec9_Item8_DataGaps`**
 
-> However, the significance of this gap is considered low and not likely to alter the report's conclusions due to the limited information obtained during interviews.
+> However, the significance of this gap is considered low and not likely to alter the report's conclusions due to the limited information obtained during interviews, as well as during our search of standard historical sources of information such as aerial photographs, and historic topographic maps
 
 **`VEC_Summary / Sec9_Item5_VEC`**
 
-> The report was designed to assist parties seeking to meet the search requirements of the ASTM Standard Practice for Assessment of Vapor Encroachment into Structures.
+> The report was designed to assist parties seeking to meet the search requirements of the ASTM Standard Practice for Assessment of Vapor Encroachment into Structures on Property Involved in Real Estate Transactions (E 2600-10)
 
 **`Sec8_13_Radon`**
 
-> If radon levels within a structure are greater than the 4 pCi/L level, the EPA recommends that construction or renovation processes be in compliance with the EPA recommendations.
+> If radon levels within a structure are greater than the 4 pCi/L level, the EPA recommends that construction or renovation processes be in compliance with the EPA's Radon Prevention in the Design and Construction Guidelines
 
 **`Sec8_12_Tanks`**
 
-> No evidence of USTs was identified on the subject property and no common indicators of USTs, such as vent pipes, fill ports, manways, pavement cuts, fuel gauges or stained soils, were observed.
+> No evidence of USTs was identified on the subject property and no common indicators of USTs, such as vent pipes, fill ports, manways, pavement cuts, fuel gauges or dispensers, were observed
 
 **`Sec8_12_Tanks`**
 
-> The subject site was not identified on the Georgia list of registered UST facilities.
+> The subject site was not identified on the Georgia list of registered UST facilities
 
 **`Sec8_12_Tanks`**
 
-> ASTs are not required to be registered in the state of Georgia.
+> ASTs are not required to be registered in the state of Georgia
 
 ---
 
@@ -157,7 +157,7 @@ Principal
 Sam@MatrixEngineeringGroup.com
 
 [SITE ADDRESS], Suite 3
-[PLACE], [STATE]. [ZIP] | t: 770.448.3124 | f: 770.448.5324
+[PLACE], [STATE]. [ZIP] | t: [PHONE] | f: [PHONE]
 
 GLOSSARY OF ABBREVIATIONS
 
@@ -207,7 +207,7 @@ SECTION | Page Number
 
 3.0 SITE LOCATION AND SURROUNDING PROPERTIES | 5
 3.1 Site Description and Location | 5
-3.2 [CLIENT] | 5
+3.2 Surrounding Properties | 5
 
 4.0 USER PROVIDED INFORMATION | 5
 4.1 Interviews | 5
@@ -339,11 +339,11 @@ The following data gaps were noted while performing the ESA-Phase I for the subj
 
 3.1 Site Description and Location
 
-The subject site is located along [SITE ADDRESS] near the intersection with [SITE ADDRESS] in [PLACE], [STATE]. According to the [COUNTY] County Tax Assessor's website, the subject site occupies approximately 31 acres in size (Parcel ID 040-0195-038) and is currently owned by [CONTACT].
+The subject site is located along [SITE ADDRESS] near the intersection with [SITE ADDRESS] in [PLACE], [STATE]. According to the [COUNTY] County Tax Assessor's website, the subject site occupies approximately 31 acres in size (Parcel ID [PARCEL ID]) and is currently owned by [CONTACT].
 
 The subject site appears to be undeveloped and is covered with grass with sparsely wooded areas at the southeastern and northwestern areas of the site. The site slopes downwards from the northern and eastern peripheries towards the central areas of the site which slopes gently in a south-southwesterly direction. A drainage feature was noted within the central areas of the site and was lined with tree logs and tree branches. The drainage feature was dry at the time of the site visit; however, it appears to convey the drainage from the upper areas of the site towards the south and southwestern areas.
 
-3.2 [CLIENT]
+3.2 Surrounding Properties
 
 Surrounding properties consist primarily of residential and commercial use, as tabulated below:
 
@@ -483,7 +483,7 @@ Under natural, undisturbed conditions, shallow groundwater flow generally follow
 
 Wetland maps prepared by the Department of Interior-Fish and Wildlife Service were reviewed to determine if there are any wetlands present at the site. Based on our review, there are no wetlands identified within the subject property.
 
-The National Flood Insurance Rate Maps (FIRM) for the area of the subject property was reviewed to determine flood zone areas. FIRM Panel 13015C010H, effective 05 October 2018, designates the site as zone X which is not identified as a flood-prone area.
+The National Flood Insurance Rate Maps (FIRM) for the area of the subject property was reviewed to determine flood zone areas. FIRM Panel [FIRM PANEL], effective 05 October 2018, designates the site as zone X which is not identified as a flood-prone area.
 
 7.5 Vapor Intrusion
 
@@ -550,7 +550,7 @@ During our site visit, there was no evidence of distressed vegetation, pools of 
 9.0 FINDINGS
 
 The following summarizes the information that was gathered during this study, our field reconnaissance, topographical and hydrological setting of the subject site, and our evaluation. The items may include Recognized Environmental Conditions (RECs), Historical Recognized Conditions (HRECS), Controlled Recognized Environmental Conditions (CRECs), and de minimis conditions.
-1. The subject site is located at [SITE ADDRESS], [PLACE], [STATE] [ZIP] and identified in the [COUNTY] County Tax Records with a Parcel ID of 0040-0195-006. The site is currently owned by [CONTACT].
+1. The subject site is located at [SITE ADDRESS], [PLACE], [STATE] [ZIP] and identified in the [COUNTY] County Tax Records with a Parcel ID of [PARCEL ID]. The site is currently owned by [CONTACT].
 2. The subject site appears to be undeveloped and is covered with grass with sparsely wooded areas at the southeastern and northwestern areas of the site. The site slopes downwards from the northern and eastern peripheries towards the central areas of the site which slopes gently in a south-southwesterly direction. A drainage feature was noted within the central areas of the site and was lined with tree logs and tree branches. The drainage feature was dry at the time of the site visit; however, it appears to convey the drainage from the upper areas of the site towards the south and southwestern areas.
 3. A Phase I Property Owner/Owner Representative interview questionnaire was completed by [CONTACT]. [CONTACT] that there have been no improvements to the property and that the property has been used for agricultural purposes.
 4. A search of available environmental records was conducted by Environmental Data Resources, Inc (EDR) in order to perform a Vapor Encroachment Screening which is intended to aid in the determination of whether possible Vapor Encroachment Conditions (VEC) exist or are likely to exist. Based on our review, VEC does not exist at the site. The EDR Vapor Encroachment Screen report is provided in Appendix F.
@@ -568,344 +568,4 @@ Matrix Engineering Group, Inc.performed a Phase I Environmental Site Assessment 
 This assessment revealed no evidence of recognized environmental conditions in connection with the property. Based on the findings of this study, it is our opinion that no further studies are warranted at this time.
 
 We declare that, to the best of our professional knowledge and belief, we meet the definition of Environmental Professional as defined in 312.10 of 40 CFR 312 and we have the specific qualifications based on education, training, and experience to assess a property of the nature, history, and setting of the subject property. We have developed and performed the appropriate inquiries in conformance with the standards and practices set forth in 40 CFR Part 312.
-
-APPENDIX A
-
-2020 USGS Topographic Maps
-[COUNTY] County Parcel Map
-Flood Insurance Rate Map
-National Wetland Inventory Map
-Historical Aerial Photographs: 1938, 1942, 1955, 1960, 1965, 1972, 1981, 1988, 1999, 2005, 2007, 2010, 2017, 2019
-Most Recent Aerial Photograph: 2019
-
-[FIGURE: USGS 2020 Topographic Map]
-[FIGURE: [COUNTY] County Parcel Map]
-[FIGURE: Flood Insurance Rate Map]
-[FIGURE: National wetland inventory map]
-[FIGURE: Historical Aerial Photograph 1938]
-[FIGURE: Historical Aerial Photograph 1942]
-[FIGURE: Historical Aerial Photograph 1955]
-[FIGURE: Historical Aerial Photograph 1960]
-[FIGURE: Historical Aerial Photograph 1965]
-[FIGURE: Historical Aerial Photograph 1972]
-[FIGURE: Historical Aerial Photograph 1981]
-[FIGURE: Historical Aerial Photograph 1988]
-[FIGURE: Historical Aerial Photograph 1999]
-[FIGURE: Historical Aerial Photograph 2005]
-[FIGURE: Historical Aerial Photograph 2007]
-[FIGURE: Historical Aerial Photograph 2010]
-[FIGURE: Historical Aerial Photograph 2017]
-[FIGURE: Historical Aerial Photograph 2019]
-
-Appendix B
-Photographs
-
-[OMITTED: 11 pages of site photographs]
-
-APPENDIX C
-[CLIENT] (EDR)
-Radius Map Report
-
-[OMITTED: 57 pages of EDR radius map database listings]
-
-Appendix D
-Phase I Property Owner/Owner Representative (User)
-Interview Questionnaire and Owner Provided Information.
-Not received yet
-
-Phase I Environmental Site Assessment
-Pre-Survey Questionnaire
-
-Someone familiar with the site should complete this questionnaire for the Phase I Environmental Site Assessment, as part of the ASTM E1527-21 Guidelines. For those questions that are not applicable, please respond "N/A" or "U/K" for those questions in which the answer is not known. If you have any questions about how to answer any of the questions, please contact us. If additional pages for responses are necessary, please attach hereto and reference it to the appropriate question number. Upon completing this form, please return it via electronic mail or facsimile, as listed below. This document and your written response will be included as an exhibit in the final report.
-
-A. GENERAL
-PREPARER
-1. Name, title and telephone number of person completing this questionnaire:
-Name: Joe Millsaps
-Title: Director of Maintenance and Construction
-Telephone Number: 470-334-8657
-2. How long has the preparer been familiar with the site or facility?
-If less than five years, who held the position prior?
-3. Property Owner/Occupant Information
-Owner's Name: ASHLEY BLACK
-Owner's Address: PARCEL 0040-0195-038
-Occupant's Name
-Occupant's Address
-VALUATION REDUCTION
-4. Was/is the purchase price of the Subject property significantly less than the purchase price of comparable properties due to environmental conditions?
-Yes [] No [X] U/K []
-If yes, please explain below.
-
-B. Property Description
-1. Land
-a. Size of Parcel? 31 Acres
-b. Shape of Parcel? [] Rectangular [X] Irregular [] Other
-c. Are there any surface waters or wetlands on the site? Yes [] No [X] U/K []
-d. Is there a well on the site? Yes [] No [X] U/K []
-If so, what type of well is it?:
-Drinking Water []
-Irrigation []
-Monitoring []
-Dry Well []
-Have contaminants in excess of governmental guidelines been identified in the water? Yes [] No [X]
-e. Was or is there a septic system on the property? Yes [] No [X] U/K []
-If so, is the septic system currently in use? Yes [] No []
-f. Has fill been imported onto the Subject? Yes [] No [X] U/K []
-g. Are there currently or has there previously been waste treatment or disposal pits, ponds, or lagoons on the site? Yes [] No [X] U/K []
-h. Where is the site's stormwater discharged to?
-
-B. PROPERTY DESCRIPTION – continued
-2. Site Improvements This includes all buildings [] N/A
-a. Describe the size (square foot) of the existing building(s). NA
-b. How old is the building(s)? NA
-c. Describe the heating and cooling system. NA
-d. Who provides the following utilities?
-Water: City of [PLACE]
-Sanitary Sewer: City of [PLACE]
-Storm Drainage:
-Natural Gas:
-Electric:
-e. Are there any floor drains on the site? Yes [] No [X] U/K []
-If so, where do they discharge to?
-3. Site History
-a. Were there any buildings or other improvements on the property prior to the existing improvements? Yes [] No [X] U/K []
-If so, what were they?
-b. Is or has the property been used for industrial or agricultural purposes, or as a gasoline station, auto repair, dry cleaner, junkyard, or landfill? Yes [X] No [] U/K []
-If so, please describe.
-Property is open land used to graze cattle
-
-B. PROPERTY DESCRIPTION – continued
-4. Site Operations
-To the best of your knowledge, do any of the following operations take place on the Subject or have ever taken place on the Subject:
-Dry Cleaning: Yes [] No [X]
-Battery Storage/Sales: Yes [] No [X]
-Paint Storage/Sales: Yes [] No [X]
-Petroleum Storage/Sales: Yes [] No [X]
-Photo or X-Ray Finishing: Yes [] No [X]
-Electronic Equipment Assembly or Manufacturing: Yes [] No [X]
-Solvent Storage or Sales: Yes [] No [X]
-Chemical Manufacturing/Sales: Yes [] No [X]
-Automobile Storage, Repair, or Disposal: Yes [] No [X]
-Agriculture: Yes [X] No []
-Medical or Dental Offices: Yes [] No [X]
-5. Previous Studies/Documentation
-a. Do you have any knowledge of previously prepared Environmental Site Assessment Reports, asbestos surveys, lead-based paint studies or testing (soil, groundwater, tank tightness testing, lead-based paint testing, asbestos testing, indoor air quality, mold (bacteria and fungi testing), etc.) conducted on the site? If so, please either provide copies of the reports or list the title, date, preparer and recipient of such report(s) below.
-[X] I have no knowledge of any environmental related studies or reports prepared on the Subject.
-b. Are you in possession of a title report, site drawings, building drawings and specifications and/or a survey for the site? Yes [] No [X]
-If so, please provide copies of same.
-
-Please provide all available environmental information from yours or your Client's records including, but not limited to, documentation in connection with any pending or threatened public or private proceedings or litigation with respect to environmental liability, environmental permits and permit applications, underground and above ground tank registration and information (including removal and testing of such tanks), environmental reports, asbestos, lead-based paint or indoor air quality studies, spill information and compliance information and programs.
-
-C. SURROUNDING PROPERTIES
-1. Has any adjoining properties been used for industrial purposes, or as a gasoline station, auto repair shop, junkyard, dry cleaner or landfill? Yes [] No [X] U/K []
-If so, please explain.
-2. Are you aware of any contamination conditions on adjoining or nearby properties? Yes [] No [X] U/K []
-3. Are there any open surface waters or wetlands adjacent to the site? Yes [] No [X] U/K []
-4. Are you aware of any active or former waste treatment or disposal pits, ponds, or lagoons on adjacent or nearby sites? Yes [] No [X] U/K []
-5. Is any neighboring property engaged in the storing, transporting or disposal of hazardous waste, or chemicals? Yes [] No [X] U/K []
-
-D. REGULATORY
-1. Has the property ever been subject to any environmental enforcement action by the federal, state local government? Yes [] No [] U/K [X]
-If so, please explain.
-2. Do you have any knowledge of pending or contemplated environmental actions against the Subject or neighborhood properties Yes [] No [X] U/K []
-If so, please state the circumstances.
-3. Has there been any formal or informal citizen or tenant complaints regarding environmental or health matters in connection with the Subject? Yes [] No [] U/K [X]
-If so, please explain.
-
-E. ASBESTOS
-1. Do you have knowledge of any materials or substances on the site that are known or suspected to contain asbestos? Yes [] No [X] U/K []
-If so, what materials and where are they located?
-
-E. ASBESTOS – continued
-GREENFIELD SITE
-2. Has an inspection for asbestos ever been conducted on the Subject? Yes [] No [X] U/K []
-3. Has asbestos been removed from the Subject? Yes [] No [X] U/K []
-4. Does the building have:
-Spray-on or troweled-on fireproofing, insulation or finishes? Yes [] No [X] U/K []
-Insulation on piping, boilers, tanks, chillers, or other mechanical equipment? Yes [] No [X] U/K []
-Transite used in cooling towers, exterior walls, ceilings fascia panels, etc.? Yes [] No [X] U/K []
-Resilient floor tile? Yes [] No [X] U/K []
-Suspended acoustical ceiling tiles? Yes [] No [X] U/K []
-A built-up or rolled roofing system? Yes [] No [X] U/K []
-
-F. PCBs
-1. Are there any on-site electrical transformers? Yes [] No [X] U/K []
-If so, do any of the transformers contain PCBs? Yes [] No [] U/K []
-Who owns the transformers and where are they located?
-2. Did any on-site transformers formerly contain PCBs, but later had the dielectric fluid replaced? Yes [] No [X] U/K []
-3. Is there any hydraulic equipment such as elevators or automotive lifts on-site? Yes [] No [X] U/K []
-If so, who services the equipment?
-Are you aware of any hydraulic fluid leaks or evidence of leakage such as unexplained fluid loss in connection with the hydraulic equipment? Yes [] No [X] U/K []
-
-F. Storage Tanks
-1. Are there any (active or inactive) Underground Storage Tanks ("UST") or Aboveground Storage Tanks ("AST") on the site? Yes [] No [X] U/K [X]
-If so, please fill out the following schedule:
-Active or Inactive Tanks
-Location of Tank | Size of Tank (Gallons) | AST or UST | Tank Contents | Age of Tank (Years) | Does the Tank Have Corrosion Protection? (Yes/No) | Does the Tank Have Leak Detection? (Yes/No) | Is the Tank In-Use? (Yes/No)
-Have any of the tanks been tightness tested? Yes [] No [] U/K []
-1. Do you have any knowledge of tanks that were either removed or closed in-place at the site? Yes [] No [X] U/K []
-If so, please fill out the following schedule:
-Tanks Removed or Closed In-Place
-Location of Former Tank | Size of Tank (Gallons) | AST or UST | Tank Contents | Tank Removal Company | Year Tank Was Removed
-
-H. LEAD
-1. Are you aware of any lead-based paint ("LBP") applications on the site? Yes [] No [X] U/K []
-2. Has LBP testing been conducted? Yes [] No [X] U/K []
-3. Have there been any reported incidences of children with elevated blood lead levels residing at the site? Yes [] No [X] U/K []
-4. Are there any children younger than 7 years old residing at the site or frequenting the site on a daily basis? Yes [] No [X] U/K []
-5. Have any LBP abatements been conducted? Yes [] No [X] U/K []
-6. Has the water been tested for lead? Yes [] No [X] U/K []
-If so, please provide a copy of the results
-
-I. HAZARDOUS MATERIALS
-1. Are hazardous materials or chemicals stored or used on-site? Yes [] No [X] U/K []
-If so, please fill out the following schedule (attach separate page if more room is required):
-Schedule of Hazardous or Toxic Substances Stored On-Site
-Material Type | Quantity (Gallons) | Location
-2. Are there any hazardous or medical waste or fluids generated or used that employ an outside service for their periodic supply and removal? Yes [] No [X] U/K []
-If so, please provide the name, address, & telephone number of the disposal company and the facility generating the waste.
-
-J. INDOOR AIR QUALITY
-1. Have strong mold odors and/or mold staining been observed onsite? Yes [] No [X] U/K []
-2. Has there been any employee or tenant reports of symptoms consistent with mold contamination or other indoor air quality concerns? Yes [] No [X] U/K []
-3. Are you aware of elevated radon gas concentrations on-site? Yes [] No [X] U/K []
-
-K. AAI USER QUESTIONNAIRE
-In order to qualify for one of the Landowner Liability Protections (LLPs) offered by the Small Business Liability Relief and Brownfield's Revitalization Act of 2001 (the "Brownfield's Amendments"), the user must provide the following information (if available) to the environmental professional. Failure to provide this information could result in a determination that "all appropriate inquiry" is not complete.
-1. Are you aware of any environmental cleanup liens against the property that are filed or recorded under federal, tribal, state or local law? Yes [] No [X] U/K []
-2. Are you aware of any Activity and Use Limitations (AULs), such as engineering controls, land use restrictions or institutional controls that are in place at the site and/or have been filed or recorded in a registry under federal, tribal, state or local law? Yes [] No [X] U/K []
-3. Do you have any specialized knowledge or experience related to the property or nearby properties? For example, are you involved in the same line of business as the current or former occupants of the property or an adjoining property so that you would have specialized knowledge of the chemicals and processes used by this type of business? Yes [] No [X] U/K []
-4. Does/Did the purchase price paid for this property reasonably reflect the fair market value of the property? Yes [X] No [] U/K []
-If you conclude that there is a difference, have you considered whether the lower purchase price is because contamination is known or believed to be present at the property? Yes [] No [] U/K []
-5. Are you aware of commonly known or reasonably ascertainable information about the property that would help the environmental professional to identify conditions indicative of releases or threatened releases? For example:
-(a.) Do you know the past uses of the property? Yes [X] No [] U/K []
-(b.) Do you know of specific chemicals that are present or once were present at the property? Yes [] No [X] U/K []
-(c.) Do you know of spills or other chemical releases that have taken place at the property? Yes [] No [X] U/K []
-(d.) Do you know of any environmental cleanups that have taken place at the property? Yes [] No [X] U/K []
-6. Based on your knowledge and experience related to the property are there any obvious indicators that point to the presence or likely presence of contamination at the property? Yes [] No [X] U/K []
-
-Appendix E
-Sanborn Map Report
-
-Certified Sanborn® Map Report
-Site Name: [COUNTY] County Elementary Sch, Not Reported, [PLACE], [STATE] [ZIP]
-EDR Inquiry # 7458864.3
-Client Name: Matrix Engineering Group, Inc., [SITE ADDRESS], [PLACE], [STATE] [ZIP]
-Contact: [FACILITY] has been searched by EDR and maps covering the target property location as provided by Matrix Engineering Group, Inc. were identified for the years listed below. [FACILITY] is the largest, most complete collection of fire insurance maps. The collection includes maps from Sanborn, Bromley, Perris & Browne, Hopkins, Barlow, and others. [CLIENT] (EDR) is authorized to grant rights for commercial reproduction of maps by the [FACILITY] LLC, the copyright holder for the collection. Results can be authenticated by visiting www.edrnet.com/sanborn.
-
-[FACILITY] is continually enhanced with newly identified map archives. This report accesses all maps in the collection as of the day this report was generated.
-
-Certified Sanborn Results:
-Certification #: 5930-483E-99C1
-PO #: NA
-Project: [COUNTY] County Elementary SC.21
-
-UNMAPPED PROPERTY
-This report certifies that the complete holdings of the [FACILITY], LLC collection have been searched based on client supplied target property information, and fire insurance maps covering the target property were not found.
-
-[FACILITY] includes more than 1.2 million fire insurance maps from Sanborn, Bromley, Perris & Browne, Hopkins, Barlow and others which track historical property usage in approximately 12,000 American cities and towns. Collections searched:
-Library of Congress
-University Publications of America
-EDR Private Collection
-
-Appendix F
-Vapor Encroachment Screen Report
-
-[OMITTED: 13 pages of EDR Vapor Encroachment Screen report]
-
-Appendix G
-Qualifications
-
-Sam Alyateem, P.E.
-[SITE ADDRESS] - Ste 3 [PLACE], [STATE] [ZIP]
-Office: 770-448-3124 ext. 22 Fax: 770-448-5324
-Email: Sam@matrixengineeringgroup.com
-
-[CONTACT] a registered civil engineer and a founding member of Matrix Engineering Group, Inc.. He has over 30 years of experience in Engineering and Construction Materials fields. [CONTACT] on several large projects in the Southeast including airports, water treatment plants, land developments, tunnels, and aerial structures, to name a few.
-
-Education
-University of North Carolina at Charlotte
-Master of Science, Civil Engineering
-Bachelor of Science, Civil Engineering
-
-Experience
-Geotechnical and Construction Materials Testing Principal Engineer: Principal Engineer and Senior Consultant for the Geotechnical, Environmental, and Materials testing projects from 1994 to present time covering projects in the following area:
-Large commercial and institutional buildings
-Industrial and warehousing projects
-Educational Facilities
-Medical Buildings
-Airports and Tunnel Projects
-Infra-structure and Transportation projects
-Water/wastewater Infra-structure projects
-
-Environmental Engineering and Hazard Risk Analysis: Project Manager and Consultant for the Environmental Services. Services included Phase I and Phase II Site Assessments, Hazardous Materials Surveys (asbestos, lead, radon, mold, etc.), and Hazard Risk Analysis for School Sites in accordance with GA Department of Education.
-
-[FACILITY]: Project Manager and Consultant for the Environmental Services. Services included Phase I and Phase II Site Assessments and Hazard Risk Analysis
-
-[COUNTY] County Annual Contract: Principal Engineer and Consultant to the various [COUNTY] County Departments (i.e. Parks & Recreation, Transportation, and Infrastructure) for geotechnical, environmental, materials testing as well as design services from 1997 with contract renewal up to 2016.
-
-Concourse “E” Expansion projects-[FACILITY]: Senior Project Manager, performed the geotechnical exploration and foundation recommendations. Supervised the construction materials testing plan implementation. The project included the largest international concourse in the nation, aprons, tunnels, roadways, steel structures, fuel farm, deep excavations, permanent and construction dewatering, deep foundation system, high reinforced retaining walls, soil stabilization, settlement evaluation of the foundations and effects of drag forces on piles. Represented the City of [PLACE] (DOA) during the Owner’s weekly meetings regarding inspections and materials testing issues.
-
-Metropolitan [PLACE] Rapid Transit Authority (MARTA): Geotechnical Engineer, responsible for coordinating the engineering staff for geotechnical exploration, engineering analysis, review of design submittals, and field inspections of foundations. Projects include: Dunwoody Station, Medical Center Station, Sandy Spring (North Line), Doraville Station, Lorado Maintenance Facility, Brownsmille Maintenance Facility, Brady Bus Facility, and several others. The work consisted of aerial structures, parking decks, tunnels, cut-and-cover sections, shallow, mat, and deep foundation system, construction and permanent slopes, settlement analysis, field instrumentations, failure investigations, engineering analysis, and engineering report preparation.
-
-The [PLACE] Olympic Venues Projects: [FACILITY], Archery & Cycling, Aquatic Center and Warming Facilities, [PLACE], [STATE]: Senior Engineer and Consultant for the various Olympic Venues. As the Chief Engineer of R&D Testing Drilling, I supervised the engineering and technical staff for the Quality Control/Quality Assurance services, including earthwork, deep and shallow foundations, concrete, reinforcing steel, and structural steel.
-
-The Olympic Equestrian Venue, [PLACE], [STATE]: Project Manager. Served as the Chief Project Manager for the construction team quality control/quality assurance concerns. Developed the first quality control/quality assurance program that complied with ACOG’s project requirements and was later used as a sample program for the other Olympic venues.
-
-Forensic Engineering: Consultant and expert witness. Performed investigation on structural failures of foundations, retaining walls, and other structural members to determine the cause of the failures. Represented clients in litigation as an expert witness
-
-Publications/Presentations
-“Modeling Hydraulically Significant Subsurface Features Utilizing MASW for Environmental Application” SAGEEP – Tuscon, Arizona, March 2012.
-“Applications of Surface Waves to Enhance Subsurface Boring Exploration into the Delineation of Undocumented Landfill Cells” SAGEEP – Tuscon, Arizona, March 2012.
-“The Use of MASW to Improve the Geotechnical Site Characterization of the 18.5 km (11.5 Miles) long Augusta Levee – Preliminary Findings”. GeoFlorida Conference 2010 – ASCE, February 2010.
-“Geophysical Surveying & Simulation Application to Geotechnical Investigations – A Cost Effective Approach for Developing Economical Foundation Engineering Design Criteria”. Geocongress 2006 – ASCE, February 2006.
-
-[CLIENT]
-Registered Professional Engineer in the States of Georgia, North Carolina, Alabama, and Mississippi.
-SBCCI Building Inspector Certification
-ICC Residential Building Inspector Certification
-Nuclear Gauge Instrument Training and Certification
-Level II Certified Design Professional – GSWCC (issued 2/2/2007)
-
-Eric Taylor
-Environmental Project Manager
-[SITE ADDRESS] - Ste 3 [PLACE], [STATE] [ZIP]
-Office: 770-448-3124 Fax: 770-448-5324
-Email: ETaylor@matrixengineeringgroup.com
-
-[CONTACT] 17 years of experience in the fields of construction materials testing, geotechnical explorations, and environmental studies. In addition to being NICET, AWS & ACI certified, he is a Master ICC Special Inspector (holding at least 4 ICC certifications), as well as being an accredited Inspector/Assessor and Management Planner for Asbestos in Buildings (meeting EPA/AHERA/ASHARA TSCA Title II and NESHAP regulations). [CONTACT] performed several Environmental Site Assessments including both Phase 1 and Phase 2. Additionally, [CONTACT] also worked on several wetland delineations for various projects and is instrumental in nearly all of the environmental projects which are performed by Matrix Engineering Group, Inc. [CONTACT] also a GSWCC Level 1B Certified (NPDES) Inspector.
-
-Education
-Kennesaw State College, 1992 to 1994
-Undergraduate studies in Civil Engineering
-Southern Polytechnic State University, 1996 to 2001
-Civil Engineering Technology Program.
-
-Experience
-Environmental Site Assessment – Phase 1 (Staff Engineer)
-[CONTACT] and/or managed the site reconnaissance, interviews and regulatory review as part of the ESA – Phase 1 protocol. On select projects, he was also responsible for the coordination and directing of drilling activities, sampling of soil and groundwater, and the reporting for ESA-Phase 2 activities. For projects in which suspect wetland areas were identified, [CONTACT] with the delineation of wetlands and was responsible for the reporting of the findings. A sample of the project in which [CONTACT] performed the afore-mentioned duties/responsibilities are as follows:
-Westbrook Creek Property ([COUNTY] County Middle & High School Sites), [COUNTY] [PLACE], [STATE]
-Holy Innocents Episcopal School – Proposed Math & Science Building, [COUNTY] County, [FACILITY] Charter School, [COUNTY] County, [FACILITY] Replacement, [COUNTY] County, [FACILITY], [COUNTY] County, [FACILITY], [COUNTY] [PLACE], [STATE]
-Benjamin E. [FACILITY], [COUNTY] County, [FACILITY], [COUNTY] [PLACE], [STATE]
-[SITE ADDRESS], [PLACE], [STATE]
-33-Acre Parcel, [PLACE], [STATE]:
-[FACILITY], [COUNTY] [PLACE], [STATE]
-Mount Vernon Presbyterian School, Sandy Springs, [CLIENT] Site, [COUNTY] [PLACE], [STATE]
-Executive Square Office Complex, [COUNTY] [PLACE], [STATE]
-Tuskegee University, Tuskegee, [FACILITY] Processing Center in [COUNTY] [PLACE], [STATE]
-Esfan Condos, [COUNTY] [PLACE], [STATE]
-Oglethorpe University, [COUNTY] County, [FACILITY], [COUNTY] [PLACE], [STATE]
-
-Certifications
-Accredited Inspector/Management Planner meeting all criteria required for EPA/AHERA/ASHARA
-(TSCA Title II) and NESHAP regulations Training. Certificate No. 3158.
-ICC certified as a Structural Welding Special Inspector
-ICC certified as a Reinforced Concrete Special Inspector
-ICC certified as a Structural Masonry Special Inspector
-ICC certified as a Structural Steel & Bolting Special Inspector
-American Concrete Institute (ACI): Certified member – Level I (Field)
-American Concrete Institute (ACI): Certified member – Level I (Laboratory)
-NPDES: Level 1B Certified Inspector – GSWCC
-NICET Certification – Level II (Asphalt), Level IV (Soil, Concrete)
-AWS Associates Certification
 ```
