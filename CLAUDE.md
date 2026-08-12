@@ -469,11 +469,31 @@ Sections 9.0/10.0/11.0 all present (these sit near the end of the body and would
 be the first casualties of truncation), natural ending at the EP qualifications
 list, zero markdown/JSON contamination.
 
-**PHASE 5 — style digest replaces the raw corpus.** The warmed corpus is
-~1.2 MB ≈ 275k tokens, attached to *two* agents (~550k tokens/report). Generate
-**once** from the kept transcripts into `knowledge/style_baseline.md`. Both
-consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
-`corpus.PromptBlock()`; the raw corpus stops shipping in prompts entirely.
+**PHASE 5 — style digest replaces the raw corpus.** Plan and rulings in
+[docs/phase5-style-digest-plan.md](docs/phase5-style-digest-plan.md).
+
+**Measured 2026-08-12** (the earlier "~1.2 MB ≈ 275k / ~550k" was an estimate,
+and ~20% low): the warmed corpus is **1,316,877 bytes ≈ 329k tokens**, attached
+to *two* agents = **≈ 658k tokens/report**. This is no longer a cost question
+only — it is the dominant term in the payload of the node that hit
+`ResourceExhausted` on 2026-08-12.
+
+**Ruled: a role-split digest, not one shared file.** The two consumers need
+different things, so each gets its own ~20–25k file — **≈ 45k per run, a 93%
+cut** — with one exemplar each: 1080 Moreland (REC-present, reasoning-shaped)
+to the ASTM Synthesizer, Old Field Road (clean/vacant, formatting-shaped) to
+the Template Compiler. Homestead is dropped; a third exemplar fits no budget
+without eating the distilled tiers, which are the point. Both agents load their
+digest instead of `corpus.PromptBlock()`; the raw corpus stops shipping in
+prompts entirely.
+
+**Exemplars are pseudonymized before assembly** — client and owner names, site
+addresses, parcel IDs and project numbers replaced with typed placeholders.
+They are full client reports appended to *every* future prompt, so they are the
+largest leak vector in the phase; placeholders keep the voice, kill the vector,
+let the contamination scan run over the whole digest with no exemptions, and
+remove the mimicry temptation that `gently slopes to the south` already
+demonstrated once.
 
 **Sourcing rules — settled by the corpus inventory, not to be re-derived:**
 
@@ -516,9 +536,17 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   2014 + the 2 earlier halves of the versioned pairs).
 - Add one guardrail line to both consuming skills: *"Baseline reports may cite
   older ASTM versions; always cite E 1527-21 regardless of baseline phrasing."*
-- Target **60–80k tokens** total. Write the file, report its actual token count
-  and what went into each tier, then **STOP for human review before wiring the
-  agents to it** — the digest is a reviewable style asset, not just a prompt.
+- ~~Target **60–80k tokens** total.~~ Superseded: **~20–25k per file, ~45k per
+  run** under the role-split ruling. The 60–80k figure was never load-bearing
+  precision — the operational goal is per-run tokens far below quota pressure.
+  Report the actual token count and what went into each tier, then **STOP for
+  human review before wiring the agents** — the digest is a reviewable style
+  asset, not just a prompt. That stop is a hard gate.
+- **Mining is deterministic, not model-driven** ([tools/minecorpus](tools/minecorpus/main.go)).
+  Text appearing verbatim in nine reports is *found by diffing*, with
+  provenance; a model asked to "find the common passages" would be expensive,
+  unverifiable, and free to invent a canonical block nobody wrote. Assembly
+  composes from the mined tables, never from the raw corpus.
 
 **PHASE 6 — backlog (each needs its own go-ahead).**
 - **Report title/descriptor in header line 2.** The stamped format is
