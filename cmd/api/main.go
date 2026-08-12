@@ -49,7 +49,11 @@ type CreateProjectRequest struct {
 }
 
 type GenerateReportRequest struct {
-	ProjectName         string                 `json:"project_name"`
+	ProjectName string `json:"project_name"`
+	// Intake is the structured contract (see intake.go). Preferred.
+	Intake *Intake `json:"intake"`
+	// Answers is the legacy flat map, kept while the form is rebuilt. When
+	// Intake is present its values win.
 	Answers             map[string]string      `json:"answers"`
 	CategorizedFiles    []core.CategorizedFile `json:"categorized_files"`
 	SpecialInstructions string                 `json:"special_instructions"`
@@ -823,7 +827,7 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	questions := prescreenQuestions()
+	questions := append(staticCoreQuestions(), siteVisitQuestions()...)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(PreScreenResponse{
@@ -834,22 +838,69 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// prescreenQuestions is the pre-screen form.
+// staticCoreQuestions is the pre-screen static core: the questions no document
+// can answer on any project, because the fact lives only in the user's head.
+// Authorization, exact legal client spelling, the report descriptor and the
+// 40 CFR 312 user obligations are never derivable from an EDR package. They are
+// legitimately static, which is why the phase builds this core first and adds
+// absence-triggered supplements after (see siteVisitQuestions).
 //
-// NO ANSWER MAY BE PRE-FILLED. These values are written to real template tags
-// by the deterministic path, so a form default is a fact nobody typed appearing
-// in a signed report -- which is how "Parcel ID 10-123-456" reached the
-// delivered Providence draft. TestPrescreenFormShipsNoPrefilledAnswers enforces
-// this.
+// The bounding principle: NEVER ask for data sitting in an uploaded document.
+// Answering such a question launders an extraction failure into a green run --
+// the EP fills the field, the report looks complete, and the parser bug
+// survives to the next project. Every question therefore carries a Context note
+// stating WHY it is asked, so the EP can judge whether answering is appropriate
+// or whether something upstream is broken and should be fixed instead.
 //
-// Still hardcoded as a fixed list; the dynamic-prescreen rework is Phase 6.
-func prescreenQuestions() []PreScreenQuestion {
+// NO ANSWER MAY BE PRE-FILLED. Several of these are written to real template
+// tags by the deterministic path, so a form default is a fact nobody typed
+// appearing in a signed report -- which is how "Parcel ID 10-123-456" reached
+// the delivered Providence draft. TestPrescreenFormShipsNoPrefilledAnswers
+// enforces this.
+//
+// Question IDs are deliberately the same strings intakeToAnswers emits, so the
+// structured contract and the flat form converge on one key per fact rather
+// than two spellings that can silently diverge.
+func staticCoreQuestions() []PreScreenQuestion {
 	return []PreScreenQuestion{
 		{
-			ID:         "parcel_id",
-			Category:   "Client & Project Information",
-			Question:   "What is the Tax Parcel ID for the subject property?",
-			Context:    "The site address was extracted, but standard tax parcel numbers were blank or fragmented in the source files.",
+			ID:       "authorization_basis",
+			Category: "Authorization",
+			Question: "How was this work authorized?",
+			// The whole point of the field: it replaces the model reading
+			// authorization out of the uploaded proposal.
+			Context:    "Composed into Section 1 deterministically. Only you can state this -- it is never inferred from the uploaded proposal.",
+			Type:       "select",
+			Options:    []string{"Signed proposal", "Purchase order", "Other"},
+			IsRequired: true,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:         "authorization_proposal_date",
+			Category:   "Authorization",
+			Question:   "Proposal date (if authorized by a signed proposal)",
+			Context:    "Printed as \"...in accordance with our proposal dated <date>\". Unanswered authorization is reported as a data gap, never guessed.",
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:         "authorization_approval_date",
+			Category:   "Authorization",
+			Question:   "Approval date, if different from the proposal date",
+			Context:    "Optional. Omitted from the sentence entirely when blank.",
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:       "parcel_id",
+			Category: "Client & Project Information",
+			Question: "Tax Parcel ID(s) for the subject property",
+			// Multi-parcel is common; comma-separated for v1, array on the wire.
+			// Each ID is printed verbatim thereafter -- spaces, dots and dashes
+			// preserved, no format enforcement.
+			Context:    "Separate multiple parcels with commas. Printed exactly as typed. Tax parcel numbers were blank or fragmented in the source files.",
 			Type:       "text",
 			IsRequired: true,
 			Answer:     "", // never pre-fill: a form default becomes a fact in a signed report
@@ -857,17 +908,29 @@ func prescreenQuestions() []PreScreenQuestion {
 		{
 			ID:         "site_acreage",
 			Category:   "Client & Project Information",
-			Question:   "What is the total site acreage for the subject property?",
-			Context:    "Ensure site acreage is accurate to compute density and historical land use ratios.",
+			Question:   "Total site acreage for the subject property",
+			Context:    "Written straight to the report. The template supplies the word \"acres\", so a bare number is enough.",
 			Type:       "text",
 			IsRequired: true,
 			Answer:     "", // never pre-fill
 		},
 		{
-			ID:         "client_spelling",
-			Category:   "Client & Project Information",
-			Question:   "Which client entity name should be printed on the recipient block?",
-			Context:    "Confirm exact client corporate entity name.",
+			ID:       "site_county",
+			Category: "Client & Project Information",
+			Question: "County (optional -- overrides the extracted value)",
+			// Deliberately optional. The EDR package states the county plainly,
+			// so requiring it would violate the bounding principle above; this
+			// exists only so the EP can override a bad extraction.
+			Context:    "Leave blank unless the extracted county is wrong. The EDR package normally states it, and asking for data we already hold would hide an extraction failure.",
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:       "client_spelling",
+			Category: "Client & Project Information",
+			Question: "Exact legal client entity name for the recipient block",
+			Context:  "Legal spelling is a fact only you can confirm; the proposal may abbreviate it.",
 			// Free text, not a select. The options here were two named Arkan
 			// entities, which pinned the question itself to one client: on any
 			// other project the EP's only choices were the wrong company or
@@ -876,6 +939,63 @@ func prescreenQuestions() []PreScreenQuestion {
 			IsRequired: true,
 			Answer:     "", // never pre-fill
 		},
+		{
+			ID:         "report_descriptor",
+			Category:   "Client & Project Information",
+			Question:   "Report title / project descriptor (optional)",
+			Context:    "Printed after the site address on running-header line 2. The line is address-only when this is blank.",
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:         "user_liens",
+			Category:   "User Obligations (40 CFR 312)",
+			Question:   "Are you aware of any environmental liens against the property?",
+			Context:    "A user obligation under 40 CFR 312. Your answer is attributed to YOU in Section 4, never presented as a Matrix finding.",
+			Type:       "select",
+			Options:    []string{"No", "Yes"},
+			IsRequired: true,
+			Answer:     "", // never pre-fill: an unanswered obligation must not read as "none known"
+		},
+		{
+			ID:         "user_auls",
+			Category:   "User Obligations (40 CFR 312)",
+			Question:   "Are you aware of any Activity and Use Limitations (AULs)?",
+			Context:    "A user obligation under 40 CFR 312. Attributed to you in Section 4.",
+			Type:       "select",
+			Options:    []string{"No", "Yes"},
+			IsRequired: true,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:         "user_specialized_knowledge",
+			Category:   "User Obligations (40 CFR 312)",
+			Question:   "Do you have specialized knowledge or experience relating to this property?",
+			Context:    "A user obligation under 40 CFR 312. Attributed to you in Section 4.",
+			Type:       "select",
+			Options:    []string{"No", "Yes"},
+			IsRequired: true,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:         "user_other",
+			Category:   "User Obligations (40 CFR 312)",
+			Question:   "Anything else you know that the uploaded documents do not say?",
+			Context:    "Free text, routed to Section 4 as user-provided actual knowledge under the ASTM Actual Knowledge Override.",
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill
+		},
+	}
+}
+
+// siteVisitQuestions cover facts whose SOURCE DOCUMENT is absent -- the second
+// legitimate question class. They are appended unconditionally for now; step 3
+// of Phase 6 gates them on "no Site Recon Checklist in detected_files" and adds
+// the remaining SV_* questions plus the EP's categorization override.
+func siteVisitQuestions() []PreScreenQuestion {
+	return []PreScreenQuestion{
 		{
 			ID:         "site_recon_ast_ust",
 			Category:   "Site Reconnaissance Checklist Gaps",
@@ -947,6 +1067,30 @@ func injectFieldDefaults(payloadJSON string, answers map[string]string, draftNot
 	m["ParcelID"] = prescreenValue(answers["parcel_id"], "parcel ID", stripParcelLabel)
 	m["SiteAcres"] = prescreenValue(answers["site_acreage"], "site acreage", stripAcreUnit)
 
+	// {{User_Authorization}} is composed in Go, never inferred. The intake field
+	// exists precisely to replace the model reading authorization out of the
+	// uploaded proposal, so an unanswered authorization is a data gap.
+	//
+	// Fragment contract read from the template: it prints "This work was
+	// performed in accordance with {{User_Authorization}}." in two places, so
+	// the value continues that clause and supplies no trailing period.
+	m["User_Authorization"] = answers["_composed_authorization"]
+	if strings.TrimSpace(fmt.Sprint(m["User_Authorization"])) == "" {
+		m["User_Authorization"] = authorizationDataGap
+	}
+
+	// {{SiteCounty}}: the EP's answer outranks the model when supplied.
+	//
+	// Deliberately NOT in goSuppliedKeys -- see the note there. When intake
+	// supplies a county it is authoritative and normalized; when it does not,
+	// the model's value stands and applyModelValueNormalizers still strips a
+	// duplicated "County". Bracketing it unconditionally would demand the EP
+	// type a fact the EDR package states plainly, which the prescreen design
+	// principle forbids.
+	if c := strings.TrimSpace(answers["site_county"]); c != "" {
+		m["SiteCounty"] = stripCountySuffix(cleanBracketsAndPunctuation(c))
+	}
+
 	// RETIRED: this blanked Proposal_Letter1-5 unconditionally as a layout hack.
 	//
 	// The real defect was never the address lines. An earlier pipeline routed
@@ -1013,6 +1157,41 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid generation payload", http.StatusBadRequest)
 		return
 	}
+
+	// Reject an intake contract this build does not understand, loudly. Never a
+	// best-effort parse: a silently half-understood intake is how a field goes
+	// missing with nobody noticing, and Report Studio will bind to this.
+	if err := req.Intake.Validate(); err != nil {
+		slog.Error("INTAKE REJECTED", "err", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Structured intake wins over the legacy flat map, field by field, so both
+	// clients work during the transition.
+	if req.Intake != nil {
+		merged := map[string]string{}
+		for k, v := range req.Answers {
+			merged[k] = v
+		}
+		for k, v := range intakeToAnswers(req.Intake) {
+			merged[k] = v
+		}
+		req.Answers = merged
+		if req.SpecialInstructions == "" {
+			req.SpecialInstructions = req.Intake.SpecialInstructions
+		}
+		if req.ProjectName == "" {
+			req.ProjectName = req.Intake.Project.Name
+		}
+	}
+
+	// Authorization is composed here, not in injectFieldDefaults, so the
+	// composition sees the structured fields rather than the flattened map.
+	if req.Answers == nil {
+		req.Answers = map[string]string{} // a request with neither field would panic on assignment
+	}
+	req.Answers["_composed_authorization"] = composeAuthorization(req.Intake.authorization())
 
 	ctx := context.Background()
 	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
@@ -1142,6 +1321,14 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 	if len(req.Answers) > 0 {
 		answersJSON, _ := json.MarshalIndent(req.Answers, "", "  ")
 		fullExtractedData += "\n\n=== [EP PRE-SCREENING ANSWERS & CORRECTIONS] ===\n" + string(answersJSON)
+	}
+
+	// User actual knowledge gets its OWN labelled block, distinct from the
+	// general answers blob, so the ASTM skill's Actual Knowledge Override rule
+	// can be pointed at it by name rather than hoping the model notices it.
+	// userKnowledgeBlock owns the no-intake case.
+	if ukBlock := userKnowledgeBlock(req.Intake); ukBlock != "" {
+		fullExtractedData += "\n\n" + ukBlock
 	}
 	if req.SpecialInstructions != "" {
 		fullExtractedData += "\n\n=== [SPECIAL EP DRAFT INSTRUCTIONS] ===\n" + req.SpecialInstructions

@@ -32,7 +32,7 @@ func TestPrescreenPlaceholdersNeverReachATag(t *testing.T) {
 // Guard the form itself, not just the injection path: a pre-filled answer is a
 // value the EP never typed that the report treats as authoritative.
 func TestPrescreenFormShipsNoPrefilledAnswers(t *testing.T) {
-	for _, q := range prescreenQuestions() {
+	for _, q := range append(staticCoreQuestions(), siteVisitQuestions()...) {
 		if strings.TrimSpace(q.Answer) != "" {
 			t.Errorf("question %q ships a pre-filled answer %q", q.ID, q.Answer)
 		}

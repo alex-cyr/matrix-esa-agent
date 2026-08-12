@@ -341,6 +341,27 @@ conventions, so anything not pinned deterministically in Go will drift back.
   on that run so Word's grammar checker cannot draw a squiggle under it — that
   squiggle, not any `<w:u>` run, was the "stray underline" seen in review.
 
+- **"Go-supplied" means Go-guaranteed — which is why an override is a third,
+  separate category.** A key in `goSuppliedKeys` is written on *every* run: the
+  EP's answer when there is one, a visible bracket when there is not. That makes
+  the corresponding intake question effectively mandatory, so the category is
+  only correct for facts that genuinely live in the user's head.
+
+  `SiteCounty` is deliberately **not** in that set, and the omission is a
+  decision rather than an oversight. Go writes it only when intake supplies it;
+  otherwise the model's value stands and the fragment normalizer still strips a
+  duplicated "County". Making it guaranteed would bracket the county whenever
+  the field was left blank — demanding a typed answer for a fact the EDR package
+  states plainly, which is the laundering failure mode the prescreen design
+  principle forbids, pointed at the EP instead of at the parser. A blank field
+  plus a model failure still lands in the two-tier validation path, so no silent
+  blank is possible either way.
+
+  The three categories, kept distinct: **Go-guaranteed** (always written,
+  brackets when absent), **override** (Go wins when the human speaks, model plus
+  normalizer when they don't), and **model context** (no deterministic path at
+  all).
+
 - **Verifiers must be built from independent assumptions.** A check that shares
   its assumptions with the thing it checks **confirms that thing instead of
   testing it**, and reports success while the defect sits in the output. Build

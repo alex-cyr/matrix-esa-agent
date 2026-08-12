@@ -35,7 +35,18 @@ var goSuppliedKeys = map[string]bool{
 	"ProjectNo":  true, // MEG- prefix normalization
 	"ParcelID":   true, // EP pre-screen answer
 	"SiteAcres":  true, // EP pre-screen answer
-	// User_Authorization joins this set when Phase 6 composes it in Go.
+
+	// Composed in Go from the structured intake, never inferred from the
+	// uploaded proposal. Always written, as a bracket when unanswered.
+	"User_Authorization": true,
+
+	// SiteCounty is deliberately ABSENT from this set. Go writes it only when
+	// intake supplies it; otherwise the model's value stands and the fragment
+	// normalizer still applies. Making it Go-guaranteed would mean bracketing
+	// the county whenever the EP left it blank -- demanding a typed answer for
+	// a fact the EDR package states plainly, which the prescreen design
+	// principle forbids ("never ask for data sitting in an uploaded document").
+	// Recorded here because the omission is a decision, not an oversight.
 }
 
 // substantiveMandatory are keys where an empty string is NOT an acceptable
