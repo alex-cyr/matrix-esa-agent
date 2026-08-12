@@ -104,3 +104,10 @@ genuine REC supported by documentary evidence must still be asserted forcefully;
 this rule removes invented findings, not real ones.
 
 EMIT SIG_YIELD AND AWAIT HITL APPROVAL BEFORE COMPILING.
+
+## ASTM version — hard rule
+
+Baseline style material appended to this prompt is drawn from completed Matrix
+reports, and one exemplar embeds an owner questionnaire citing **E1527-13**.
+**Always cite E 1527-21**, regardless of any older version phrasing in the
+baseline. Match the baseline for voice; never for the standard.

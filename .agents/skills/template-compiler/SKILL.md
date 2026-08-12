@@ -371,3 +371,10 @@ the first understates the assessed property boundary. List them exactly as the
 EP entered them.
 
 Once compiled into the JSON buffer, flag the Pipeline orchestrator that generation is complete.
+
+## ASTM version — hard rule
+
+Baseline style material appended to this prompt is drawn from completed Matrix
+reports, and one exemplar embeds an owner questionnaire citing **E1527-13**.
+**Always cite E 1527-21**, regardless of any older version phrasing in the
+baseline. Match the baseline for voice; never for the standard.

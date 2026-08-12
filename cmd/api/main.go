@@ -308,6 +308,21 @@ const (
 
 var requiredSkills = []string{skillParser, skillGeo, skillSiteRecon, skillASTM, skillTemplate, skillHistorical}
 
+// The Phase 5 style digests replace the raw corpus in prompts. Role-split: each
+// consuming agent gets only what it uses.
+//
+// The raw corpus and its cache stay in place -- they are the source the digests
+// are regenerated from, they still feed the baseline coverage note, and
+// re-attaching corpus.PromptBlock() is the rollback. What changed is that
+// ~658k tokens of transcripts no longer ship in every prompt; the digests are
+// ~22k for both agents combined.
+const (
+	digestASTM     = "knowledge/style_baseline_astm.md"
+	digestCompiler = "knowledge/style_baseline_compiler.md"
+)
+
+var requiredDigests = []string{digestASTM, digestCompiler}
+
 // canonicalTags is the tag inventory parsed from the template at boot. Nil only
 // if the template could not be read, in which case the process has already
 // exited.
@@ -471,17 +486,32 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 	if len(corpus.Docs) == 0 {
 		slog.Warn("NO HISTORICAL STYLE BASELINE: output tone will be unanchored", "dir", historicalDir)
 	}
-	baseline := corpus.PromptBlock()
+	// corpus.PromptBlock() is deliberately NOT attached any more. The corpus is
+	// still loaded above because it supplies the baseline coverage note and is
+	// the source the digests are regenerated from; it just stops shipping in
+	// prompts. Re-adding "+ corpus.PromptBlock()" below is the rollback.
 
-	// The ASTM Synthesizer writes the actual rationales and regulatory lingo,
-	// so it needs the same style baseline as the Template Compiler.
+	// Role-split: each agent gets the digest built for what it writes. The
+	// Synthesizer reasons about findings, the Compiler formats tag values, and
+	// giving each only its own material is what makes ~22k viable where a
+	// shared block was 658k.
+	astmDigest, err := core.LoadSkill(digestASTM)
+	if err != nil {
+		return nil, nil, status, err
+	}
+	compilerDigest, err := core.LoadSkill(digestCompiler)
+	if err != nil {
+		return nil, nil, status, err
+	}
+
+	// The ASTM Synthesizer writes the actual rationales and regulatory lingo.
 	astmPrompt, err := core.LoadSkill(skillASTM)
 	if err != nil {
 		return nil, nil, status, err
 	}
 	astmAgent, err := core.NewAgent(ctx, projectID, location, core.AgentConfig{
 		Name: "ASTMSynthesizerAgent", Model: modelID,
-		SystemPrompt: astmPrompt + baseline, Temperature: 0.2,
+		SystemPrompt: astmPrompt + "\n\n" + astmDigest, Temperature: 0.2,
 		MaxOutputTokens: maxOutputTokens,
 	})
 	if err != nil {
@@ -494,7 +524,7 @@ func buildAgents(ctx context.Context, projectID, location string) (*core.Agent, 
 	}
 	templateCfg := core.AgentConfig{
 		Name: "TemplateCompilerAgent", Model: modelID,
-		SystemPrompt: templatePrompt + baseline, Temperature: 0.2,
+		SystemPrompt: templatePrompt + "\n\n" + compilerDigest, Temperature: 0.2,
 		MaxOutputTokens: maxOutputTokens,
 		// Its entire yield is one JSON object, so the response is guaranteed
 		// parseable and the brace-hunting heuristic downstream is unnecessary.
@@ -1425,6 +1455,16 @@ func main() {
 	for _, p := range requiredSkills {
 		if _, err := core.LoadSkill(p); err != nil {
 			slog.Error("STARTUP ABORTED: required agent skill unreadable", "err", err)
+			os.Exit(1)
+		}
+	}
+
+	// The digests are prompt content: a missing or empty one would silently
+	// unanchor the house voice, the same failure the skill preflight guards.
+	for _, p := range requiredDigests {
+		if _, err := core.LoadSkill(p); err != nil {
+			slog.Error("STARTUP ABORTED: required style digest unreadable",
+				"err", err, "fix", "go run ./tools/builddigest")
 			os.Exit(1)
 		}
 	}
