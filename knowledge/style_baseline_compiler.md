@@ -9,6 +9,11 @@ is asserted to be house style on anyone's say-so.
 and project numbers have been replaced. Never copy an identifier from this
 file into a report — there are none to copy, by design.
 
+**Physical-setting passages show FORM only.** Gradient and flow-direction
+content must follow the geospatial-evaluator rule — report with attribution
+or flag `[EP VERIFY: groundwater flow direction]`; directions here are
+placeholders, never values.
+
 ## ASTM version
 
 Baseline material below may quote older ASTM versions — one exemplar embeds an
@@ -341,7 +346,7 @@ The following data gaps were noted while performing the ESA-Phase I for the subj
 
 The subject site is located along [SITE ADDRESS] near the intersection with [SITE ADDRESS] in [PLACE], [STATE]. According to the [COUNTY] County Tax Assessor's website, the subject site occupies approximately 31 acres in size (Parcel ID [PARCEL ID]) and is currently owned by [CONTACT].
 
-The subject site appears to be undeveloped and is covered with grass with sparsely wooded areas at the southeastern and northwestern areas of the site. The site slopes downwards from the northern and eastern peripheries towards the central areas of the site which slopes gently in a south-southwesterly direction. A drainage feature was noted within the central areas of the site and was lined with tree logs and tree branches. The drainage feature was dry at the time of the site visit; however, it appears to convey the drainage from the upper areas of the site towards the south and southwestern areas.
+The subject site appears to be undeveloped and is covered with grass with sparsely wooded areas at the southeastern and northwestern areas of the site. The site slopes downwards from the ⟨DIRECTION⟩ and ⟨DIRECTION⟩ peripheries towards the central areas of the site which slopes gently in a ⟨DIRECTION⟩-⟨DIRECTION⟩ direction. A drainage feature was noted within the central areas of the site and was lined with tree logs and tree branches. The drainage feature was dry at the time of the site visit; however, it appears to convey the drainage from the upper areas of the site towards the ⟨DIRECTION⟩ and ⟨DIRECTION⟩ areas.
 
 3.2 Surrounding Properties
 
@@ -403,7 +408,7 @@ Fire Insurance Maps, such as Sanborn Maps, constitute a source of prior site use
 
 Matrix reviewed the [PLACE] 30-Minute Series and 7.5-Minute Series topographic maps for the area of the property, dated from 1891 to 2020. The subject property is depicted in white shading on the most recent maps. Areas shaded in white indicate areas which are generally clear of vegetation. Gray shading indicates densely built-up areas. Purple shading was used on older maps indicating feature changes but is no longer used on current maps.
 
-Based on the topographic map provided in the EDR reports and the topographic map from [COUNTY] County tax assessor website, the subject site generally slopes down gently in a southerly direction from an approximate maximum elevation of 798 within the northern part of the subject site to approximately 760 feet Mean Sea Level near the southern boundary of the site.
+Based on the topographic map provided in the EDR reports and the topographic map from [COUNTY] County tax assessor website, the subject site generally slopes down gently in a ⟨DIRECTION⟩ direction from an approximate maximum elevation of ⟨ELEV⟩ within the ⟨DIRECTION⟩ part of the subject site to approximately ⟨ELEV⟩ ft Mean Sea Level near the ⟨DIRECTION⟩ boundary of the site.
 
 6.0 REGULATORY REVIEW
 
@@ -469,7 +474,7 @@ No properties were identified at the same or lower elevations than the subject s
 
 7.1 Site Topography
 
-Based on the topographic maps, the subject site generally slopes gently in a southerly direction from an approximate maximum elevation of 798 within the northern part of the subject site to approximately 760 feet Mean Sea Level near the southern boundary of the site. A drainage feature was noted at the central areas of the site and was lined with tree logs and tree branches. The drainage feature was dry at the time of the site visit, however, it appears to convey the drainage from the upper areas of the site towards the south and southeastern areas.
+Based on the topographic maps, the subject site generally slopes gently in a ⟨DIRECTION⟩ direction from an approximate maximum elevation of ⟨ELEV⟩ within the ⟨DIRECTION⟩ part of the subject site to approximately ⟨ELEV⟩ ft Mean Sea Level near the ⟨DIRECTION⟩ boundary of the site. A drainage feature was noted at the central areas of the site and was lined with tree logs and tree branches. The drainage feature was dry at the time of the site visit, however, it appears to convey the drainage from the upper areas of the site towards the ⟨DIRECTION⟩ and ⟨DIRECTION⟩ areas.
 
 7.2 Site Geology
 
@@ -477,7 +482,7 @@ The subject site is located in the Appalachian Valley and Ridge Physiographic Pr
 
 7.3 Site Hydrology
 
-Under natural, undisturbed conditions, shallow groundwater flow generally follows the topography of the land surface, and on this basis, the topography suggests that groundwater flow across the site is generally in a southerly direction.
+Under natural, undisturbed conditions, shallow groundwater flow generally follows the topography of the land surface, and on this basis, the topography suggests that groundwater flow across the site is generally in a ⟨DIRECTION⟩ direction.
 
 7.4 Wetlands, Surface Waters, and Flood Plains
 
@@ -551,7 +556,7 @@ During our site visit, there was no evidence of distressed vegetation, pools of 
 
 The following summarizes the information that was gathered during this study, our field reconnaissance, topographical and hydrological setting of the subject site, and our evaluation. The items may include Recognized Environmental Conditions (RECs), Historical Recognized Conditions (HRECS), Controlled Recognized Environmental Conditions (CRECs), and de minimis conditions.
 1. The subject site is located at [SITE ADDRESS], [PLACE], [STATE] [ZIP] and identified in the [COUNTY] County Tax Records with a Parcel ID of [PARCEL ID]. The site is currently owned by [CONTACT].
-2. The subject site appears to be undeveloped and is covered with grass with sparsely wooded areas at the southeastern and northwestern areas of the site. The site slopes downwards from the northern and eastern peripheries towards the central areas of the site which slopes gently in a south-southwesterly direction. A drainage feature was noted within the central areas of the site and was lined with tree logs and tree branches. The drainage feature was dry at the time of the site visit; however, it appears to convey the drainage from the upper areas of the site towards the south and southwestern areas.
+2. The subject site appears to be undeveloped and is covered with grass with sparsely wooded areas at the southeastern and northwestern areas of the site. The site slopes downwards from the ⟨DIRECTION⟩ and ⟨DIRECTION⟩ peripheries towards the central areas of the site which slopes gently in a ⟨DIRECTION⟩-⟨DIRECTION⟩ direction. A drainage feature was noted within the central areas of the site and was lined with tree logs and tree branches. The drainage feature was dry at the time of the site visit; however, it appears to convey the drainage from the upper areas of the site towards the ⟨DIRECTION⟩ and ⟨DIRECTION⟩ areas.
 3. A Phase I Property Owner/Owner Representative interview questionnaire was completed by [CONTACT]. [CONTACT] that there have been no improvements to the property and that the property has been used for agricultural purposes.
 4. A search of available environmental records was conducted by Environmental Data Resources, Inc (EDR) in order to perform a Vapor Encroachment Screening which is intended to aid in the determination of whether possible Vapor Encroachment Conditions (VEC) exist or are likely to exist. Based on our review, VEC does not exist at the site. The EDR Vapor Encroachment Screen report is provided in Appendix F.
 5. Based on the EDR records, no UST or AST were identified at the subject property.

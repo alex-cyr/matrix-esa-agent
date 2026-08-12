@@ -9,6 +9,11 @@ is asserted to be house style on anyone's say-so.
 and project numbers have been replaced. Never copy an identifier from this
 file into a report — there are none to copy, by design.
 
+**Physical-setting passages show FORM only.** Gradient and flow-direction
+content must follow the geospatial-evaluator rule — report with attribution
+or flag `[EP VERIFY: groundwater flow direction]`; directions here are
+placeholders, never values.
+
 ## ASTM version
 
 Baseline material below may quote older ASTM versions — one exemplar embeds an
@@ -337,7 +342,7 @@ The subject site is located primarily within the limits of [SITE ADDRESS], [PLAC
 
 The entrance of the site was accessed from the remnants of [SITE ADDRESS], but the subject site was primarily traversed by foot. The site is currently vacant and is heavily wooded. [WATERCOURSE] runs along the boundary of the easement.
 
-Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately 870 feet MSL along eastern areas of the subject site to an approximate elevation of 830 feet MSL near [WATERCOURSE] along the western boundary of the site. The elevation change at the site is on the order of 40 feet.
+Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately ⟨ELEV⟩ ft MSL along ⟨DIRECTION⟩ areas of the subject site to an approximate elevation of ⟨ELEV⟩ ft MSL near [WATERCOURSE] along the ⟨DIRECTION⟩ boundary of the site. The elevation change at the site is on the order of ⟨ELEV⟩ ft.
 
 3.2 Surrounding Properties
 
@@ -394,7 +399,7 @@ Fire Insurance Maps, such as Sanborn Maps, constitute a source of prior site use
 
 5.3 Topographic Maps
 
-Matrix reviewed the Southeast [PLACE] 7.5-minute Series, Conley 7.5-minute Series, [PLACE] Vicinity Sheet 3-Minute Series, East Point 7.5-Minute Series, and [PLACE] 30- Minute Series topographic maps for the area of the property, dated from 1888 to 2020. The most recent maps show the subject property depicted in green shading. Areas shaded in green indicate undeveloped areas and are generally wooded. Areas shaded in white indicate areas which are generally clear of vegetation. Purple shading was used on older maps indicating feature changes but is no longer used on current maps. Based on the topographic information obtained from the USGS maps, as well as the hydrology of the area, it appears that groundwater flow would be in a southwesterly direction away from the site with a topographical relief between the highest point in the subject property and the lowest point on the order of approximately 40 feet.
+Matrix reviewed the ⟨DIRECTION⟩ [PLACE] 7.5-minute Series, Conley 7.5-minute Series, [PLACE] Vicinity Sheet 3-Minute Series, East Point 7.5-Minute Series, and [PLACE] 30- Minute Series topographic maps for the area of the property, dated from 1888 to 2020. The most recent maps show the subject property depicted in green shading. Areas shaded in green indicate undeveloped areas and are generally wooded. Areas shaded in white indicate areas which are generally clear of vegetation. Purple shading was used on older maps indicating feature changes but is no longer used on current maps. Based on the topographic information obtained from the USGS maps, as well as the hydrology of the area, it appears that groundwater flow would be in a ⟨DIRECTION⟩ direction away from the site with a topographical relief between the highest point in the subject property and the lowest point on the order of approximately ⟨ELEV⟩ ft.
 
 6.0 REGULATORY REVIEW
 
@@ -470,7 +475,7 @@ Groundwater and surface water levels were tested for various contaminants. Based
 
 7.1 Site Topography
 
-Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately 870 feet MSL along eastern areas of the subject site to an approximate elevation of 830 feet MSL near [WATERCOURSE] along the western boundary of the site. The elevation change at the site is on the order of 40 feet.
+Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately ⟨ELEV⟩ ft MSL along ⟨DIRECTION⟩ areas of the subject site to an approximate elevation of ⟨ELEV⟩ ft MSL near [WATERCOURSE] along the ⟨DIRECTION⟩ boundary of the site. The elevation change at the site is on the order of ⟨ELEV⟩ ft.
 
 7.2 Site Geology
 
@@ -482,7 +487,7 @@ Chemical decomposition initially occurs along the boundaries of individual miner
 
 7.3 Site Hydrology
 
-Under natural, undisturbed conditions, shallow groundwater flow generally follows the topography of the land surface, and on this basis, the topography suggests that groundwater flow across the site is in a southwesterly direction.
+Under natural, undisturbed conditions, shallow groundwater flow generally follows the topography of the land surface, and on this basis, the topography suggests that groundwater flow across the site is in a ⟨DIRECTION⟩ direction.
 
 7.4 Wetlands, Surface Waters, and Flood Plains
 
@@ -502,7 +507,7 @@ The reconnaissance of the subject site, beginning at Station 7+00 up to Station 
 
 The site within the explored segment (Station 7+00 to 42+70) is currently vacant and is heavily wooded. [WATERCOURSE] runs along the western and/or southern boundaries of the easement.
 
-The surfaces are covered with gravel roadbeds and pathways covered with topsoil, leaf litter, and weeds. Large boulders and concrete pieces were noted at various locations within the easement. Sewer manholes, as well as underground and above-ground sewer lines, were evident within and around the easement. The site slopes generally in a westerly and southern direction towards [WATERCOURSE] with a topographical relief ranging between 10 feet to greater than 30 feet.
+The surfaces are covered with gravel roadbeds and pathways covered with topsoil, leaf litter, and weeds. Large boulders and concrete pieces were noted at various locations within the easement. Sewer manholes, as well as underground and above-ground sewer lines, were evident within and around the easement. The site slopes generally in a ⟨DIRECTION⟩ and ⟨DIRECTION⟩ direction towards [WATERCOURSE] with a topographical relief ranging between ⟨ELEV⟩ ft to greater than ⟨ELEV⟩ ft.
 
 Based on our site visits, we did not observe any trash dumping, stockpiles, or deleterious materials of concern. A few tires were noted along the boundaries of the easement, which do not appear to be of concern upon removal and appropriate disposal. Additionally, due to the presence of a landfill adjacent to the easement, a flame ionization detector (Thermo TVA 2020 FID) was used to detect the methane levels. The levels were taken inside shallow augered bore holes as well as ambient readings. The levels detected were lower than 0.1% and deemed to be insignificant. Based on the levels of methane detected during our field visits and our observations of the site, it is our opinion that, at the current site conditions, there are no issues that would make the property unsafe or unsuitable for public use.
 
@@ -538,7 +543,7 @@ Evidence of a municipal sewer system was noted at the site.
 
 8.8 Surface Water Runoff
 
-Surface water runoff appears to flow in a southwesterly direction.
+Surface water runoff appears to flow in a ⟨DIRECTION⟩ direction.
 
 8.9 Pits, Sumps, Drywells, and Catch-Basins
 
@@ -586,7 +591,7 @@ During our site visit, there was no evidence of distressed vegetation, pools of 
 
 The following summarizes the information that was gathered during this study, our field reconnaissance, topographical and hydrological setting of the subject site, and our evaluation. The items may include Recognized Environmental Conditions (RECs), Historical Recognized Conditions (HRECS), Controlled Recognized Environmental Conditions (CRECs), and de minimis conditions.
 1. The subject site is located primarily within the limits of [SITE ADDRESS], [PLACE], [STATE], and consists of an easement that runs along [WATERCOURSE] (Parcel ID [PARCEL ID]). The subject site also transects the westernmost portion of the parcels located at [SITE ADDRESS] (Parcel ID [PARCEL ID]) and [SITE ADDRESS] (Parcel ID [PARCEL ID]). According to [COUNTY] County property tax records, each of the properties that make up the easement are presently owned by [CLIENT] The easement is located within the limits of the former [SITE ADDRESS] Landfill – Phase I and on property adjacent to the former [SITE ADDRESS] Landfills – Phases 2 through 4, which is a former C&D landfill that was closed in 1998. The former landfill is currently in post-closure care. The limits of the proposed easement are provided in Figure 1, which is a site plan that was provided by [COUNTY] County.
-2. Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately 870 feet MSL along eastern areas of the subject site to an approximate elevation of 830 feet MSL near [WATERCOURSE] along the western boundary of the site. The elevation change at the site is on the order of 40 feet.
+2. Based on the topographical information obtained from the [COUNTY] County GIS website, the topography of the site slopes downwards from a maximum elevation of approximately ⟨ELEV⟩ ft MSL along ⟨DIRECTION⟩ areas of the subject site to an approximate elevation of ⟨ELEV⟩ ft MSL near [WATERCOURSE] along the ⟨DIRECTION⟩ boundary of the site. The elevation change at the site is on the order of ⟨ELEV⟩ ft.
 3. Wetland maps prepared by the Department of Interior-Fish and Wildlife Service were reviewed to determine the presence of wetland areas within the site boundary. Based on the Wetland map, no wetlands exist in the subject site.
 4. The National Flood Insurance Rate Map (FIRM) for the area of the subject property was reviewed to determine flood zone areas. FIRM Panels [FIRM PANEL] and [FIRM PANEL], effective May 16, 2013, designate much of the subject site within Zone X, which is not identified as a flood-prone area. Along [WATERCOURSE], the maps show areas within Zone AE, which are identified as areas within a 100-year flood plain. It is possible that portions of the subject site lie within areas designated within the 100-year flood plain.
 5. A search of available environmental records was conducted by Environmental Data Resources, Inc (EDR) in order to perform a Vapor Encroachment Screening which is intended to aid in the determination of whether possible Vapor Encroachment Conditions (VEC) exist or are likely to exist. Based on the search, there were no properties identified at which a VEC is likely to exist.

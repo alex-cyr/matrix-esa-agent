@@ -215,6 +215,16 @@ var contaminationPatterns = []struct {
 	{"parcel id (alt formats)", regexp.MustCompile(`\b\d{3,4}-\d{4}-\d{3}\b`)},
 	{"FIRM panel", regexp.MustCompile(`\b\d{5}C\d{3,4}[A-Z]\b`)},
 	{"named watercourse/landfill", regexp.MustCompile(`\b[A-Z][A-Za-z'’\-]+\s+(Creek|Landfill|Branch|River|Lake|Pond|Quarry|Mine|Reservoir)\b`)},
+
+	// A DIRECTION in a physical-setting sentence is a site fact, and the most
+	// dangerous kind this digest can carry. The exemplars said "groundwater
+	// flow across the site is in a southwesterly direction" and a live run
+	// then asserted "south/southwesterly" for a parcel the EP has established
+	// drains EAST -- the digest was teaching the exact behaviour the
+	// geospatial-evaluator gradient rule forbids. Same class as the
+	// "gently slopes to the south" exemplar that reached a delivered report.
+	{"directional site-fact", regexp.MustCompile(`(?i)(topograph|groundwater|surface water|runoff|drainage|slopes?|gradient)[^.]{0,140}\b(north|south|east|west)(ern|erly|ward|wardly)?\b`)},
+	{"spot elevation", regexp.MustCompile(`(?i)(elevation|slopes?|topograph)[^.]{0,120}\b\d{2,5}(\.\d+)?\s*(feet|ft\.?|foot)\b`)},
 }
 
 // scanAllowlist are public bodies, standards and generic descriptors that match
@@ -360,6 +370,47 @@ func maskBodyLeaks(s string) string {
 	return s
 }
 
+// --- directional site-facts ---------------------------------------------------
+
+// A direction in a physical-setting sentence is a site fact, not house voice,
+// and the exemplars were teaching the model to state one confidently.
+//
+// The 2026-08-12 global run asserted "groundwater is inferred to flow in a
+// south/southwesterly direction" for a parcel the EP has established drains
+// EAST (EP-caught error 6). Both exemplars carry sentences of exactly that
+// shape -- "groundwater flow across the site is in a southwesterly direction",
+// "surface water runoff appears to flow in a southwesterly direction" -- and
+// the fabricated direction matched them. This is the "gently slopes to the
+// south" failure again, one layer down: pseudonymization treated names and
+// addresses as site facts but not directions.
+//
+// Only the FORM survives. The direction itself must come from the Geospatial
+// Evaluator, attributed, or carry [EP VERIFY].
+var (
+	physicalSettingSentence = regexp.MustCompile(`(?i)(topograph|groundwater|surface water|runoff|drainage|slopes?|gradient|elevation)`)
+	directionalAdjective    = regexp.MustCompile(`(?i)\b(north|south|east|west)(?:[\s/-]*(north|south|east|west))?(erly|ern|ward|wardly|eastern|western)?\b`)
+	spotElevationValue      = regexp.MustCompile(`(?i)\b\d{2,5}(\.\d+)?\s*(feet|ft\.?|foot)\b`)
+	bareElevationValue      = regexp.MustCompile(`(?i)\b(elevations?\s+(?:of|ranging from|at)\s+)\d{2,5}(\.\d+)?\b`)
+)
+
+// maskDirectionalFacts blanks directions and spot elevations, but only inside
+// physical-setting sentences. Scoped that way so ordinary prose -- "the
+// northern portion of the building", a street named West Exchange -- is not
+// mangled, and so the sentence SHAPE the exemplar is there to teach survives.
+func maskDirectionalFacts(s string) string {
+	sentences := strings.SplitAfter(s, ".")
+	for i, sent := range sentences {
+		if !physicalSettingSentence.MatchString(sent) {
+			continue
+		}
+		sent = directionalAdjective.ReplaceAllString(sent, "⟨DIRECTION⟩")
+		sent = spotElevationValue.ReplaceAllString(sent, "⟨ELEV⟩ ft")
+		sent = bareElevationValue.ReplaceAllString(sent, "${1}⟨ELEV⟩")
+		sentences[i] = sent
+	}
+	return strings.Join(sentences, "")
+}
+
 // restoreHeadings undoes over-masking of structural headings. "Surrounding
 // Properties" is a section title, not a client.
 var headingFixes = strings.NewReplacer(
@@ -436,7 +487,7 @@ func main() {
 		// Structural cut first, then pattern masking. Cutting the appendices
 		// removes an entire class of leak rather than chasing its members.
 		body0 := bodyOnly(exemplar)
-		clean := headingFixes.Replace(maskBodyLeaks(pseudonymize(body0)))
+		clean := headingFixes.Replace(maskDirectionalFacts(maskBodyLeaks(pseudonymize(body0))))
 
 		var b strings.Builder
 		fmt.Fprintf(&b, "# Matrix house style — %s\n\n", spec.role)
@@ -447,6 +498,10 @@ func main() {
 		b.WriteString("**Identifiers are placeholders.** Client names, addresses, parcel IDs, counties\n")
 		b.WriteString("and project numbers have been replaced. Never copy an identifier from this\n")
 		b.WriteString("file into a report — there are none to copy, by design.\n\n")
+		b.WriteString("**Physical-setting passages show FORM only.** Gradient and flow-direction\n")
+		b.WriteString("content must follow the geospatial-evaluator rule — report with attribution\n")
+		b.WriteString("or flag `[EP VERIFY: groundwater flow direction]`; directions here are\n")
+		b.WriteString("placeholders, never values.\n\n")
 		b.WriteString(guardrail)
 		b.WriteString("\n")
 		b.WriteString(numberingNote)
