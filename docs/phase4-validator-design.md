@@ -323,14 +323,42 @@ text* of the part:
 1. Take up to **N words immediately preceding** the tag position, and N words
    immediately following.
 2. Normalise both sides: lowercase, strip punctuation.
-3. **Signal A** — flag if the value's first *k = 3* words equal the preceding
-   text's last 3 words (and symmetrically for trailing overlap).
+3. **Signal A** — flag if the longest **suffix of the preceding template text
+   that is also a prefix of the value** is *k = 3* words or longer, over a
+   20-word window (and symmetrically: longest suffix of the value that is a
+   prefix of the following text).
+
+   > **[AMENDED] Deviation from the reviewed §5, approved.** The original
+   > formulation compared the template's *last* 3 words against the value's
+   > *first* 3. That assumes the duplication aligns at the boundary, and the
+   > real `User_Authorization` splice does not: the value restates the lead-in
+   > **from its first word** — template `"Matrix was authorized to perform this
+   > work under "`, value `"Matrix was authorized to perform this work under a
+   > signed proposal…"`. Last-3 is `[this work under]`, first-3 is `[Matrix was
+   > authorized]`, so the specified rule scores zero on a splice that repeats
+   > eight consecutive words. Caught by the test on its first run. The
+   > suffix/prefix generalization catches both shapes at the same threshold.
+   > The 20-word window exists because the restated clause is 8 words long and
+   > a 6-word window would clip it.
 4. **Signal B** — flag if the value's first word is **capitalised** and the
    template lead-in does **not** end in sentence-terminating punctuation: the
    value starts a new sentence in the middle of an existing one.
-5. Flag **doubled terminal punctuation**: value ends `.` and the next template
+5. **Signal C [AMENDED — added, approved]** — flag an **adjacent duplicate word
+   across the boundary**: the value's last word equals the template's next
+   word, or the value's first word equals the template's previous word.
+   Case-insensitive.
+
+   Added from audit evidence, not from theory. The delivered Providence report
+   reads *"the subject site occupies approximately **1.7 Acres acres** in
+   size"* — the template supplies the unit and the value carried its own. The
+   overlap is one word, so signals A and B both miss it. An adjacent duplicated
+   word across a tag boundary is almost never legitimate English, and
+   detection-only makes the noise cheap. If the acceptance run shows it firing
+   spuriously it gets demoted **with data**, not pre-emptively.
+
+6. Flag **doubled terminal punctuation**: value ends `.` and the next template
    character is `.`.
-6. Log at error level: tag name, signal type, preceding template words, value
+7. Log at error level: tag name, signal type, preceding template words, value
    prefix.
 
 ### Threshold decision [AMENDED — resolved]

@@ -222,6 +222,11 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 			// Step 1: Un-fracture Microsoft Word split XML tags inside {{...}}
 			xmlStr = unfractureDocxXML(xmlStr)
 
+			// Step 1a: splice detection, while the tag positions and the
+			// template's own surrounding words are still visible. Detection
+			// only -- nothing is changed and nothing can fail here.
+			logSpliceFindings(scanPartForSplices(f.Name, xmlStr, replaceMap))
+
 			// Step 2: Replace all JSON key/value pairs cleanly.
 			// Values are XML-sanitized at insertion: an unescaped "&" in a
 			// value such as "Diane & Brian J. Pete" produced a document Word
@@ -230,6 +235,16 @@ func mergeDocxLogic(templatePath string, jsonBytes []byte, outputPath string) er
 				valStr := cleanBracketsAndPunctuation(fmt.Sprint(v))
 				valStr = core.SanitizeDocxValue(valStr)
 				xmlStr = replaceTag(xmlStr, k, valStr)
+			}
+
+			// Step 2a: drop auto-numbered paragraphs that substitution left
+			// empty, so Word does not render a list number against blank
+			// space. Runs before the unreplaced-tag report on purpose: a
+			// paragraph whose tag failed to fill still contains "{{Tag}}", so
+			// it is not empty, is not removed, and is still reported below.
+			if cleaned, n := removeEmptyNumberedParagraphs(xmlStr); n > 0 {
+				slog.Info("EMPTY NUMBERED PARAGRAPHS REMOVED", "part", f.Name, "count", n)
+				xmlStr = cleaned
 			}
 
 			// Step 3: report what the payload failed to fill, before the

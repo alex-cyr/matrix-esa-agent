@@ -315,6 +315,25 @@ before replacing the original. Header line 1 and line 2 now position their
 right-hand values with a single right-aligned tab stop at 9360 twips (page width
 12240 less two 1440 margins) instead of seven tab runs plus ten literal spaces.
 
+## Reading delivered vs generated reports
+
+Two distinctions that have already caused wrong conclusions during
+investigation:
+
+- **`tmp/esa_outputs/` holds machine drafts, not delivered copies.** The reports
+  that went to clients were hand-finalized afterwards, and those finals are not
+  on the dev machine. A defect visible in a draft may have been corrected by
+  hand before issuance, and a draft that looks clean proves nothing about what
+  shipped. Say which one you inspected, every time.
+- **Purchaser ≠ owner.** On Providence Road, **Arkan Homes LLC is the
+  purchaser** (and the client — the recipient block is Mr. Ihssan Hashem, Arkan
+  Homes LLC, Milton GA), while **the Petes are the property owners**. A report
+  naming Arkan as the client and the Petes as owners is correct, not a leak of
+  the retired hardcodes. This matters because `Arkan`, `Morningpark` and
+  `Hashem` are on the `injectFieldDefaults` tripwire list: the tripwire bans
+  them from **Go-side defaults**, not from the report, where they are legitimate
+  model-sourced client data.
+
 ## Known bugs to fix (in order)
 1. ~~main.go feeds raw .docx bytes (zip binary) from historical/ into the
    system prompt as "historical context" — must extract real text first.~~
