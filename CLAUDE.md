@@ -293,6 +293,29 @@ conventions, so anything not pinned deterministically in Go will drift back.
   on that run so Word's grammar checker cannot draw a squiggle under it — that
   squiggle, not any `<w:u>` run, was the "stray underline" seen in review.
 
+- **Verifiers must be built from independent assumptions.** A check that shares
+  its assumptions with the thing it checks **confirms that thing instead of
+  testing it**, and reports success while the defect sits in the output. Build
+  the verifier from a different direction, and prefer it to be *broader* than
+  what it verifies.
+
+  Three times this has already paid, each in a different shape:
+  - **The contamination scan.** It reported *clean* while `Old Field Road NW`
+    and `Adairsville, GA` sat in the digest — masker and scan both assumed a
+    street number and a fixed city list. Rebuilt deliberately wider (street
+    names with no number, any `City, ST`, any `X County`), it immediately
+    caught an occupant address in Knoxville, TN that the Georgia-only masker
+    had missed.
+  - **`goSuppliedKeys` vs `injectFieldDefaults`.** The divergence test checks
+    them against *the template*, not against each other — which is why it found
+    four dead key spellings, including the acreage the EP typed by hand.
+  - **The corpus miner.** Trusting its first output would have shipped a table
+    missing every canonical block. Testing it against passages predicted
+    *independently* — CLAUDE.md's own Tier-1 list — exposed three bugs at once.
+
+  The general form: **do not let the thing that produces an answer also decide
+  whether the answer is right.**
+
 - **Skill exemplars are fabrication vectors.** Template-compiler rule 7 once
   gave `{{USGS_TopoSummary}}` the example wording *"gently slopes to the south
   with surface water runoff directed toward municipal drainage features"*. That
