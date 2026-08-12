@@ -1,8 +1,8 @@
 # Phase 4 — Template Tag Validator
 
-**Status: APPROVED WITH AMENDMENTS.** External review returned 2026-08-11; all
-six open questions answered, two additions required. Amendments are folded in
-below and marked **[AMENDED]** where they changed the original design.
+**Status: BUILT AND ACCEPTED.** External review returned 2026-08-11; all six
+open questions answered, two additions required. Amendments are folded in below
+and marked **[AMENDED]**. Acceptance run 2026-08-12 — see §12.
 
 Author: Claude Code · Repo state at design: `1428cb9` · Template measured:
 `knowledge/ESA_PHASE_I_Template.docx`
@@ -533,3 +533,117 @@ convention.
 
 Checkpoints to the reviewer: the amended doc's diff summary (this commit), then
 the merge-path diffs before step 3 applies, then the acceptance-run result.
+
+---
+
+## 12. Acceptance run — 2026-08-12 [AMENDED]
+
+Providence Road, `Phase_I_ESA_Report_..._20260812_004029.docx`. HTTP 200 in
+9m48s, baseline 19/19.
+
+```
+slots_auto_filled=0  missing_first_pass=12  reprompt_ran=true
+recovered=12  data_gapped=0  deliberate_blanks=1  unknown_keys=7
+```
+
+**§9 criteria: all passed.** Zero unreplaced tags, zero fractured survivors,
+header clean, and 8.13 / 8.15 / Section 9.0 all carrying real content where the
+August 5 draft had a blank, boilerplate only, and a skipped enumeration.
+
+**The run is its own justification.** The compiler emitted seven *invented*
+Section 9.0 key names — `Sec9_Item1_Intro`, `Sec9_Item2_SiteInfo`,
+`Sec9_Item3_Topography`, `Sec9_Item4_WetlandsFlood`, `Sec9_Item6_RECs`,
+`Sec9_Item7_HRECsCRECs`, `Sec9_Item9_DeMinimis` — none of which exist. Without
+the re-prompt this run ships a blank Section 9.0, which is the original
+delivered defect. The root cause was rule 3 still naming `ExecutiveSummary_Text`:
+with no valid target the model guessed at names. Reworked to name all eight
+slots explicitly, so Section 9.0 fills on the first pass and the re-prompt goes
+back to being a safety net.
+
+### Splice detector, first live data
+
+| Signal | Findings | Verdict |
+|---|---|---|
+| sentence-start (B) | 73 across 67 tags | Almost all proper nouns — **refined**, below |
+| doubled-period | 7 | Useful |
+| overlap (A) | 2 | Precise |
+| duplicate-word (C) | 2 | **Both real defects** |
+
+Two live defects found, both fixed at source afterwards:
+
+1. **`User_Authorization`** — *"in accordance with **This work was performed in
+   accordance with** our proposal dated July 6, 2026**..**"*. EP-caught error 5,
+   still shipping. Caught by three signals at once. Root cause was rule 6
+   itself, which *instructed* the restatement — the same disease as rule 10: an
+   instruction mandating restatement of template-owned text outranks a SPLICE
+   RULE 250 lines away, every time.
+2. **`SiteCounty`** — *"the **Fulton County County** Tax Assessor's website"*.
+   Previously unknown, found by signal C, the signal that was added on a hunch
+   from one piece of audit evidence.
+
+### Signal B refinement [AMENDED — approved]
+
+Unrefined, signal B is 87% of output and unusable. It is also the *only*
+defense against the two-word-overlap restatement class, so it was refined
+rather than demoted: **fire only when the value's capitalised opening words
+also appear in the preceding window** (2 words, 12-word lookback).
+
+A restatement necessarily echoes what it restates; a proper noun does not.
+Checked against all 73 findings from this run: every proper-noun case is
+silenced (`Alpharetta, GA 30009`, `Mr. Ihssan Hashem`, `August 2026`,
+`Fulton County`) and `The topography suggests` still fires. Pinned by tests in
+both directions.
+
+### Supply-chain check
+
+Rule 6 now requires the radon zone from upstream data — so the parser was
+checked for a supplier and **had none**. Without that, rule 6 would have
+data-gapped radon on every run: honest, but avoidably so. Parser extraction
+parameter 5 now extracts the EPA Radon Zone, the county it belongs to, and the
+activity threshold, and the compiler cross-checks the county before using it.
+
+### Confirmation run — same day, after the close-out fixes
+
+`Phase_I_ESA_Report_..._20260812_014347.docx`. First attempt returned HTTP 500:
+`ResourceExhausted` on the Template Compiler after 4 attempts — a genuine Vertex
+quota limit from running three ~550k-token generations in one evening, not a
+code fault. The classifier named it `throttled`, spent 30/60/90s of backoff and
+surfaced the reason instead of a generic timeout, which is what ITEM 1 was for.
+The retry after a quota pause returned HTTP 200 in 12m17s.
+
+```
+slots_auto_filled=0  missing_first_pass=5  reprompt_ran=true
+recovered=3  data_gapped=2  deliberate_blanks=1  unknown_keys=0
+```
+
+| Target | Before | After |
+|---|---|---|
+| `User_Authorization` | *"in accordance with **This work was performed in accordance with** our proposal dated July 6, 2026**..**"* | *"in accordance with our proposal dated July 6, 2026."* |
+| `SiteCounty` | *"the **Fulton County County** Tax Assessor's website"* | *"the Fulton County Tax Assessor's website"* |
+| Invented Sec9 keys | 7 | **0** — `unknown_keys=0`, and Section 9.0 filled on the FIRST pass |
+| Missing on first pass | 12 | **5** |
+| Splice findings | 84 | **14** |
+
+`data_gapped=2` is `SV_AccessFrom` and `SV_AccessVia`, rendering as
+*"accessed from [MEG DATAGAP: SV_AccessFrom] via [MEG DATAGAP: SV_AccessVia]"* —
+the intended outcome for data genuinely absent from the checklist. Zero
+unreplaced tags, header clean, 8.13 populated.
+
+### Two findings for the next pass
+
+1. **`{{FloodZone}}` needs a fragment contract**, third of its kind. Template
+   reads *"designates the site as zone `{{FloodZone}}`"*; the value was
+   `Zone X`, delivering *"as zone Zone X"*. Found by signal C again — the
+   signal added on a hunch has now caught three real defects
+   (`SiteAcres`, `SiteCounty`, `FloodZone`) and produced no false positives.
+2. **Signal B is close but not done.** Of its 9 findings, **one is a true
+   positive** — `SV_CurrentUse` delivered *"The site is presently The site is
+   currently developed with…"*, a real restatement. The other 8 are all
+   single-word `Residential` table cells (`North_AdjUse`, `East_SurrUse`, …)
+   that echo the word "residential" in nearby template prose.
+
+   Proposed one-line tightening, **not applied**: require the value to be at
+   least 2 words before signal B can fire. Single-word values are table cells
+   and proper nouns, never restatements. That drops all 8 remaining false
+   positives and keeps both true positives, since `The topography suggests` and
+   `The site is presently…` are multi-word.

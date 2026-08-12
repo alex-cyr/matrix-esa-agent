@@ -141,4 +141,10 @@ func TestRealCompilerSkillHasNoSchemaDrift(t *testing.T) {
 			"This is the schema-rivalry class: the model may fill either the dead key or its live twin, "+
 			"so the same bug produces a blank on one run and content on the next.", report.BindingSchema)
 	}
+	// Both binding tiers now fail boot, so both have to stay clean.
+	if len(report.BindingHeadings) > 0 {
+		t.Errorf("template-compiler rule headings name tags the template does not have: %v\n"+
+			"A rule target pointing at nothing is a rule written against nothing — Section 8.13 "+
+			"shipped empty that way. This fails boot.", report.BindingHeadings)
+	}
 }

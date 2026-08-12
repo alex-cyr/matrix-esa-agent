@@ -345,12 +345,15 @@ investigation:
    DONE. `buildAgents` now loads the corpus before constructing either agent
    and appends the same `corpus.PromptBlock()` to both. Note this attaches
    the baseline twice per generation — see the token cost below.
-3. Template Compiler must emit **~280** exact `{{Key}}` JSON keys with no
-   validation — missing keys silently become blank fields in the report.
-   (The long-standing "160" figure was wrong: `docx_tags.txt` holds **272**
-   unique tags, of which `Up1-14_*` = 70 and `Down1-20_*` = 100 are table
-   slots, leaving ~102 substantive keys.) Need a Go-side
-   validate/diff/re-prompt loop before docx injection.
+3. ~~Template Compiler must emit ~280 exact `{{Key}}` JSON keys with no
+   validation — missing keys silently become blank fields in the report.~~
+   **DONE — Phase 4.** The canonical list is parsed from the template at boot
+   (**300 tags**: 299 in the body plus header-only `ReportDate`; 170 slots,
+   130 substantive), and `validateAndRepair` fills slot gaps, re-prompts once
+   for absent substantive keys, and brackets the rest. Proven on the
+   2026-08-12 Providence acceptance run, where the compiler emitted **seven
+   invented Section 9.0 key names** and the validator recovered all 12 missing
+   keys — without it that run would have shipped a blank Section 9.0.
 
 ## Approved, not yet built
 
@@ -394,7 +397,28 @@ Cloud Run**. Original spec retained below.
    remove before issuance]`. Explicitly **not** an ASTM data-gap line — it is a
    drafting artifact for the EP to clear, not a regulatory finding.
 
-**PHASE 4 — bug 3, the validator.**
+**PHASE 4 — bug 3, the validator. DONE.** Design in
+[docs/phase4-validator-design.md](docs/phase4-validator-design.md) (approved
+with amendments after external review). Acceptance run **2026-08-12**,
+Providence Road, `Phase_I_ESA_Report_..._20260812_004029.docx`:
+
+- **Zero unreplaced tags, zero fractured survivors.** Baseline 19/19.
+- 8.13 Radon, 8.15 LBP and Section 9.0 all carry real content — all three were
+  blank or boilerplate-only in the August 5 draft.
+- `slots_auto_filled=0, missing_first_pass=12, reprompt_ran=true,
+  recovered=12, data_gapped=0, deliberate_blanks=1`.
+- **The run is the proof the validator was needed.** The compiler emitted seven
+  invented Section 9.0 key names (`Sec9_Item1_Intro`, `Sec9_Item3_Topography`,
+  `Sec9_Item9_DeMinimis`, …), none of which exist. Without the re-prompt,
+  Section 9.0 ships blank — exactly the delivered defect.
+- The splice detector found two live defects the same run: the
+  `User_Authorization` restatement (EP-caught error 5, still shipping) and a
+  previously unknown *"Fulton County County Tax Assessor"* duplication. Both
+  fixed at source afterwards.
+
+Boot now **fails** on either binding drift tier — a rule-heading target or a
+JSON-schema key naming a tag the template lacks. Original spec retained below.
+
 - Parse the canonical tag list from `knowledge/ESA_PHASE_I_Template.docx` at
   boot (after unfracturing), **not** from the skill markdown. Log drift vs the
   skill's documented list once at startup.
@@ -409,9 +433,11 @@ plus 2 fractured survivors in header parts. **`Sec9_Item1`–`Sec9_Item7` must b
 classed substantive-mandatory** — the compiler skipped the entire Section 9.0
 findings enumeration, which is the core of the report. A validator that let
 Sec9 keys fall through to `""` would reproduce exactly the delivered defect.
-- Update template-compiler SKILL.md: correct "160" to ~280, and require unused
-  `UpN`/`DownN` slots be emitted as `""` (same trailing-empty convention as the
-  Proposal lines).
+*(Shipped as `Sec9_Item1`–`Sec9_Item8`, the five `SV_*` strings and
+`DataGaps_Text` — 14 mandatory keys.)*
+- ~~Update template-compiler SKILL.md: correct "160" to ~280, and require
+  unused `UpN`/`DownN` slots be emitted as `""`.~~ DONE — the skill now states
+  300 / 170 / 130 and names the Go-supplied keys.
 
 **PHASE 5 PREP — corpus inventory.** Read-only, zero model calls. May run any
 time after the nil-extractor verification, in parallel with Phase 2. One row per
@@ -551,6 +577,25 @@ consuming agents (ASTM Synthesizer, Template Compiler) load it instead of
   - `Sec8.1`, `8.2`, `8.4`–`8.10`, `8.13` were all **filled with real
     site-visit content** — so the compiler consumed most of SiteRecon's output.
     A full handoff-drop is ruled out.
+
+    > **CORRECTION, 2026-08-12 (Claude Code).** `Sec8_13` was **not** filled.
+    > Re-inspection of the same artifact
+    > (`Phase_I_ESA_Report_..._20260805_022316.docx`) shows Section 8.13 Radon
+    > completely empty — the "Radon" heading sits directly against "Asbestos
+    > Containing Materials", with no zone and no pCi/L figure anywhere in the
+    > document. `Sec8_15` likewise carried only static boilerplate.
+    >
+    > The cause was found later: template-compiler rule 6 specified the radon
+    > wording for `{{Radon_Summary}}`, a tag the template does not contain, and
+    > the dead key sat in the JSON schema beside its live twin
+    > `{{Sec8_13_Radon}}` — so the model could fill either, and the discard was
+    > **nondeterministic**. Fixed in `1428cb9` and `ca08ead`.
+    >
+    > The original conclusion above is left standing because it was reasonable
+    > on the evidence then to hand, and the reasoning it records is still the
+    > right method. What it got wrong is the fill status of one section, not
+    > the argument. The wider point survives intact: a full handoff-drop *is*
+    > ruled out, since 8.1–8.10 really were populated.
   - The two `Sec8` blanks were **fractured-tag survivors**, addressed by the
     un-fracture fix in `45c2446`.
   - The `SV_*` blanks are **Section 3.1 parser-extracted strings, not SiteRecon

@@ -86,6 +86,42 @@ func equalWords(a, b []string) bool {
 	return true
 }
 
+// echoLookback is how far back the lexical-echo test looks.
+const echoLookback = 12
+
+// echoWords is how many of the value's opening words must appear in the
+// preceding text for a capitalised restart to count as a restatement.
+const echoWords = 2
+
+// echoesPrecedingText reports whether the value's opening words are already
+// present in the template text just before it.
+//
+// This is what separates a restatement from a proper noun. "The topography
+// suggests" echoes a lead-in ending "the topography of the site"; "Alpharetta,
+// GA 30009" echoes nothing, because a place name is new information rather
+// than a repetition.
+func echoesPrecedingText(beforeWords, valueWords []string) bool {
+	window := lastN(beforeWords, echoLookback)
+	if len(window) == 0 {
+		return false
+	}
+	present := make(map[string]bool, len(window))
+	for _, w := range window {
+		present[w] = true
+	}
+
+	need := echoWords
+	if len(valueWords) < need {
+		need = len(valueWords)
+	}
+	for i := 0; i < need; i++ {
+		if !present[valueWords[i]] {
+			return false
+		}
+	}
+	return need > 0
+}
+
 // suffixPrefixOverlap returns the length of the longest suffix of a that is
 // also a prefix of b.
 func suffixPrefixOverlap(a, b []string) int {
@@ -170,7 +206,22 @@ func detectSplice(part, tag, before, value, after string) []SpliceFinding {
 	// Signal B -- the value opens a new sentence in the middle of one the
 	// template already began. This is the rule that catches the topography
 	// splice, whose literal overlap is only two words.
-	if !hasBracketPrefix(value) && startsNewSentence(value) && !endsSentence(before) {
+	//
+	// REFINED with data from the first acceptance run, where the unrefined form
+	// produced 73 findings across 67 tags -- almost all of them proper nouns
+	// that legitimately start a value: "Alpharetta, GA 30009", "Mr. Ihssan
+	// Hashem", "August 2026", "Fulton County". At that volume the detector is
+	// noise and gets switched off.
+	//
+	// The added condition is a LEXICAL ECHO: a capitalised restart only counts
+	// as a splice when the value's opening words also appear in the template
+	// text just before it. A restatement necessarily echoes what it restates;
+	// a proper noun does not. Checked against all 73 findings from that run:
+	// every proper-noun case is silenced, and "The topography suggests" -- the
+	// one catch that mattered -- still fires, because both "the" and
+	// "topography" appear in the lead-in.
+	if !hasBracketPrefix(value) && startsNewSentence(value) && !endsSentence(before) &&
+		echoesPrecedingText(beforeWords, valueWords) {
 		add("sentence-start")
 	}
 

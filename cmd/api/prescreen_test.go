@@ -118,6 +118,41 @@ func TestPrescreenFragmentContracts(t *testing.T) {
 	}
 }
 
+// The live acceptance run delivered "the Fulton County County Tax Assessor's
+// website". The skill now states the contract, but a skill rule is advisory and
+// the model already broke this one, so Go enforces it too.
+func TestSiteCountyFragmentContract(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"Fulton", "Fulton"},
+		{"Fulton County", "Fulton"},
+		{"Fulton county", "Fulton"},
+		{"FULTON COUNTY", "FULTON"},
+		{"Fulton County.", "Fulton"},
+		{"DeKalb County", "DeKalb"},
+	}
+	for _, tc := range cases {
+		if got := stripCountySuffix(tc.in); got != tc.want {
+			t.Errorf("stripCountySuffix(%q) = %q, want %q — the template supplies \"County\"", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestModelValueNormalizersApplyThroughInjection(t *testing.T) {
+	var got map[string]interface{}
+	out := injectFieldDefaults(`{"SiteCounty":"Fulton County","OwnerName":"Acme County Holdings"}`, nil, "")
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["SiteCounty"] != "Fulton" {
+		t.Errorf("SiteCounty = %v, want \"Fulton\"", got["SiteCounty"])
+	}
+	// Only tags with a declared contract are touched. "County" inside an
+	// unrelated value is none of our business.
+	if got["OwnerName"] != "Acme County Holdings" {
+		t.Errorf("OwnerName was rewritten: %v", got["OwnerName"])
+	}
+}
+
 // End to end: the doubled unit seen in the delivered draft cannot recur through
 // the deterministic path.
 func TestAcreageDoesNotDoubleTheUnit(t *testing.T) {

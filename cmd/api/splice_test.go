@@ -36,6 +36,43 @@ func TestSpliceDetectsTopographyRestatement(t *testing.T) {
 	}
 }
 
+// Signal B refinement, pinned in both directions with cases from the first
+// acceptance run. The unrefined rule produced 73 findings across 67 tags,
+// almost all proper nouns; the lexical-echo condition silences those without
+// losing the one catch that mattered.
+func TestSpliceSentenceStartRequiresLexicalEcho(t *testing.T) {
+	fires := []struct{ name, before, value, after string }{
+		{
+			"topography restatement still fires",
+			"Based on the topographical information obtained from USGS Historical Topographic Maps, the topography of the site ",
+			"The topography suggests the site slopes to the east.", ".",
+		},
+	}
+	for _, tc := range fires {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := detectSplice("p", "USGS_TopoSummary", tc.before, tc.value, tc.after); !hasSignal(got, "sentence-start") {
+				t.Errorf("expected sentence-start; got %v", signals(got))
+			}
+		})
+	}
+
+	// Every one of these fired before the refinement.
+	silent := []struct{ name, tag, before, value, after string }{
+		{"city/state/zip", "SiteCityStateZip", "Environmental Site Assessment - Phase I At 272 Lantern Ridge Court ", "Alpharetta, GA 30009", ""},
+		{"recipient name", "Proposal_To1", "Submitted to ", "Mr. Ihssan Hashem", ""},
+		{"client entity", "User_ClientName", "appreciates the opportunity to work with ", "Arkan Homes LLC", " on this project"},
+		{"month and year", "ReportMonthYear", "Project Number MEG 303315 ", "August 2026", ""},
+		{"county name", "SiteCounty", "The subject site is located at 272 Lantern Ridge Court. According to the ", "Fulton", " County Tax Assessor"},
+	}
+	for _, tc := range silent {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := detectSplice("p", tc.tag, tc.before, tc.value, tc.after); hasSignal(got, "sentence-start") {
+				t.Errorf("proper noun flagged as a splice: %v", signals(got))
+			}
+		})
+	}
+}
+
 // The correct fragment must stay silent.
 func TestSpliceQuietOnCorrectFragment(t *testing.T) {
 	before := "Based on the topographical information obtained from USGS Historical Topographic Maps, the topography of the site "

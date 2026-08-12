@@ -60,7 +60,11 @@ You MUST populate the individual contextual variables within Section 9.0 FINDING
  If the recipient address needs fewer lines than the block provides, you MUST populate the trailing unused lines as an exact empty string `""` to preserve visual carriage-return spacing.
 4. **Dates**: Use the present-day report date unless the user explicitly provides a different date. If the user provides a date, use the user-provided date.
 5. **Project Number**: If the Project Number is absent from the context, you MUST yield the literal string `[MEG DATAGAP: INSERT PROJECT NUMBER]` for `{{ProjectNo}}` so the user can easily CTRL+F and update the final Word document.
-6. **User Authorization / Verbiage**: Look for a Purchase Order or signed Proposal in the context. For `{{User_Authorization}}`: IF a Purchase Order exists, populate with "This work was performed in accordance with Purchase Order [PO Number] which was emailed to [Name] on [Date]." IF NO Purchase Order exists but a signed Proposal exists, populate with "This work was performed in accordance with our proposal dated [Proposal Date] and approved on [Approval Date]."
+6. **User Authorization / Verbiage (`{{User_Authorization}}`)**: Look for a Purchase Order or signed Proposal in the context.
+   - **THIS IS A SENTENCE FRAGMENT.** The template already prints, in **two** places: *"This work was performed in accordance with `{{User_Authorization}}`."* Your value **continues** that clause. Do not restate it, and do not supply the closing period — the template has one.
+   - Purchase Order exists: `Purchase Order ⟨PO number⟩, emailed to ⟨name⟩ on ⟨date⟩`
+   - No PO but a signed proposal exists: `our proposal dated ⟨date⟩ and approved on ⟨date⟩`
+   - **Wrong:** `This work was performed in accordance with our proposal dated ⟨date⟩.` — this restates the lead-in and delivers *"in accordance with This work was performed in accordance with our proposal dated July 6, 2026.."*, doubled period included. An EP caught exactly that in a signed draft, and the earlier wording of this very rule is what produced it.
 7. **Missing Data & Parcel Fallbacks**: If data is missing (e.g., dynamic filepath links), yield a clear `[MEG DATAGAP: UPDATE FILEPATH LINK]`. For Section 3.1, since EDR does NOT contain Assessor Data, you MUST yield `[MEG DATAGAP: INSERT PARCEL ID]` for the Parcel ID variable, and `[MEG DATAGAP: INSERT ACRE SIZE]` for the site acreage variable if it cannot be found in the proposal/checklists.
 8. **Owner Questionnaire default**: For Section 4.1, if a completed questionnaire is NOT found in the payload, you MUST yield the default text: "The questionnaire was forwarded to the owner's representative, but Matrix had not received the completed questionnaire at the time of writing this report." Ensure this fulfills the variable for that section.
 9. **Aerial Photographs Table (Section 5.1)**: You MUST group aerial photos with matching descriptions into single rows grouped by chronological ranges (e.g., "1938, 1950, 1955" on one row) exactly like the Static Template. DO NOT output one year per row if the description is identical across multiple years.
@@ -86,9 +90,24 @@ You MUST use Matrix Engineering Group's exact standard phrasing derived from his
    - Standard default when questionnaire is pending:
      *"The User Questionnaire was submitted to [Client Name]. At the time of writing this report, no environmental liens, activity and use limitations (AULs), or specialized knowledge regarding environmental contamination were reported by the User."*
 
-3. **Section 9.0 Findings (`{{ExecutiveSummary_Text}}`)**:
-   - Standard clean assessment summary:
-     *"Matrix Engineering Group, Inc. performed a Phase I Environmental Site Assessment of the subject property located at {{SiteStreetAddress}}, {{SiteCityStateZip}} in accordance with ASTM E1527-21. This assessment has revealed no evidence of Recognized Environmental Conditions (RECs), Historical RECs (HRECs), or Controlled RECs (CRECs) in connection with the Subject Property."*
+3. **Section 9.0 Findings — EIGHT NUMBERED SLOTS, EXACT NAMES**:
+   - **There is no `ExecutiveSummary_Text` tag.** This rule used to name one, so the model had no valid target and guessed: a real run emitted `Sec9_Item1_Intro`, `Sec9_Item2_SiteInfo`, `Sec9_Item3_Topography`, `Sec9_Item4_WetlandsFlood`, `Sec9_Item6_RECs`, `Sec9_Item7_HRECsCRECs` and `Sec9_Item9_DeMinimis` — **seven invented names, none of which exist**, and Section 9.0 would have shipped blank.
+   - Emit **all eight**, by these exact names, in this fixed order:
+
+     | Key | Content |
+     |---|---|
+     | `{{Sec9_Item1_SiteInfo}}` | Location, parcel(s), owner |
+     | `{{Sec9_Item2_Topo}}` | Topography and elevation |
+     | `{{Sec9_Item3_Wetlands}}` | Wetlands / surface waters |
+     | `{{Sec9_Item4_Flood}}` | Flood zone |
+     | `{{Sec9_Item5_VEC}}` | Vapor encroachment |
+     | `{{Sec9_Item6_OnsiteReg}}` | On-site regulatory findings |
+     | `{{Sec9_Item7_OffsiteReg}}` | Off-site regulatory findings |
+     | `{{Sec9_Item8_DataGaps}}` | Data gaps |
+
+   - Each is **one item in an auto-numbered list**. Write the sentence only — the template supplies the number, so never begin with "1.", "2)" or a bullet.
+   - **A slot with nothing to report still gets a sentence** stating that, e.g. *"No vapor encroachment condition was identified for the subject property."* Never leave one empty: these are mandatory keys, and an empty value is replaced with a `[MEG DATAGAP: …]` bracket in the delivered document.
+   - Section 9.0 is the core of the report. It must be complete on the first pass; the validator's re-prompt is a safety net, not the primary path.
 
 4. **Section 10.0 Opinions & Recommendations (`{{Opinions_Text}}` / `{{FollowUp_Text}}`)**:
    - Standard clean recommendation:
@@ -104,7 +123,8 @@ You MUST use Matrix Engineering Group's exact standard phrasing derived from his
    - Matrix standard county radon zone format. This slot is a **standalone paragraph**, not a continuation, so write a complete sentence:
      *"⟨County⟩ County, where the Subject Property is located, is designated as EPA Radon Zone ⟨zone⟩, indicating a ⟨risk level⟩ potential for indoor radon levels ⟨threshold clause⟩."*
    - `⟨…⟩` marks values this report's own data supplies — they are placeholders, never text to emit. **Write plain prose: do not put `{{...}}` braces inside the value.** A brace that reaches the document is stripped at merge, leaving the bare tag name printed in the report.
-   - **The zone must come from the subject county's actual EPA Map of Radon Zones designation, carried in upstream agent output.** Never carry a zone over from a historical baseline report. The baselines span many counties, and a zone imitated from a neighbouring county's report is a fabricated regulatory fact in a sealed document.
+   - **The zone must come from the subject county's actual EPA Map of Radon Zones designation, as extracted by the Parser from the EDR package** (Parser extraction parameter 5). Never carry a zone over from a historical baseline report. The baselines span many counties, and a zone imitated from a neighbouring county's report is a fabricated regulatory fact in a sealed document.
+   - **Check the county matches.** The Parser records the county each zone belongs to. If the zone it carries is for a different county than the subject property, that is not your zone — emit the data gap below instead.
    - If no EPA zone designation for the subject county is present in the payload, emit `[MEG DATAGAP: EPA radon zone for ⟨County⟩ County]`; if the county itself is unknown, emit `[MEG DATAGAP: subject county and EPA radon zone]`. **Never leave Section 8.13 empty, and never guess a zone.**
 
 7. **Sections 3.1, 5.3 & 7.1 Historical Topographic Quadrangle Map Wording (`{{USGS_TopoSource}}`, `{{USGS_TopoSummary}}`)**:
@@ -127,6 +147,8 @@ You MUST use Matrix Engineering Group's exact standard phrasing derived from his
    - **Preserve any `[EP VERIFY: groundwater flow direction]` bracket verbatim.** If the Evaluator flagged the gradient, that bracket *is* the value. Do not swap it for a direction, and do not drop it because it reads oddly in the sentence — it is there precisely so the EP sees it.
    - The tag sits **mid-sentence** in both places it appears — *"...it appears that groundwater would generally flow in a `{{GWFlowDir}}` direction."* (5.3) and *"...groundwater is inferred to flow in a `{{GWFlowDir}}` direction."* (7.3). The value is therefore a **fragment**: no leading capital, no trailing period. A settled value is a bare directional adjective of the form `⟨direction⟩ly` or `⟨direction⟩-⟨direction⟩` — **format examples only; the direction itself comes from the Evaluator, never from this line.**
    - If the Geospatial Evaluator produced nothing for the gradient, emit `[MEG DATAGAP: groundwater flow direction]`. Never infer a direction to fill the gap.
+
+10. **County name (`{{SiteCounty}}`)**: the **bare county name**, with no "County" suffix. The template supplies the word: *"According to the `{{SiteCounty}}` County Tax Assessor's website"*. A value of `Fulton County` delivers *"the Fulton County County Tax Assessor's website"*, which a live run produced. Correct value: `Fulton`.
 
 ## Verification
 Before outputting final content:
@@ -298,7 +320,7 @@ Do not yield conversational text. Map your generated data directly into the foll
   "{{ReportDate}}": "string"
 }
 ```
-*(This is a structural excerpt; apply this exact map to generate a payload capable of completing all ~280 variables directly derived from context. The template contains 272 distinct tags: ~102 substantive keys plus 170 table slots — `Up1-14_*` and `Down1-20_*`.)*
+*(This is a structural excerpt; apply this exact map to generate a payload completing every variable derivable from context. The template contains **300 distinct tags** — 299 in the report body plus `{{ReportDate}}` in the running header. **170 are table slots** (`Up1-14_*`, `Down1-20_*`) and **130 are substantive**. Two of those are Go-supplied and always overwritten, so spend no effort on them: `{{ReportDate}}` and `{{DraftNote}}`. `{{ProjectNo}}`, `{{ParcelID}}` and `{{SiteAcres}}` are Go-supplied too when the EP answered the pre-screen.)*
 
 ## SPLICE RULE — CONTINUE THE SENTENCE, NEVER RESTATE IT (EP-CAUGHT FAILURE)
 

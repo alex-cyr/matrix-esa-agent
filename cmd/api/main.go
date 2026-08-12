@@ -362,11 +362,13 @@ func preflightTemplateTags() {
 			fatal = true
 		}
 		if len(report.BindingHeadings) > 0 {
-			// Not yet fatal: rule 3's ExecutiveSummary_Text is a known dead
-			// target whose rework rides with the Section 9.0 changes. Promote
-			// this to fatal alongside the schema tier once it lands.
+			// Fatal since the rule 3 rework removed the last known dead target
+			// (ExecutiveSummary_Text). A rule heading naming a tag that does
+			// not exist is a rule written against nothing: Section 8.13 shipped
+			// empty that way, and Section 9.0 came within one re-prompt of it.
 			slog.Error("SKILL/TEMPLATE TAG DRIFT (rule heading): rule target does not exist in the template",
 				"skill", path, "tags", report.BindingHeadings)
+			fatal = true
 		}
 	}
 	if fatal {
@@ -948,6 +950,11 @@ func injectFieldDefaults(payloadJSON string, answers map[string]string, draftNot
 	// the key is always emitted -- an unset tag would survive into the document
 	// as a literal "{{DraftNote}}".
 	cleanedMap["DraftNote"] = draftNote
+
+	// Enforce the fragment contracts the template itself dictates on values the
+	// model supplied. Advisory skill rules were not enough: a live run produced
+	// "the Fulton County County Tax Assessor's website".
+	applyModelValueNormalizers(cleanedMap)
 
 	b, _ := json.Marshal(cleanedMap)
 	return string(b)

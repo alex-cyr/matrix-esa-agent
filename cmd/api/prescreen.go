@@ -88,6 +88,48 @@ func stripAcreUnit(s string) string {
 // parcelLabelPrefix matches a leading "Parcel ID"-style label.
 var parcelLabelPrefix = regexp.MustCompile(`(?i)^\s*parcel\s*(id|no\.?|number|#)?\s*[:#-]?\s*`)
 
+// countySuffix matches a trailing "County" on a county name.
+var countySuffix = regexp.MustCompile(`(?i)[\s,]*\bcounty\.?\s*$`)
+
+// modelValueNormalizers enforce fragment contracts on tags the MODEL fills.
+//
+// The skill states each contract too, but a skill rule is advisory and the
+// model has broken this one in a live run. Where the template's surrounding
+// words are fixed, the correct formatting is knowable in Go, so Go enforces it.
+// Keep this list short: it is for contracts the template itself dictates, not
+// for editing the model's prose.
+var modelValueNormalizers = map[string]func(string) string{
+	// Template: "According to the {{SiteCounty}} County Tax Assessor's
+	// website". A value of "Fulton County" delivered "the Fulton County County
+	// Tax Assessor's website".
+	"SiteCounty": stripCountySuffix,
+}
+
+func stripCountySuffix(s string) string {
+	return strings.TrimSpace(countySuffix.ReplaceAllString(strings.TrimSpace(s), ""))
+}
+
+// applyModelValueNormalizers rewrites model-supplied values whose fragment
+// contract the template fixes. Returns the number of values changed.
+func applyModelValueNormalizers(m map[string]interface{}) int {
+	changed := 0
+	for key, normalize := range modelValueNormalizers {
+		raw, ok := m[key].(string)
+		if !ok {
+			continue
+		}
+		fixed := normalize(raw)
+		if fixed == raw || fixed == "" {
+			continue
+		}
+		slog.Warn("FRAGMENT CONTRACT ENFORCED", "key", key, "was", raw, "now", fixed,
+			"note", "the template supplies the surrounding words; the model repeated them")
+		m[key] = fixed
+		changed++
+	}
+	return changed
+}
+
 // stripParcelLabel enforces the {{ParcelID}} fragment contract.
 //
 // The template reads "(Parcel ID {{ParcelID}})", so a value that repeats the
