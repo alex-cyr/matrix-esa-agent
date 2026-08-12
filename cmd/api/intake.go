@@ -93,11 +93,17 @@ type UserKnowledge struct {
 }
 
 // SiteVisit is asked only when no site recon checklist was uploaded.
+//
+// ObservedFeatures carries the EP's own wording under the Verbatim Label
+// Protocol and is never normalized on the way through: a tidied description
+// smuggles in a conclusion the inspector never made, and downstream agents
+// cannot tell it from an observation.
 type SiteVisit struct {
-	AccessFrom     string `json:"access_from"`
-	AccessVia      string `json:"access_via"`
-	CurrentUse     string `json:"current_use"`
-	ASTUSTObserved string `json:"ast_ust_observed"`
+	AccessFrom       string `json:"access_from"`
+	AccessVia        string `json:"access_via"`
+	CurrentUse       string `json:"current_use"`
+	ObservedFeatures string `json:"observed_features"`
+	ASTUSTObserved   string `json:"ast_ust_observed"`
 }
 
 // userKnowledge is nil-safe, but note that "no intake at all" and "an intake
@@ -338,6 +344,9 @@ func intakeToAnswers(in *Intake) map[string]string {
 	}
 	if v := strings.TrimSpace(in.SiteVisit.CurrentUse); v != "" {
 		out["sv_current_use"] = v
+	}
+	if v := strings.TrimSpace(in.SiteVisit.ObservedFeatures); v != "" {
+		out["sv_observed_features"] = v
 	}
 	if v := strings.TrimSpace(in.SiteVisit.ASTUSTObserved); v != "" {
 		out["site_recon_ast_ust"] = v

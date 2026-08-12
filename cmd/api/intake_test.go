@@ -339,13 +339,13 @@ func TestIntakeKeysMatchTheQuestionIDs(t *testing.T) {
 		"project_number": true, // supplied by the project header, not the form
 		"client_contact": true, // client block is its own later item
 		"client_address": true, // ditto
-		"sv_access_from": true, // step 3 adds these questions
-		"sv_access_via":  true,
-		"sv_current_use": true,
 	}
 
+	// No checklist detected, so the site-visit questions are in play. That is
+	// the case where every sv_* key has a matching question; when a checklist
+	// IS present the questions vanish and the keys simply go unfilled.
 	ids := map[string]bool{}
-	for _, q := range append(staticCoreQuestions(), siteVisitQuestions()...) {
+	for _, q := range append(staticCoreQuestions(), siteVisitQuestions(nil)...) {
 		ids[q.ID] = true
 	}
 
@@ -359,10 +359,11 @@ func TestIntakeKeysMatchTheQuestionIDs(t *testing.T) {
 	full.Site.County = "Fulton"
 	full.Site.Descriptor = "Residential Redevelopment"
 	full.SiteVisit = SiteVisit{
-		AccessFrom:     "Providence Road",
-		AccessVia:      "a gravel drive",
-		CurrentUse:     "vacant wooded land",
-		ASTUSTObserved: "No ASTs or USTs observed",
+		AccessFrom:       "Providence Road",
+		AccessVia:        "a gravel drive",
+		CurrentUse:       "vacant wooded land",
+		ObservedFeatures: "a paved-over junction box near the north boundary",
+		ASTUSTObserved:   "No ASTs or USTs observed",
 	}
 
 	for k := range intakeToAnswers(full) {
@@ -375,13 +376,17 @@ func TestIntakeKeysMatchTheQuestionIDs(t *testing.T) {
 	// And the reverse direction: a question whose answer no Go path reads is a
 	// question that quietly does nothing.
 	readsAnswer := map[string]bool{
-		"authorization_basis":         true, // assembled into intake.authorization by the client
-		"authorization_proposal_date": true,
-		"authorization_approval_date": true,
-		"user_liens":                  true, // assembled into intake.user_knowledge
-		"user_auls":                   true,
-		"user_specialized_knowledge":  true,
-		"user_other":                  true,
+		"authorization_basis":             true, // assembled into intake.authorization by the client
+		"authorization_proposal_date":     true,
+		"authorization_approval_date":     true,
+		"authorization_po_number":         true,
+		"authorization_po_recipient":      true,
+		"authorization_po_date":           true,
+		"authorization_other_description": true,
+		"user_liens":                      true, // assembled into intake.user_knowledge
+		"user_auls":                       true,
+		"user_specialized_knowledge":      true,
+		"user_other":                      true,
 	}
 	emitted := intakeToAnswers(full)
 	for id := range ids {

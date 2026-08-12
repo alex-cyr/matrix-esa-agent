@@ -24,6 +24,15 @@ import (
 
 type PreScreenRequest struct {
 	ProjectName string `json:"project_name"`
+	// CategoryOverrides re-tags a detected file by name, e.g.
+	// {"MEG Field Sheet 3.pdf": "Site Recon Checklist"}.
+	//
+	// Filename categorisation is deterministic and cheap, and it is wrong
+	// whenever a file is named unconventionally. Rather than adding a model
+	// call to guess better, the EP corrects it in one click and re-runs the
+	// pre-screen: the trigger logic stays deterministic and an oddly-named
+	// checklist costs one click instead of five redundant questions.
+	CategoryOverrides map[string]string `json:"category_overrides"`
 }
 
 type PreScreenQuestion struct {
@@ -42,6 +51,10 @@ type PreScreenResponse struct {
 	Project       string                 `json:"project_name"`
 	Questions     []PreScreenQuestion    `json:"questions"`
 	DetectedFiles []core.CategorizedFile `json:"detected_files"`
+	// AvailableCategories is the vocabulary for the EP's re-tag control. Served
+	// by the API rather than hardcoded in the page, so the override list cannot
+	// drift away from what the categorizer actually produces.
+	AvailableCategories []string `json:"available_categories"`
 }
 
 type CreateProjectRequest struct {
@@ -798,24 +811,14 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 	var catFiles []core.CategorizedFile
 	for _, df := range downloadedFiles {
 		base := filepath.Base(df)
-		cat := "Other Document"
-		baseLower := strings.ToLower(base)
-		if strings.Contains(baseLower, "proposal") {
-			cat = "Proposal / Contract"
-		} else if strings.Contains(baseLower, "edr") || strings.Contains(baseLower, "aerial") || strings.Contains(baseLower, "topo") || strings.Contains(baseLower, "sanborn") || strings.Contains(baseLower, "radius") {
-			cat = "EDR Historical Package"
-		} else if strings.Contains(baseLower, "filio") || strings.Contains(baseLower, "photo") {
-			cat = "Filio Site Photos"
-		} else if strings.Contains(baseLower, "recon") || strings.Contains(baseLower, "checklist") {
-			cat = "Site Recon Checklist"
-		} else if strings.Contains(baseLower, "wetland") {
-			cat = "Wetland Map"
-		} else if strings.Contains(baseLower, "firm") || strings.Contains(baseLower, "flood") {
-			cat = "FIRM Flood Map"
-		} else if strings.Contains(baseLower, "vec") {
-			cat = "VEC Application"
-		} else if strings.Contains(baseLower, "questionnaire") {
-			cat = "User Questionnaire"
+		cat := categorizeUpload(base)
+
+		// The EP's own tag outranks the filename guess. Logged, because a
+		// correction is evidence that the filename rules need widening -- and
+		// silently accepting it would waste that evidence.
+		if over := strings.TrimSpace(req.CategoryOverrides[base]); over != "" && over != cat {
+			slog.Info("PRESCREEN CATEGORY OVERRIDDEN BY EP", "file", base, "was", cat, "now", over)
+			cat = over
 		}
 
 		catFiles = append(catFiles, core.CategorizedFile{
@@ -827,14 +830,15 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	questions := append(staticCoreQuestions(), siteVisitQuestions()...)
+	questions := append(staticCoreQuestions(), siteVisitQuestions(catFiles)...)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(PreScreenResponse{
-		Status:        "success",
-		Project:       req.ProjectName,
-		Questions:     questions,
-		DetectedFiles: catFiles,
+		Status:              "success",
+		Project:             req.ProjectName,
+		Questions:           questions,
+		DetectedFiles:       catFiles,
+		AvailableCategories: uploadCategories(),
 	})
 }
 
@@ -894,6 +898,43 @@ func staticCoreQuestions() []PreScreenQuestion {
 			Answer:     "", // never pre-fill
 		},
 		{
+			ID:         "authorization_po_number",
+			Category:   "Authorization",
+			Question:   "Purchase Order number (if authorized by purchase order)",
+			Context:    "Printed as \"...in accordance with Purchase Order <number>\". Without it the basis cannot be stated and becomes a data gap.",
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:         "authorization_po_recipient",
+			Category:   "Authorization",
+			Question:   "Who was the Purchase Order sent to?",
+			Context:    "Optional. Omitted from the sentence when blank.",
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:         "authorization_po_date",
+			Category:   "Authorization",
+			Question:   "Purchase Order date",
+			Context:    "Optional. Omitted from the sentence when blank.",
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:       "authorization_other_description",
+			Category: "Authorization",
+			Question: "Describe how the work was authorized (if neither of the above)",
+			// Used VERBATIM. The EP owns this wording, and it continues the
+			// template's clause "This work was performed in accordance with ".
+			Context: "Used word for word, continuing the sentence \"This work was performed in accordance with ...\". Write the continuation only, with no closing period.",
+			Type:    "text", IsRequired: false,
+			Answer: "", // never pre-fill
+		},
+		{
 			ID:       "parcel_id",
 			Category: "Client & Project Information",
 			Question: "Tax Parcel ID(s) for the subject property",
@@ -929,14 +970,17 @@ func staticCoreQuestions() []PreScreenQuestion {
 		{
 			ID:       "client_spelling",
 			Category: "Client & Project Information",
-			Question: "Exact legal client entity name for the recipient block",
-			Context:  "Legal spelling is a fact only you can confirm; the proposal may abbreviate it.",
+			Question: "Exact legal client entity name (optional -- overrides what you entered at setup)",
+			// Optional, because the EP already typed a client entity when
+			// creating the project and the form sends that when this is blank.
+			// Requiring it here would be asking twice for one fact.
+			Context: "Leave blank to use the entity you entered at project setup. Fill it in only when the recipient block needs a fuller legal spelling.",
 			// Free text, not a select. The options here were two named Arkan
 			// entities, which pinned the question itself to one client: on any
 			// other project the EP's only choices were the wrong company or
 			// "Other".
 			Type:       "text",
-			IsRequired: true,
+			IsRequired: false,
 			Answer:     "", // never pre-fill
 		},
 		{
@@ -990,20 +1034,128 @@ func staticCoreQuestions() []PreScreenQuestion {
 	}
 }
 
+// siteReconChecklistCategory is the category whose PRESENCE suppresses every
+// site-visit question. One string, referenced by the categorizer, the trigger
+// and the UI's override list, so they cannot drift apart.
+const siteReconChecklistCategory = "Site Recon Checklist"
+
+// categorizeUpload classifies a file by filename substring. Deterministic and
+// free; wrong whenever a file is named unconventionally, which is what the EP's
+// category override exists to correct.
+func categorizeUpload(base string) string {
+	b := strings.ToLower(base)
+	switch {
+	case strings.Contains(b, "proposal"):
+		return "Proposal / Contract"
+	case strings.Contains(b, "edr"), strings.Contains(b, "aerial"), strings.Contains(b, "topo"),
+		strings.Contains(b, "sanborn"), strings.Contains(b, "radius"):
+		return "EDR Historical Package"
+	case strings.Contains(b, "filio"), strings.Contains(b, "photo"):
+		return "Filio Site Photos"
+	case strings.Contains(b, "recon"), strings.Contains(b, "checklist"):
+		return siteReconChecklistCategory
+	case strings.Contains(b, "wetland"):
+		return "Wetland Map"
+	case strings.Contains(b, "firm"), strings.Contains(b, "flood"):
+		return "FIRM Flood Map"
+	case strings.Contains(b, "vec"):
+		return "VEC Application"
+	case strings.Contains(b, "questionnaire"):
+		return "User Questionnaire"
+	}
+	return "Other Document"
+}
+
+// uploadCategories is the set of categories the EP may assign in the override
+// UI. Derived from the categorizer's own outputs so the two cannot diverge.
+func uploadCategories() []string {
+	return []string{
+		"Proposal / Contract",
+		"EDR Historical Package",
+		"Filio Site Photos",
+		siteReconChecklistCategory,
+		"Wetland Map",
+		"FIRM Flood Map",
+		"VEC Application",
+		"User Questionnaire",
+		"Other Document",
+	}
+}
+
 // siteVisitQuestions cover facts whose SOURCE DOCUMENT is absent -- the second
-// legitimate question class. They are appended unconditionally for now; step 3
-// of Phase 6 gates them on "no Site Recon Checklist in detected_files" and adds
-// the remaining SV_* questions plus the EP's categorization override.
-func siteVisitQuestions() []PreScreenQuestion {
+// legitimate question class, and the only one this build asks dynamically.
+//
+// The trigger is the ABSENCE of a Site Recon Checklist among the detected
+// files. When one was uploaded, these questions are not asked at all: the
+// answers are sitting in a document we hold, and asking anyway would launder an
+// extraction failure into a green run -- the EP fills the field, the report
+// looks complete, and the parser bug survives to the next project.
+//
+// The trigger is filename-based and therefore imperfect, so it is paired with
+// the EP's category override rather than with a model call. Every question says
+// in its Context WHY it appeared, so a wrongly-triggered set reads as a signal
+// that something upstream is broken instead of as busywork.
+func siteVisitQuestions(detected []core.CategorizedFile) []PreScreenQuestion {
+	for _, f := range detected {
+		if f.Category == siteReconChecklistCategory {
+			return nil
+		}
+	}
+
+	const why = "No Site Recon Checklist was found in the uploads, so this field observation has no source document. " +
+		"If a checklist WAS uploaded under another name, re-tag it above instead of answering here."
+
 	return []PreScreenQuestion{
 		{
+			ID:         "sv_access_from",
+			Category:   "Site Reconnaissance (no checklist uploaded)",
+			Question:   "Which road or right-of-way is the property accessed from?",
+			Context:    why,
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill: this is a FIELD OBSERVATION
+		},
+		{
+			ID:         "sv_access_via",
+			Category:   "Site Reconnaissance (no checklist uploaded)",
+			Question:   "How was the property traversed during the site visit?",
+			Context:    why + " Describe what was walked or driven, not what it means.",
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:         "sv_current_use",
+			Category:   "Site Reconnaissance (no checklist uploaded)",
+			Question:   "What was the observed current use of the property?",
+			Context:    why,
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill
+		},
+		{
+			ID:       "sv_observed_features",
+			Category: "Site Reconnaissance (no checklist uploaded)",
+			Question: "What features were observed on the property?",
+			// Verbatim Label Protocol: the EP's own wording travels downstream
+			// untouched. A normalized description smuggles in a conclusion the
+			// inspector never made -- which is how a water meter cap became a
+			// fabricated septic REC in a signed report.
+			Context: why + " Describe features in your own words, exactly as observed " +
+				"(\"paved-over junction box\"), and do NOT identify what an ambiguous feature is. " +
+				"An unidentified feature is flagged for EP verification, never diagnosed.",
+			Type:       "text",
+			IsRequired: false,
+			Answer:     "", // never pre-fill
+		},
+		{
 			ID:         "site_recon_ast_ust",
-			Category:   "Site Reconnaissance Checklist Gaps",
+			Category:   "Site Reconnaissance (no checklist uploaded)",
 			Question:   "Were any Aboveground (AST) or Underground (UST) Storage Tanks observed during the physical site visit?",
-			Context:    "Confirm field observation findings regarding potential tanks or fill ports.",
+			Context:    why + " Select \"Not Inspected\" rather than guessing; an honest data gap outranks an assumed absence.",
 			Type:       "select",
 			Options:    []string{"No ASTs or USTs observed", "Active AST observed with secondary containment", "Historical UST fill port observed (Requires REC Evaluation)", "Not Inspected / Data Gap"},
-			IsRequired: true,
+			IsRequired: false,
 			Answer:     "", // never pre-fill: this one pre-answers a FIELD OBSERVATION
 		},
 	}

@@ -607,6 +607,13 @@
                         Answer all required (•) questions first before proceeding — or resolve highlighted fields below.
                     </div>
 
+                    <!-- Category override. Categorisation is by filename, which is
+                         deterministic and free but wrong for an oddly-named file.
+                         Re-tagging here re-runs the pre-screen, so a checklist we
+                         failed to recognise costs one click instead of five
+                         redundant field-observation questions. -->
+                    <div id="detectedFilesContainer" style="margin-bottom: 24px;"></div>
+
                     <div id="questionsContainer">
                         <div style="color: var(--text-muted); font-size: 13px;">Analyzing documents and extracting data gaps...</div>
                     </div>
@@ -789,64 +796,240 @@
             `).join('');
         }
 
+        // Server-supplied pre-screen state. categoryOverrides is the EP's own
+        // re-tagging, sent back so the question set is recomputed against it.
+        let detectedFiles = [];
+        let availableCategories = [];
+        let categoryOverrides = {};
+        // Required questions as the SERVER declared them, recorded at render
+        // time so the submit check follows the live question set.
+        let requiredQuestions = [];
+
+        function esc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
         async function triggerPreScreen() {
             goToStep(2);
             const container = document.getElementById('questionsContainer');
-            container.innerHTML = `<div style="color: var(--accent); font-weight: bold; font-size: 15px;">Parsing project files and extracting data gaps...</div>`;
+            container.innerHTML = `<div style="color: var(--accent); font-weight: bold; font-size: 15px;">Reading uploads and working out what only you can answer...</div>`;
 
             try {
                 const res = await fetch('/api/v1/prescreen', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ project_name: activeProject })
+                    body: JSON.stringify({
+                        project_name: activeProject,
+                        category_overrides: categoryOverrides
+                    })
                 });
                 const data = await res.json();
+                detectedFiles = data.detected_files || [];
+                availableCategories = data.available_categories || [];
+                renderDetectedFiles();
                 renderQuestions(data.questions || []);
             } catch(e) {
+                renderDetectedFiles();
                 renderQuestions([]);
             }
         }
 
+        // The EP's tag outranks the filename guess. Re-running the pre-screen is
+        // the point: the question set is DERIVED from these categories, so a
+        // correction here removes questions whose answers are in a document we
+        // already hold.
+        function retagFile(name, category) {
+            categoryOverrides[name] = category;
+            triggerPreScreen();
+        }
+
+        function renderDetectedFiles() {
+            const container = document.getElementById('detectedFilesContainer');
+            if (!container) return;
+            if (!detectedFiles.length) { container.innerHTML = ''; return; }
+
+            const opts = availableCategories.length ? availableCategories : [];
+            container.innerHTML = `
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">Detected documents</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+                    Categories are guessed from filenames. If one is wrong, re-tag it — the questions below are
+                    derived from what's missing, so correcting a tag removes questions the document can already answer.
+                </div>
+                ${detectedFiles.map(f => {
+                    const name = f.original_name || f.OriginalName || '';
+                    const cat = f.category || f.Category || '';
+                    return `
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                        <div style="flex: 1; font-size: 13px;">${esc(name)}</div>
+                        <select onchange="retagFile('${esc(name).replace(/'/g, "\\'")}', this.value)"
+                                style="font-size: 12px; padding: 5px 8px;">
+                            ${opts.map(o => `<option value="${esc(o)}" ${o === cat ? 'selected' : ''}>${esc(o)}</option>`).join('')}
+                        </select>
+                    </div>`;
+                }).join('')}
+            `;
+        }
+
         function renderQuestions(questions) {
             const container = document.getElementById('questionsContainer');
+
+            requiredQuestions = (questions || [])
+                .filter(q => (q.is_required !== undefined) ? q.is_required : !!q.IsRequired)
+                .map(q => ({ id: q.id || q.ID || '', text: q.question || q.Question || '' }));
+
             if(!questions || questions.length === 0) {
-                container.innerHTML = `<div style="color: var(--success); font-weight: bold;">All core document fields verified cleanly! Ready for generation.</div>`;
+                container.innerHTML = `<div style="color: var(--success); font-weight: bold;">Nothing left to ask — every remaining field comes from the uploaded documents.</div>`;
                 return;
             }
 
-            container.innerHTML = questions.map((q, i) => {
-                const qText = q.question || q.Question || '';
-                const qCtx = q.context || q.Context || '';
-                const qType = q.type || q.Type || 'text';
-                const qId = q.id || q.ID || ('q_' + i);
-                const qReq = (q.is_required !== undefined) ? q.is_required : (q.IsRequired !== undefined ? q.IsRequired : false);
-                const qAns = q.answer || q.Answer || '';
-                const qOpts = q.options || q.Options || [];
+            // Grouped by the server's Category so the EP reads a form, not a
+            // list. Order within a group is the server's order.
+            const groups = [];
+            const seen = {};
+            questions.forEach(q => {
+                const cat = q.category || q.Category || 'Other';
+                if (!seen[cat]) { seen[cat] = []; groups.push(cat); }
+                seen[cat].push(q);
+            });
 
-                return `
-                <div class="question-card">
-                    <div class="question-title">
-                        ${qReq ? '<span class="required-dot">•</span>' : ''}${qText}
-                    </div>
-                    ${qCtx ? `<div class="question-context">${qCtx}</div>` : ''}
-                    ${qType === 'select' ? `
-                        <select id="q_${qId}">
-                            ${qOpts.map(opt => `<option value="${opt}" ${opt === qAns ? 'selected' : ''}>${opt}</option>`).join('')}
-                        </select>
-                    ` : `
-                        <input type="text" id="q_${qId}" value="${qAns}" placeholder="Enter response...">
-                    `}
+            container.innerHTML = groups.map(cat => `
+                <div style="margin-bottom: 26px;">
+                    <div style="font-size: 13px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase;
+                                color: var(--accent); margin-bottom: 10px;">${esc(cat)}</div>
+                    ${seen[cat].map(renderQuestionCard).join('')}
                 </div>
-                `;
-            }).join('');
+            `).join('');
+        }
+
+        function renderQuestionCard(q, i) {
+            const qText = q.question || q.Question || '';
+            const qCtx = q.context || q.Context || '';
+            const qType = q.type || q.Type || 'text';
+            const qId = q.id || q.ID || ('q_' + i);
+            const qReq = (q.is_required !== undefined) ? q.is_required : (q.IsRequired !== undefined ? q.IsRequired : false);
+            const qOpts = q.options || q.Options || [];
+
+            // NO pre-selected answer, ever -- including on a select. A select
+            // whose first option is chosen by default answers the question for
+            // the EP, and on the 40 CFR 312 obligations that would render an
+            // unanswered obligation as "the user reports none known": a legal
+            // disclosure nobody made, in a signed report. Hence the empty
+            // leading option, which the intake assembly reads as "not answered".
+            return `
+            <div class="question-card">
+                <div class="question-title">
+                    ${qReq ? '<span class="required-dot">•</span>' : ''}${esc(qText)}
+                </div>
+                ${qCtx ? `<div class="question-context">${esc(qCtx)}</div>` : ''}
+                ${qType === 'select' ? `
+                    <select id="q_${esc(qId)}">
+                        <option value="">— not answered —</option>
+                        ${qOpts.map(opt => `<option value="${esc(opt)}">${esc(opt)}</option>`).join('')}
+                    </select>
+                ` : `
+                    <input type="text" id="q_${esc(qId)}" value="" placeholder="Enter response...">
+                `}
+            </div>
+            `;
+        }
+
+        // --- intake assembly -------------------------------------------------
+        //
+        // The form is the FIRST CLIENT of the intake contract, not its owner.
+        // It reads the answers off the rendered questions and posts the schema
+        // the server publishes; nothing is inferred from one field to another,
+        // and nothing is seeded.
+
+        function qv(id) {
+            const el = document.getElementById('q_' + id);
+            return el && el.value ? el.value.trim() : '';
+        }
+
+        // Tri-state, matching the Go side: null means NOT ANSWERED, which is a
+        // different fact from "none known". Collapsing them would attribute a
+        // 40 CFR 312 disclosure to a user who never made one.
+        function triState(id) {
+            const v = qv(id);
+            if (v === 'Yes') return true;
+            if (v === 'No') return false;
+            return null;
+        }
+
+        function authorizationBasis() {
+            switch (qv('authorization_basis')) {
+                case 'Signed proposal': return 'signed_proposal';
+                case 'Purchase order': return 'purchase_order';
+                case 'Other': return 'other';
+                default: return '';   // unanswered -> the server writes a data gap
+            }
+        }
+
+        // Comma-separated in, array on the wire. Each ID stays VERBATIM after
+        // the split: spaces, dots and dashes are preserved and no format is
+        // enforced, per the house rule.
+        function parcelIDs() {
+            return qv('parcel_id').split(',').map(s => s.trim()).filter(s => s.length > 0);
+        }
+
+        function buildIntake() {
+            return {
+                schema_version: 1,
+                project: { name: activeProject, number: activeProjectNo },
+                authorization: {
+                    basis:             authorizationBasis(),
+                    proposal_date:     qv('authorization_proposal_date'),
+                    approval_date:     qv('authorization_approval_date'),
+                    po_number:         qv('authorization_po_number'),
+                    po_recipient:      qv('authorization_po_recipient'),
+                    po_date:           qv('authorization_po_date'),
+                    other_description: qv('authorization_other_description')
+                },
+                client: {
+                    // Falls back to the entity the EP typed when creating the
+                    // project. That is a value the user entered for this same
+                    // fact, not a default nobody chose -- the pre-screen field
+                    // exists to correct the legal spelling, so leaving it blank
+                    // means "what I already typed is right".
+                    entity_name: qv('client_spelling') || activeClient,
+                    contact_name: '',
+                    address_lines: []
+                },
+                site: {
+                    parcel_ids: parcelIDs(),
+                    acreage:    qv('site_acreage'),
+                    county:     qv('site_county'),
+                    descriptor: qv('report_descriptor')
+                },
+                user_knowledge: {
+                    environmental_liens:   { known: triState('user_liens'),                 detail: '' },
+                    aul_known:             { known: triState('user_auls'),                  detail: '' },
+                    specialized_knowledge: { known: triState('user_specialized_knowledge'), detail: '' },
+                    other: qv('user_other')
+                },
+                site_visit: {
+                    access_from:       qv('sv_access_from'),
+                    access_via:        qv('sv_access_via'),
+                    current_use:       qv('sv_current_use'),
+                    observed_features: qv('sv_observed_features'),
+                    ast_ust_observed:  qv('site_recon_ast_ust')
+                },
+                special_instructions: document.getElementById('specialInstructions')?.value || ''
+            };
         }
 
         async function submitFinalGeneration() {
+            // Required questions are whatever the SERVER marked required, found
+            // by walking the rendered cards. The old check hardcoded one
+            // question's id and its wording, so it silently stopped covering the
+            // form the moment the question set changed.
             const banner = document.getElementById('valBanner');
-            const p1 = document.getElementById('q_parcel_id');
-            if(p1 && (!p1.value || p1.value.trim() === '')) {
+            const unanswered = requiredQuestions.filter(q => qv(q.id) === '');
+            if (unanswered.length) {
                 banner.style.display = 'block';
-                banner.textContent = 'Answer all required (•) questions first: What is the Tax Parcel ID for the subject property?';
+                banner.textContent = 'Answer all required (•) questions first: ' +
+                    unanswered.map(q => q.text).join(' · ');
                 return;
             }
             banner.style.display = 'none';
@@ -855,35 +1038,13 @@
             progress.style.display = 'block';
             document.getElementById('progressStatusText').textContent = 'Compiling main DOCX template + Appendix packages for ' + activeProject + '...';
 
-            // Gather all answers dynamically from the Pre-Screen questions container
-            // Seeded with intake values the user actually entered — nothing else.
-            // parcel_id and site_acreage used to be seeded with demo strings and
-            // overwritten only if the EP filled the field, so a blank field sent
-            // "10-123-456" to a signed report.
-            const ansObj = {
-                project_number: activeProjectNo,
-                client_spelling: activeClient
-            };
-            const questionInputs = document.querySelectorAll('#questionsContainer input, #questionsContainer select');
-            questionInputs.forEach(input => {
-                const val = input.value ? input.value.trim() : '';
-                if (!val) return;
-                const rawId = input.id ? input.id.replace(/^q_/, '') : '';
-                if (rawId) ansObj[rawId] = val;
-                // NO free-text scraping. A heuristic that guesses a parcel ID or
-                // an acreage out of an arbitrary answer can silently overwrite a
-                // correct value the EP typed, and it compared against the very
-                // demo strings this purge removed. Each field carries its own
-                // answer; nothing infers one field from another.
-            });
-
             try {
                 const res = await fetch('/api/v1/generate', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         project_name: activeProject,
-                        answers: ansObj,
+                        intake: buildIntake(),
                         categorized_files: uploadedFiles,
                         special_instructions: document.getElementById('specialInstructions')?.value || ''
                     })
