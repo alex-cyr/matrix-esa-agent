@@ -98,10 +98,13 @@ You MUST use Matrix Engineering Group's exact standard phrasing derived from his
    - NWI Wetlands: *"According to the U.S. Fish and Wildlife Service National Wetlands Inventory (NWI) map, no mapped wetlands or surface water bodies are located within the boundary of the Subject Property."*
    - `{{USGS_TopoSummary}}` is the exception in this group: unlike Sanborn and NWI above, it is **not** a standalone sentence. It continues a clause the template has already begun. See rule 7 below for its contract; the two full-sentence examples here do not apply to it.
 
-6. **Section 8.13 Radon Standard Wording (`{{Radon_Summary}}`)**:
-   - Must follow Matrix standard county radon zone format:
-     *"{{SiteCounty}} County, where the Subject Property is located, is designated as EPA Radon {{Radon_Zone}}, indicating a {{Radon_RiskSummary}} potential for indoor radon levels {{Radon_LevelThreshold}}."*
-     (e.g. *"Fulton County, where the Subject Property is located, is designated as EPA Radon Zone 1, indicating a high potential for indoor radon levels greater than 4 pCi/L."*)
+6. **Section 8.13 Radon Standard Wording (`{{Sec8_13_Radon}}`)**:
+   - **The tag is `{{Sec8_13_Radon}}`.** Earlier revisions of this rule named `{{Radon_Summary}}`, which does not exist in the template. The value went nowhere and **Section 8.13 shipped empty in a delivered report** — the "Radon" heading sat directly against the "Asbestos Containing Materials" heading with nothing between them.
+   - Matrix standard county radon zone format. This slot is a **standalone paragraph**, not a continuation, so write a complete sentence:
+     *"⟨County⟩ County, where the Subject Property is located, is designated as EPA Radon Zone ⟨zone⟩, indicating a ⟨risk level⟩ potential for indoor radon levels ⟨threshold clause⟩."*
+   - `⟨…⟩` marks values this report's own data supplies — they are placeholders, never text to emit. **Write plain prose: do not put `{{...}}` braces inside the value.** A brace that reaches the document is stripped at merge, leaving the bare tag name printed in the report.
+   - **The zone must come from the subject county's actual EPA Map of Radon Zones designation, carried in upstream agent output.** Never carry a zone over from a historical baseline report. The baselines span many counties, and a zone imitated from a neighbouring county's report is a fabricated regulatory fact in a sealed document.
+   - If no EPA zone designation for the subject county is present in the payload, emit `[MEG DATAGAP: EPA radon zone for ⟨County⟩ County]`; if the county itself is unknown, emit `[MEG DATAGAP: subject county and EPA radon zone]`. **Never leave Section 8.13 empty, and never guess a zone.**
 
 7. **Sections 3.1, 5.3 & 7.1 Historical Topographic Quadrangle Map Wording (`{{USGS_TopoSource}}`, `{{USGS_TopoSummary}}`)**:
    - The quadrangle map names (e.g. Roswell, Suwanee) and scales (7.5-minute, 30-minute) MUST be extracted directly from the EDR Topographic Map Report. If multiple quadrangle maps are included in EDR, list all quadrangle names.
