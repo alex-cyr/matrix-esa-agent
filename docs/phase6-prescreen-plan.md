@@ -1,9 +1,18 @@
 # Phase 6 — Dynamic Prescreen
 
-**Plan for review. Nothing built. No code written.**
+**Reviewed. All six §6 questions ruled — see the `[RULED]` annotations.**
+Rulings are authoritative; where the analysis above them differs, the ruling
+wins.
 
-Author: Claude Code · Repo state: `b3641b3` · Findings are read from the code,
-not from CLAUDE.md's memory of it.
+Author: Claude Code · Plan written at `b3641b3`, rulings folded in at `7a06e22`
+· Findings are read from the code, not from CLAUDE.md's memory of it.
+
+**Build order (ruled):** kill commit → schema + static core + Go-supplied wiring
+(county, authorization composition) + labelled user-knowledge block →
+absence-triggered `site_visit` questions + categorization override → acceptance
+on **two** runs: a filled intake (`User_Authorization` composed, `SiteCounty`
+supplied, §4 content present *with attribution*) and an empty intake (brackets
+everywhere, zero defaults, zero inference).
 
 ---
 
@@ -263,7 +272,7 @@ be pointed at it by name rather than hoping the model notices.
 
 ---
 
-## 5. What Phase 6 must also fix (found, not scoped in the brief)
+## 5. What Phase 6 must also fix (found, not scoped in the brief) — DONE in `7a06e22`
 
 - **Client-side placeholder defaults** (§1.4). `client_spelling` defaulting to a
   named client is live and unguarded.
@@ -274,32 +283,93 @@ be pointed at it by name rather than hoping the model notices.
 
 ---
 
-## 6. Questions for the reviewer
+## 6. Questions for the reviewer — all six RULED
 
 1. **Fork.** Accept (c) built (b)→(c) — static core plus *document-absence*
    supplement, deferring content-level gap analysis until we see whether it is
    needed? Or commit to the full two-step flow now?
-2. **Authorization composition.** The standing ruling says compose
-   `User_Authorization` in Go. Confirm the sentence shape, given it is a
-   fragment continuing *"This work was performed in accordance with "* — e.g.
-   `our proposal dated <date> and approved on <date>` / `Purchase Order <no>,
-   emailed to <name> on <date>`.
-3. **Client block.** Should `client.*` become Go-supplied into
-   `{{Proposal_To1-4}}` / `{{Proposal_Letter1-5}}`? It would make the recipient
-   block deterministic — it shipped **empty** once — but those tags carry a
-   60-character audit and a layout constraint, and Go would then own line
-   assignment. Bigger than it looks; I would want it as its own item.
-4. **Schema versioning.** `schema_version` as an integer with additive-only
-   changes, or full semver? Report Studio and checklist v2 will both bind to
-   this, so the answer determines how breaking changes get made later.
-5. **Site-visit questions.** Confirm the trigger is *"no `Site Recon Checklist`
-   in `detected_files`"* — filename-based, which is what exists today. That is
-   load-bearing and imperfect: a checklist named oddly reads as absent, and the
-   EP gets asked questions the document could answer.
-6. **Multi-parcel UI.** `parcel_ids` is an array. Does the form need repeatable
-   inputs now, or is comma-separated text acceptable for v1 with the array as
-   the wire format?
 
----
+   **[RULED — accepted: (c), built (b)→(c). Content-level gap analysis
+   DEFERRED, but deferred *with instrumentation*.]** The reasoning given for
+   deferral aligns with the evidence — the recurring
+   `SV_AccessFrom`/`SV_AccessVia` brackets *are* absent-checklist gaps — and
+   option (a)'s failure mode is decisive: a second model surface that can
+   hallucinate a gap list into confidently wrong questions is **a new
+   fabrication surface, opened in the week we spent closing fabrication
+   surfaces.**
 
-**STOP.** No code. Awaiting rulings on §6.
+   The deferral is not indefinite; it is evidence-gated. Two log lines decide
+   when the two-step flow gets built, behind this same schema:
+   - log whenever an **EP-filled field later conflicts with parsed content**
+     (the EP answered something the documents also said, differently), and
+   - log whenever a **DATAGAP occurs despite the relevant document being
+     present** (the extraction failed on material we hold).
+
+   The first says the static core is asking for things it shouldn't; the second
+   says content-level analysis would have caught something absence-detection
+   cannot. Neither is a guess.
+
+2. **Authorization composition.** Confirm the sentence shape, given it is a
+   fragment continuing *"This work was performed in accordance with "*.
+
+   **[RULED — composed in Go, and the fragment contract is *derived from the
+   template's actual surrounding text*: found, not assumed.]** Dates convert
+   ISO → house format (`Month D, YYYY`). `basis: other` uses
+   `other_description` **verbatim** — the EP owns that wording. An unanswered
+   authorization produces `[MEG DATAGAP: authorization]` and is **never
+   inferred from the uploaded proposal**: this field exists precisely to
+   replace that inference, so falling back to it would defeat the field.
+
+3. **Client block.** Should `client.*` become Go-supplied into the
+   `Proposal_To*` / `Proposal_Letter*` tags?
+
+   **[RULED — instinct ratified: its OWN ITEM, after the Phase 6 core.]** A
+   deterministic recipient block is right eventually — it shipped **empty**
+   once, and it is header-class content — but the 60-character audit plus Go
+   owning line assignment is a small layout engine and gets its own design
+   pass. **V1:** `client.*` stays model context, now improved by the exact
+   legal spelling arriving from intake.
+
+4. **Schema versioning.** Integer additive-only, or semver?
+
+   **[RULED — integer, additive-only.]** Within a version, fields are never
+   removed or repurposed, only added. A breaking change is a new integer. The
+   server accepts known versions **only** and **rejects unknown versions
+   loudly** — never best-effort parses. Define that behaviour *now*, before
+   Report Studio binds to it. Semver is ceremony for a contract with three
+   known clients.
+
+5. **Site-visit questions.** Confirm the filename-based trigger.
+
+   **[RULED — filename-based confirmed, with one addition that fixes its
+   imperfection without a model call: a human categorization override in the
+   UI.]** The `detected_files` list is shown with its categories, and the EP
+   can re-tag any file ("this IS the Site Recon Checklist"). The
+   oddly-named-checklist case then costs the EP **one click instead of five
+   redundant questions**, the trigger logic stays deterministic, and every
+   question still carries its `Context` note so the EP can *see* why it is
+   being asked and correct upstream instead of answering around the problem.
+
+6. **Multi-parcel UI.** Repeatable inputs now, or comma-separated for v1?
+
+   **[RULED — comma-separated text is fine for v1, with `parcel_ids` as the
+   array wire format.]** The client splits on comma and trims. Each parcel is
+   **verbatim thereafter** per the house rule — spaces, dots and dashes
+   preserved, no format enforcement.
+
+### Ratified without change
+
+- The dedicated labelled §4 block (`USER ACTUAL KNOWLEDGE — 40 CFR 312`) with
+  attribution and never-silently-dropped semantics. A `known: true` disclosure
+  either reaches §4 or produces a bracket — **a vanished disclosed AUL is
+  correctly named the worst failure this phase could introduce.**
+- The per-question `Context` notes.
+- `site.county` as new Go-supplied.
+- `parcel_ids` as an array.
+
+### Kill commit — extended, and shipped
+
+The kill was **extended** at review to include the free-text scraping heuristic
+(`index.html:860-869`): anything that can silently overwrite a correct EP-typed
+value is placeholder-law-adjacent and dies with the seeds and the fallbacks.
+Shipped as `7a06e22`.
