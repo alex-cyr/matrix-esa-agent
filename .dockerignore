@@ -1,0 +1,27 @@
+# Keep the build context to what the image actually needs.
+#
+# historical/ is deliberately NOT excluded: the warm transcript cache under
+# historical/.cache is baked into the image so containers never pay extraction
+# cost on a customer request, and boot refuses to start without it.
+#
+# Everything below is either secret, client material the image has no use for,
+# or bulk that would be uploaded to the build service for nothing.
+
+# Secrets — must never reach a build context.
+.env
+.env.*
+*-service-account*.json
+
+# Client material the runtime does not read.
+tmp/
+edr_source/
+output/
+historical_excluded/
+
+# Local build and scratch artifacts.
+.git
+.gitignore
+*.exe
+*.exe~
+scratch/
+docs/
