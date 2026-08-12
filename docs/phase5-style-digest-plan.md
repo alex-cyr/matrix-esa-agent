@@ -314,3 +314,58 @@ prose is unaffected, but it is recorded rather than hidden.
 
 **HARD STOP.** Files are for review. No agent is wired; `corpus.PromptBlock()`
 is still attached.
+
+---
+
+## 9. Wiring — measured live [AMENDED]
+
+Both agents wired 2026-08-12; `corpus.PromptBlock()` no longer attached.
+
+Confirmation run (raw corpus) versus the wired run, from the `NODE ENGAGED`
+lines of two live generates:
+
+| Node | system prompt, was | now | est. input tokens |
+|---|---|---|---|
+| GeospatialEvaluator | 6,538 | 6,538 | 10,318 → 9,137 |
+| SiteReconSynthesizer | 3,200 | 3,200 | 10,016 → 8,639 |
+| **ASTMSynthesizer** | **1,328,362** | **62,320** | **342,043 → 24,151** |
+| cumulative at step 3 | | | **362,377 → 41,927** |
+
+**A 93% cut on the digest-consuming node, measured in a live run** rather than
+computed from file sizes. Banked as evidence; the digests do what they were
+built to do.
+
+## 10. The quota wall, and the global endpoint
+
+The comparison run kept failing on `ResourceExhausted`, and the cause was not
+the digests.
+
+**The limit is 1,000,000 input tokens per minute, regional (`us-central1`).**
+The daily budget is 1B and barely touched. **A self-serve increase is not
+available** — the project is too young for eligibility, and higher values route
+through Sales, which is not a path being taken.
+
+**The parser stage is what bursts it**, not the pipeline: 13 files, ~72 MB, and
+after Phase 5 the pipeline nodes are ~16k and ~19k tokens. Two fixes landed:
+
+1. `core.Pacer`, a rolling one-minute budget on the parser loop.
+2. **Charging every attempt rather than every file.** The first version paced
+   the caller's loop, which missed retries — and `Agent.Execute` re-sends the
+   entire payload on each of up to four attempts. A run showed **12 uncharged
+   parser retries**, after which a 24k-token pipeline call was rejected because
+   the budget had no idea what had been spent. The charge now happens inside
+   the retry loop, where the bytes actually go out.
+
+**The way out is the global endpoint.** The project's *global* input-tokens-per-
+minute row is unlimited, and the regional cap simply does not apply there.
+
+- The SDK supports it: `cloud.google.com/go/vertexai/genai` special-cases
+  `location == "global"` to `aiplatform.googleapis.com` instead of
+  `<region>-aiplatform.googleapis.com`.
+- **`gemini-2.5-pro` answers there.** Verified with
+  [tools/probelocation](../tools/probelocation/main.go), a deliberately tiny
+  call — six-word prompt, 16-token cap — before committing any real traffic:
+  `OK in 1.086s — prompt=7 output=0 total=19 tokens`. `us-central1` as control:
+  `OK in 1.479s`.
+
+`VERTEX_LOCATION=global` needs no code change; the knob already existed.
