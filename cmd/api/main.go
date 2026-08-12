@@ -594,8 +594,11 @@ func listProjectsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// No demo list. An empty bucket means no projects; inventing four client
+	// names to fill the screen is how a project nobody chose gets selected and
+	// generated against.
 	if len(projects) == 0 {
-		projects = []string{"Beavers_Road_Property", "Grayson_Medical_Office", "Loganville_Medical_Office_ESA", "Providence_Road"}
+		slog.Info("NO PROJECTS FOUND", "bucket", bucketName)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -665,7 +668,9 @@ func uploadFilesHandler(w http.ResponseWriter, r *http.Request) {
 
 	projName := r.FormValue("project_name")
 	if projName == "" {
-		projName = "Beavers_Road_Property"
+		slog.Warn("UPLOAD REJECTED: no project name supplied")
+		http.Error(w, "project_name is required", http.StatusBadRequest)
+		return
 	}
 
 	localDir := filepath.Join("tmp", "esa_inputs", projName)
@@ -731,8 +736,10 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req PreScreenRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		req.ProjectName = "Beavers_Road_Property"
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || strings.TrimSpace(req.ProjectName) == "" {
+		slog.Warn("PRESCREEN REJECTED: unreadable body or missing project name", "err", err)
+		http.Error(w, "project_name is required", http.StatusBadRequest)
+		return
 	}
 
 	ctx := context.Background()
@@ -1431,7 +1438,8 @@ func analyzeBucketHandler(w http.ResponseWriter, r *http.Request) {
 	cleanPrefix = strings.TrimSuffix(cleanPrefix, "/")
 	projName := cleanPrefix
 	if projName == "" {
-		projName = "Beavers_Road_Property"
+		http.Error(w, "folder_prefix is required", http.StatusBadRequest)
+		return
 	}
 
 	genReq := GenerateReportRequest{

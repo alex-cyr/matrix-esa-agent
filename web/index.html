@@ -487,7 +487,7 @@
                 </thead>
                 <tbody id="reportsTableBody">
                     <tr>
-                        <td style="font-weight: 700; color: #fff;">Beavers_Road_Property_ESA_Report.docx</td>
+                        <td style="font-weight: 700; color: #fff;">—</td>
                         <td>Phase I ESA (ASTM E1527-21)</td>
                         <td><span class="badge-status">COMPLETED</span></td>
                         <td>Eric / Matrix EP</td>
@@ -524,11 +524,11 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                 <div>
                     <label>Client Name / Entity</label>
-                    <input type="text" id="modalClient" placeholder="e.g. Arkan Homes, LLC">
+                    <input type="text" id="modalClient" placeholder="Exact legal entity name">
                 </div>
                 <div>
                     <label>Project Number</label>
-                    <input type="text" id="modalProjNo" placeholder="e.g. MEG-303259">
+                    <input type="text" id="modalProjNo" placeholder="As assigned — never invented">
                 </div>
             </div>
 
@@ -624,7 +624,7 @@
 
                     <div style="margin-bottom: 24px;">
                         <label>Special Instructions (Optional)</label>
-                        <textarea id="specialInstructions" style="width: 100%; height: 90px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; color: var(--text-main); font-size: 13.5px;" placeholder="e.g. Note recent site grading on North property boundary..."></textarea>
+                        <textarea id="specialInstructions" style="width: 100%; height: 90px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; color: var(--text-main); font-size: 13.5px;" placeholder="Anything the EP knows that the uploaded documents do not say"></textarea>
                     </div>
 
                     <div class="btn-group">
@@ -643,9 +643,11 @@
     <script>
         let currentStep = 1;
         let uploadedFiles = [];
-        let activeProject = "Beavers_Road_Property";
-        let activeProjectNo = "MEG-303259";
-        let activeClient = "Arkan Homes, LLC";
+        // No defaults. A value the user never typed is a fact nobody chose, and
+        // it reaches a signed report: "Parcel ID 10-123-456" got there this way.
+        let activeProject = "";
+        let activeProjectNo = "";
+        let activeClient = "";
 
         function showDashboard() {
             document.getElementById('dashboardView').style.display = 'block';
@@ -661,10 +663,21 @@
         }
 
         async function confirmNewReportSetup() {
-            const rawName = document.getElementById('modalProjName').value.trim() || 'Beavers_Road_Property';
+            const rawName = document.getElementById('modalProjName').value.trim();
+            const rawNo = document.getElementById('modalProjNo').value.trim();
+            const rawClient = document.getElementById('modalClient').value.trim();
+
+            // Required, not defaulted. The old fallbacks invented a project name,
+            // a client, and — worst — a RANDOM project number
+            // ('MEG-' + Math.random()), which is a plausible-looking identifier
+            // nobody assigned, printed on every page of a sealed report.
+            if (!rawName || !rawNo || !rawClient) {
+                alert('Project name, project number and client entity are all required. None of them can be guessed.');
+                return;
+            }
             activeProject = rawName.replace(/\s+/g, '_');
-            activeProjectNo = document.getElementById('modalProjNo').value.trim() || 'MEG-' + Math.floor(100000 + Math.random()*900000);
-            activeClient = document.getElementById('modalClient').value.trim() || 'Arkan Homes, LLC';
+            activeProjectNo = rawNo;
+            activeClient = rawClient;
 
             try {
                 await fetch('/api/v1/projects/create', {
@@ -843,11 +856,13 @@
             document.getElementById('progressStatusText').textContent = 'Compiling main DOCX template + Appendix packages for ' + activeProject + '...';
 
             // Gather all answers dynamically from the Pre-Screen questions container
+            // Seeded with intake values the user actually entered — nothing else.
+            // parcel_id and site_acreage used to be seeded with demo strings and
+            // overwritten only if the EP filled the field, so a blank field sent
+            // "10-123-456" to a signed report.
             const ansObj = {
                 project_number: activeProjectNo,
-                client_spelling: activeClient,
-                parcel_id: '10-123-456',
-                site_acreage: '1.7 Acres'
+                client_spelling: activeClient
             };
             const questionInputs = document.querySelectorAll('#questionsContainer input, #questionsContainer select');
             questionInputs.forEach(input => {
@@ -855,19 +870,11 @@
                 if (!val) return;
                 const rawId = input.id ? input.id.replace(/^q_/, '') : '';
                 if (rawId) ansObj[rawId] = val;
-
-                // Intelligently parse parcel ID or acreage if typed in text answers
-                const lower = val.toLowerCase();
-                if (lower.includes('parcel') || val.match(/\b\d{2}[\s\-]?\d+/)) {
-                    const pMatch = val.match(/\bParcel\s+ID\s*([\d\s\-]+)/i) || val.match(/([\d]{2}[\s\-]?[\d\s\-]{8,})/);
-                    if (pMatch) ansObj['parcel_id'] = pMatch[1].trim();
-                    else if (!ansObj['parcel_id'] || ansObj['parcel_id'] === '10-123-456') ansObj['parcel_id'] = val;
-                }
-                if (lower.includes('acre') || val.match(/\b\d+(\.\d+)?\s*acre/i)) {
-                    const aMatch = val.match(/([\d\.]+\s*acres?)/i);
-                    if (aMatch) ansObj['site_acreage'] = aMatch[1].trim();
-                    else if (!ansObj['site_acreage'] || ansObj['site_acreage'] === '1.7 Acres') ansObj['site_acreage'] = val;
-                }
+                // NO free-text scraping. A heuristic that guesses a parcel ID or
+                // an acreage out of an arbitrary answer can silently overwrite a
+                // correct value the EP typed, and it compared against the very
+                // demo strings this purge removed. Each field carries its own
+                // answer; nothing infers one field from another.
             });
 
             try {
