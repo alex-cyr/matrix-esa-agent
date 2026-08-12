@@ -156,9 +156,17 @@ func TestInjectFieldDefaultsAppliesEPAnswers(t *testing.T) {
 		"parcel_id":      "11-0022-33",
 		"site_acreage":   "4.2 Acres",
 	}, "")
-	for _, want := range []string{`"ProjectNo":"302858"`, `"ParcelID":"11-0022-33"`, `"SiteAcreage":"4.2 Acres"`} {
+	// SiteAcres, not SiteAcreage: {{SiteAcres}} is the tag the template actually
+	// contains, and the old spelling matched nothing at merge, so the EP's typed
+	// acreage never reached the document.
+	for _, want := range []string{`"ProjectNo":"302858"`, `"ParcelID":"11-0022-33"`, `"SiteAcres":"4.2 Acres"`} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %s in %s", want, out)
+		}
+	}
+	for _, dead := range []string{"SiteAcreage", "site_acreage", "SiteParcelID", "parcel_id"} {
+		if strings.Contains(out, `"`+dead+`"`) {
+			t.Errorf("dead key %q written again: it is not a template tag and matches nothing at merge", dead)
 		}
 	}
 }

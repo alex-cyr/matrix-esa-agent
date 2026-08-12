@@ -37,7 +37,7 @@ not name a function the EP did not record. If the checklist explicitly says
 what this rule permits.
 
 ## Output Formatting
-Output a flat JSON dictionary mapping your finished paragraphs strictly to the literal `{{Bracketed}}` tags used by the Template Compiler. Example:
+Output a flat JSON dictionary mapping your finished paragraphs strictly to the literal `{{...}}` tags used by the Template Compiler. Example:
 {
   "{{Sec8_0_Recon}}": "The reconnaissance of the subject site was performed on [Date] by [Inspector]. It was [Weather] with a temperature of approximately[Temp]...",
   "{{Sec8_1_CurrentUse}}": "The site is a single-family home which was vacant at the time of the site reconnaissance...",

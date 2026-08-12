@@ -293,6 +293,74 @@ const (
 
 var requiredSkills = []string{skillParser, skillGeo, skillSiteRecon, skillASTM, skillTemplate, skillHistorical}
 
+// canonicalTags is the tag inventory parsed from the template at boot. Nil only
+// if the template could not be read, in which case the process has already
+// exited.
+var canonicalTags *TagInventory
+
+// resolveTemplatePath mirrors the merge's template resolution order.
+func resolveTemplatePath() string {
+	const primary = "knowledge/ESA_PHASE_I_Template.docx"
+	if _, err := os.Stat(primary); err == nil {
+		return primary
+	}
+	return "ESA_PHASE_I_BLANK_TEMPLATE.docx"
+}
+
+// preflightTemplateTags parses the canonical tag inventory and checks the skills
+// against it.
+//
+// Binding references -- rule headings and JSON schema keys -- are machine-
+// consumed target text. A rule heading naming a tag that does not exist is a
+// rule written against nothing (Section 8.13 shipped empty for this reason). A
+// dead schema key is worse: it sits beside its live twin and the model may fill
+// either, so the same defect produces a blank on one run and content on the
+// next. Skills deploy with the container, so this is a deploy-time mistake and
+// should look like one.
+func preflightTemplateTags() {
+	inv, err := ParseCanonicalTags(resolveTemplatePath())
+	if err != nil {
+		slog.Error("STARTUP ABORTED: cannot parse the canonical tag list from the template", "err", err)
+		os.Exit(1)
+	}
+	canonicalTags = inv
+	slog.Info("/// CANONICAL TAG INVENTORY ///", "template", resolveTemplatePath(),
+		"total", len(inv.All), "slots", len(inv.Slots), "substantive", len(inv.Substantive))
+
+	var fatal bool
+	for _, path := range requiredSkills {
+		content, err := core.LoadSkill(path)
+		if err != nil {
+			continue // already preflighted above
+		}
+		report := CheckSkillTagDrift(inv, path, content)
+		if report.Empty() {
+			continue
+		}
+		if len(report.Prose) > 0 {
+			slog.Warn("SKILL/TEMPLATE TAG DRIFT (prose)", "skill", path, "tags", report.Prose,
+				"note", "explanatory text; mark deliberate references with "+driftIgnoreMarker)
+		}
+		if len(report.BindingSchema) > 0 {
+			slog.Error("SKILL/TEMPLATE TAG DRIFT (json schema): key does not exist in the template",
+				"skill", path, "tags", report.BindingSchema)
+			fatal = true
+		}
+		if len(report.BindingHeadings) > 0 {
+			// Not yet fatal: rule 3's ExecutiveSummary_Text is a known dead
+			// target whose rework rides with the Section 9.0 changes. Promote
+			// this to fatal alongside the schema tier once it lands.
+			slog.Error("SKILL/TEMPLATE TAG DRIFT (rule heading): rule target does not exist in the template",
+				"skill", path, "tags", report.BindingHeadings)
+		}
+	}
+	if fatal {
+		slog.Error("STARTUP ABORTED: a skill names a template tag that does not exist",
+			"fix", "correct the tag name in the skill, or add the tag to the template")
+		os.Exit(1)
+	}
+}
+
 // historicalDir holds completed human-authored reports used as a style baseline.
 const historicalDir = "historical"
 
@@ -793,14 +861,19 @@ func injectFieldDefaults(payloadJSON string, answers map[string]string, draftNot
 	}
 
 	// EP pre-screen answers outrank the model: a human typed these.
+	//
+	// Write only the tags the template actually contains -- {{ParcelID}} and
+	// {{SiteAcres}}. This used to spray four extra spellings (parcel_id,
+	// SiteParcelID, site_acreage, SiteAcreage), none of which exist in the
+	// template, so they matched nothing at merge. For acreage that meant BOTH
+	// spellings were dead and the EP's typed answer never reached the document
+	// at all, leaving {{SiteAcres}} unfilled on every run. Caught by
+	// TestGoSuppliedKeysExistInTemplate the first time it ran.
 	if pID, ok := answers["parcel_id"]; ok && pID != "" {
-		m["parcel_id"] = cleanBracketsAndPunctuation(pID)
 		m["ParcelID"] = cleanBracketsAndPunctuation(pID)
-		m["SiteParcelID"] = cleanBracketsAndPunctuation(pID)
 	}
 	if acreage, ok := answers["site_acreage"]; ok && acreage != "" {
-		m["site_acreage"] = cleanBracketsAndPunctuation(acreage)
-		m["SiteAcreage"] = cleanBracketsAndPunctuation(acreage)
+		m["SiteAcres"] = cleanBracketsAndPunctuation(acreage)
 	}
 
 	// RETIRED: this blanked Proposal_Letter1-5 unconditionally as a layout hack.
@@ -821,9 +894,9 @@ func injectFieldDefaults(payloadJSON string, answers map[string]string, draftNot
 	// model emitted as "{{SiteAcres}}" would otherwise never match anything.
 	cleanedMap := make(map[string]interface{})
 	for k, v := range m {
-		cleanK := strings.TrimPrefix(strings.TrimSuffix(k, "}}"), "{{")
-		cleanK = strings.TrimPrefix(strings.TrimSuffix(cleanK, "}"), "{")
-		cleanK = strings.TrimSpace(cleanK)
+		// normalizeTagKey is shared with the validator so both agree on what a
+		// key is called; see goSuppliedKeys in validate.go.
+		cleanK := normalizeTagKey(k)
 
 		if strV, isStr := v.(string); isStr {
 			cleanedMap[cleanK] = cleanBracketsAndPunctuation(strV)
@@ -1007,14 +1080,21 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate against the canonical tag list before the merge: absent table
+	// slots become "", absent substantive keys get exactly one re-prompt, and
+	// whatever is still absent becomes a visible [MEG DATAGAP] bracket rather
+	// than a blank region nobody notices. Never fails the request.
+	var validation ValidationResult
+	if canonicalTags != nil {
+		finalPayload, validation = validateAndRepair(ctx, finalPayload,
+			canonicalTags, makeReprompt(pipeline, finalPayload))
+	}
+
 	// No brace-hunting: the compiler runs with ResponseMIMEType
 	// "application/json", so its yield is a JSON object by construction.
 	finalPayload = injectFieldDefaults(finalPayload, req.Answers, baselineStatus.DraftNote())
 
-	templatePath := "knowledge/ESA_PHASE_I_Template.docx"
-	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
-		templatePath = "ESA_PHASE_I_BLANK_TEMPLATE.docx"
-	}
+	templatePath := resolveTemplatePath()
 
 	cleanProjName := strings.ReplaceAll(req.ProjectName, " ", "_")
 	timestamp := time.Now().Format("20060102_150405")
@@ -1051,8 +1131,16 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":          "success",
-		"baseline":        baselineStatus,
+		"status":   "success",
+		"baseline": baselineStatus,
+		// A deliberate blank is still a blank: the count travels with the
+		// response so it is visible without reading the logs.
+		"validation": map[string]interface{}{
+			"slots_auto_filled": validation.SlotsAutoFilled,
+			"data_gapped":       validation.DataGapped,
+			"deliberate_blanks": validation.DeliberateBlankCount(),
+			"reprompt_ran":      validation.RepromptRan,
+		},
 		"file_name":       finalFilename,
 		"gcs_output_path": fmt.Sprintf("gs://%s/esa_outputs/%s/Matrix_Cloud_Final_Report.docx", bucketName, req.ProjectName),
 		"download_url":    fmt.Sprintf("/api/v1/download?project=%s&file=%s", req.ProjectName, finalFilename),
@@ -1301,6 +1389,7 @@ func main() {
 	}
 
 	preflightHistoricalCache()
+	preflightTemplateTags()
 
 	http.HandleFunc("/api/v1/user", authUserHandler)
 	http.HandleFunc("/api/v1/projects", listProjectsHandler)

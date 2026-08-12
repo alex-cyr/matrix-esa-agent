@@ -50,6 +50,13 @@ specified the radon wording for `{{Radon_Summary}}`; the template's real slot is
 `{{Sec8_13_Radon}}`. The value was emitted, matched nothing, and was discarded.
 Fixed in `1428cb9`, but the class needs a systemic guard — §2.
 
+**[AMENDED] Why this class survived two shipped reports and a fix pass:** the
+dead key sat in the JSON schema block *beside its live twin*, so the model was
+free to fill either one. That makes the discard **nondeterministic** — the same
+bug produces a blank on one run and content on the next. Intermittent is the
+worst kind of silent: it defeats spot-checking, and it makes the defect look
+like a one-off rather than a structural fault.
+
 **Correction to repo history. [AMENDED]** CLAUDE.md's SiteRecon investigation
 note records `Sec8_13` as "filled with real site-visit content". Direct
 inspection shows it empty. This lands as an **attributed correction** — the
@@ -133,23 +140,48 @@ explain the §8.14/§8.15 blanks. `ExecutiveSummary_Text` is rule 3 — the Sect
 enumeration; its rework is larger and rides with Phase 4, where `Sec9_Item1..8`
 become substantive-mandatory anyway.
 
-### Design — phased strictness [AMENDED]
+### Scope: headings **and** the JSON schema block [AMENDED]
 
-Review chose a two-stage rollout rather than warn-only forever:
+The original design scanned rule headings only (option a). **That misses the
+schema-rivalry class entirely**, because schema keys are not rule headings — and
+schema rivalry is the variant that actually shipped, twice, nondeterministically.
 
-- **Now: warn-only.** Three of the seven are legitimate prose. Failing boot today
-  would make the check something people route around.
-- **After the seven are cleaned: rule-heading mismatches FAIL BOOT.** A rule
-  *target* — the tag named in a bolded rule heading — pointing at nothing is
-  never legitimate. Skills deploy with the container, so deploy time is the cheap
-  place to fail; the expensive place is a delivered report with a blank section.
-- **Prose references stay warn-only**, with an inline ignore marker for
-  stragglers (option (b) from the original design), so historical notes like the
-  `{{Radon_Summary}}` reference in rule 6 can be kept deliberately.
+The scan therefore covers **both kinds of machine-consumed target text**:
 
-Scanning targets rule headings (the bolded `**… (`{{Tag}}`)**` form). Log format:
-one `SKILL/TEMPLATE TAG DRIFT` line per skill file, once at boot, listing unknown
-tags and whether each is a heading target or prose.
+| Reference kind | Binding? | Why |
+|---|---|---|
+| Rule heading — `**… (`{{Tag}}`)**` | **Yes** | A rule target pointing at nothing is a rule written against nothing. |
+| JSON schema block key | **Yes** | The model fills it directly. A dead key beside its live twin lets the model pick either. |
+| Prose, examples, historical notes | No — warn | Explanatory text. Marked deliberate references are silenced. |
+
+### Phased strictness [AMENDED]
+
+Review chose a staged rollout rather than warn-only forever:
+
+- **Schema-block mismatches FAIL BOOT — now.** `ca08ead` cleaned this tier, so
+  it is already clean and can be enforced immediately. The class that had to be
+  found by hand becomes a deploy-time error from here on. **Shipped as
+  implemented.**
+- **Rule-heading mismatches: error-logged, not yet fatal.** One known dead target
+  remains — rule 3's `{{ExecutiveSummary_Text}}`, whose Section 9.0 rework rides
+  with Phase 4. Promote this tier to fatal alongside the schema tier once that
+  lands; the code carries a comment saying so at the promotion point.
+- **Prose references stay warn-only**, with the `<!-- tag-check: ignore -->`
+  marker for deliberate ones. Applied to the two references that exist precisely
+  to stop mistakes recurring: the negative reference to `{{Proposal_To5}}` and
+  the historical note naming `{{Radon_Summary}}`.
+
+Skills deploy with the container, so deploy time is the cheap place to fail. The
+expensive place is a delivered report with a blank section.
+
+Log format: one `SKILL/TEMPLATE TAG DRIFT` line per skill file per tier, once at
+boot, saying which tier each unknown tag came from.
+
+> **Tradeoff accepted:** the ignore marker lives in the skill file, which *is*
+> the system prompt, so it costs a few tokens of noise the model sees. The
+> alternative — an allowlist in Go — would be a second list that has to agree
+> with the first, which is the failure mode Addition B exists to eliminate.
+> Keeping the marker next to the reference keeps one source of truth.
 
 ---
 
@@ -186,9 +218,18 @@ definition that both consume:
 var goSuppliedKeys = map[string]bool{ ... }
 ```
 
-Current members: `ReportDate`, `DraftNote`, `ProjectNo`, `ParcelID`,
-`SiteParcelID`, `parcel_id`, `SiteAcreage`, `site_acreage` — plus
-`User_Authorization` once Phase 6 composes it.
+Current members: `ReportDate`, `DraftNote`, `ProjectNo`, `ParcelID`, `SiteAcres`
+— plus `User_Authorization` once Phase 6 composes it.
+
+**[AMENDED] The set shrank from eight to five, because four of the original
+eight were not template tags at all.** `injectFieldDefaults` was writing
+`parcel_id`, `SiteParcelID`, `site_acreage` and `SiteAcreage`; the template
+contains only `{{ParcelID}}` and `{{SiteAcres}}`. For the parcel ID one of the
+three spellings happened to be right. **For acreage, both spellings were wrong,
+so the EP's typed site acreage never reached the document on any run** — it was
+written into the void while `{{SiteAcres}}` stayed unfilled. Found by
+`TestGoSuppliedKeysExistInTemplate` the first time it ran, and fixed in the same
+commit as the validator.
 
 **Enforced by test, not by discipline.** §8 carries a divergence test: every key
 `injectFieldDefaults` writes must appear in `goSuppliedKeys`, and vice versa. The
@@ -403,7 +444,10 @@ Also add:
 | splice negative | the correct fragment `"gently slopes to the …"` stays silent |
 | splice punctuation | value ending `.` before a template `.` fires |
 | numbered-slot cleanup | empty `Sec9_Item8_DataGaps` removes its numbered paragraph; a non-empty one is untouched |
-| drift check | a rule-heading tag that does not exist produces the failure; a prose reference with an ignore marker does not |
+| drift check — classification | heading / schema / prose are bucketed correctly; an ignore-marked prose reference is silent |
+| **drift check — schema tier clean** | the real compiler skill has zero schema-block drift, so the tier that fails boot stays passable |
+| **go-supplied keys are real tags** | every member of `goSuppliedKeys` exists in the template — the check that found the lost site acreage |
+| **mandatory keys are real tags** | every member of `substantiveMandatory` exists, or it would be bracketed on every run and never render |
 
 ---
 
