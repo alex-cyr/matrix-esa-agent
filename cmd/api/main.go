@@ -1087,7 +1087,9 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 	// quota: 13 files and ~72 MB of media on a Providence generate, sent back to
 	// back. Pacing here keeps a single generate under the ceiling; the pipeline
 	// nodes are ~16k and ~19k tokens after Phase 5 and are not the pressure.
-	pacer := core.NewDefaultPacer()
+	// Charged inside Agent.Execute, before every attempt. Pacing this loop
+	// instead would miss retries, and a throttled retry re-sends the whole file.
+	parserAgent.Pacer = core.NewDefaultPacer()
 
 	var fullExtractedData string
 	var parsed, parseFailed int
@@ -1104,12 +1106,6 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 			mimeType = "image/png"
 		} else if ext == ".jpg" || ext == ".jpeg" {
 			mimeType = "image/jpeg"
-		}
-
-		if err := pacer.Reserve(ctx, core.EstimateMediaTokens(len(fileBytes)), filepath.Base(localPath)); err != nil {
-			slog.Error("PARSER PACING ABANDONED", "file", filepath.Base(localPath), "err", err)
-			http.Error(w, "request cancelled: "+err.Error(), http.StatusRequestTimeout)
-			return
 		}
 
 		slog.Info("PARSER NODE ENGAGED", "file", filepath.Base(localPath),

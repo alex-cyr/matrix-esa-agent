@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	"cloud.google.com/go/vertexai/genai"
 )
 
 // fakeClock lets the pacer be tested without sleeping.
@@ -112,5 +114,51 @@ func TestEstimateMediaTokensIsConservative(t *testing.T) {
 	got := EstimateMediaTokens(oneMB)
 	if got < 20_000 {
 		t.Errorf("EstimateMediaTokens(1MB) = %d, too low to protect a 1M/min ceiling", got)
+	}
+}
+
+// The bug this fix exists for: pacing the caller's loop charged once per file
+// while Agent.Execute could send that file up to maxRetries+1 times. On the
+// 2026-08-12 run that was 12 uncharged parser retries, and the region rejected
+// a 24k-token pipeline call because the budget had no idea what had been spent.
+//
+// Charging happens in Agent.reserve, which Execute calls before EVERY attempt.
+// This drives that method directly -- a genai client cannot be exercised
+// without credentials, so the assertion is on the charging path rather than on
+// a live retry.
+func TestAgentChargesEveryAttemptIncludingRetries(t *testing.T) {
+	p, _ := testPacer(10_000_000) // large enough that nothing blocks
+	a := &Agent{Cfg: AgentConfig{Name: "ParserAgent"}, Pacer: p}
+
+	parts := []genai.Part{
+		genai.Text("Extract text and tables from this document: big.pdf"),
+		genai.Blob{MIMEType: "application/pdf", Data: make([]byte, 9_000_000)},
+	}
+	perAttempt := estimatePartsTokens(parts)
+	if perAttempt < 100_000 {
+		t.Fatalf("estimate for a 9 MB blob is implausibly low: %d", perAttempt)
+	}
+
+	const attempts = 4 // one initial call plus maxRetries
+	for i := 0; i < attempts; i++ {
+		if err := a.reserve(context.Background(), parts); err != nil {
+			t.Fatalf("attempt %d: %v", i+1, err)
+		}
+	}
+
+	p.mu.Lock()
+	charged := p.prune(p.now())
+	p.mu.Unlock()
+
+	if want := perAttempt * attempts; charged != want {
+		t.Errorf("charged %d tokens for %d attempts, want %d — retries are not being charged, "+
+			"which is exactly the under-count that let a burst through", charged, attempts, want)
+	}
+}
+
+func TestAgentWithoutPacerIsUnpaced(t *testing.T) {
+	a := &Agent{Cfg: AgentConfig{Name: "X"}}
+	if err := a.reserve(context.Background(), []genai.Part{genai.Text("hi")}); err != nil {
+		t.Errorf("a nil pacer must be a no-op, got %v", err)
 	}
 }

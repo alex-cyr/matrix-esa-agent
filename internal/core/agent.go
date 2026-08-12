@@ -41,6 +41,39 @@ type AgentConfig struct {
 type Agent struct {
 	Cfg    AgentConfig
 	Client *genai.Client
+	// Pacer, when set, is charged before EVERY attempt -- including retries.
+	// Nil means unpaced.
+	//
+	// Pacing the caller's loop instead of the attempts under-charges badly: a
+	// throttled call retries up to maxRetries times, each re-sending the whole
+	// payload. On the 2026-08-12 run that was 12 parser retries the pacer never
+	// saw, so one 9 MB file could spend ~1.5M tokens while the budget recorded
+	// 374k. The charge has to happen where the bytes actually go out.
+	Pacer *Pacer
+}
+
+// estimatePartsTokens approximates the input cost of one request. Media
+// dominates; text is counted at the same crude chars/4 used elsewhere.
+func estimatePartsTokens(parts []genai.Part) int {
+	total := 0
+	for _, p := range parts {
+		switch v := p.(type) {
+		case genai.Blob:
+			total += EstimateMediaTokens(len(v.Data))
+		case genai.Text:
+			total += len(string(v)) / 4
+		}
+	}
+	return total
+}
+
+// reserve charges the pacer for one attempt. Separated from Execute so the
+// per-attempt charging can be exercised without a Vertex client.
+func (a *Agent) reserve(ctx context.Context, parts []genai.Part) error {
+	if a.Pacer == nil {
+		return nil
+	}
+	return a.Pacer.Reserve(ctx, estimatePartsTokens(parts), a.Cfg.Name)
 }
 
 func NewAgent(ctx context.Context, projectID, location string, cfg AgentConfig) (*Agent, error) {
@@ -78,6 +111,12 @@ func (a *Agent) Execute(ctx context.Context, parts ...genai.Part) (*Artifact, er
 	// Retries are classified (see retry.go): permanent errors surface on the
 	// first attempt, quota errors get 30/60/90s, transport blips 5/10/20s.
 	for attempt := 1; ; attempt++ {
+		// Charged before every attempt: a retry re-sends the whole payload and
+		// costs the quota exactly as much as the first try did.
+		if perr := a.reserve(ctx, parts); perr != nil {
+			return nil, fmt.Errorf("generation for %s abandoned while pacing: %w", a.Cfg.Name, perr)
+		}
+
 		resp, err = model.GenerateContent(ctx, parts...)
 		if err == nil {
 			break
