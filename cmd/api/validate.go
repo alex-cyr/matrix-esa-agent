@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -76,11 +77,73 @@ type ValidationResult struct {
 	DataGapped       []string `json:"data_gapped"`
 	DeliberateBlanks []string `json:"deliberate_blanks"`
 	UnknownKeys      []string `json:"unknown_keys"`
+	// GradientGuarded records that a bare flow direction was replaced with an
+	// EP flag because no GeoCheck source backed it.
+	GradientGuarded bool `json:"gradient_guarded"`
 }
 
 // DeliberateBlankCount travels in the /generate response: a deliberate blank is
 // still a blank, so it has to be chosen AND seen.
 func (v ValidationResult) DeliberateBlankCount() int { return len(v.DeliberateBlanks) }
+
+// --- gradient guard -----------------------------------------------------------
+
+// The geospatial-evaluator rule says GeoCheck's computed gradient is the
+// PRIMARY source and that low confidence must be flagged. A skill rule is
+// advisory, and the model has now gambled past it in both directions: one run
+// fabricated "south/southwesterly" for a parcel the EP has established drains
+// east, and the next stated the correct direction — both unflagged, both
+// unsourced. Right-by-luck is not a property worth shipping.
+//
+// So the precedence is enforced here instead: a bare direction is permitted
+// only when the parser actually found a GeoCheck gradient. Otherwise the value
+// becomes a bracket the EP will see.
+const gradientNoSourceBracket = "[EP VERIFY: groundwater flow direction — stated without GeoCheck source]"
+
+var (
+	// The parser emits this when the EDR package carries no gradient.
+	noGeoCheckMarker = regexp.MustCompile(`(?i)MEG DATAGAP:\s*NO GEOCHECK GRADIENT`)
+	// Evidence the parser did extract one.
+	geoCheckGradientRe = regexp.MustCompile(`(?i)(geo\s?check[^.\n]{0,80}(gradient|slope)|(general\s+)?topographic\s+gradient\s*[:=]|gradient[^.\n]{0,40}geo\s?check)`)
+)
+
+// GeoCheckGradientPresent reports whether upstream extraction found a GeoCheck
+// topographic gradient. The explicit data-gap marker wins over any incidental
+// mention: if the parser said it could not find one, it did not find one.
+func GeoCheckGradientPresent(upstream string) bool {
+	if noGeoCheckMarker.MatchString(upstream) {
+		return false
+	}
+	return geoCheckGradientRe.MatchString(upstream)
+}
+
+// enforceGradientGuard replaces an unsourced bare direction with a bracket.
+// Returns whether it substituted.
+func enforceGradientGuard(values map[string]interface{}, geoCheckPresent bool) bool {
+	raw, ok := values["GWFlowDir"]
+	if !ok {
+		return false // absent: tier B handles it
+	}
+	s, ok := raw.(string)
+	if !ok {
+		return false
+	}
+	trimmed := strings.TrimSpace(s)
+
+	// Nothing to guard: blank values are tier B's problem, and a value that is
+	// already a bracket is the flag working. Never double-bracket.
+	if trimmed == "" || strings.HasPrefix(trimmed, "[") {
+		return false
+	}
+	if geoCheckPresent {
+		return false
+	}
+
+	slog.Error("GRADIENT GUARD: bare flow direction with no GeoCheck source; substituting an EP flag",
+		"was", trimmed, "now", gradientNoSourceBracket)
+	values["GWFlowDir"] = gradientNoSourceBracket
+	return true
+}
 
 // normalizeTagKey strips braces the model sometimes wraps around its own keys.
 // Shared with injectFieldDefaults so both agree on what a key is called.
@@ -93,7 +156,7 @@ func normalizeTagKey(k string) string {
 
 // validateAndRepair fills slot gaps, re-prompts once for absent substantive
 // keys, and brackets whatever is still missing.
-func validateAndRepair(ctx context.Context, payloadJSON string, inv *TagInventory, reprompt RepromptFunc) (string, ValidationResult) {
+func validateAndRepair(ctx context.Context, payloadJSON string, inv *TagInventory, reprompt RepromptFunc, geoCheckPresent bool) (string, ValidationResult) {
 	var res ValidationResult
 
 	var raw map[string]interface{}
@@ -186,6 +249,10 @@ func validateAndRepair(ctx context.Context, payloadJSON string, inv *TagInventor
 	}
 	sort.Strings(res.DataGapped)
 
+	// Gradient guard: the geospatial rule's source precedence, enforced where the
+	// model cannot gamble past it. Runs after recovery so it sees the final value.
+	res.GradientGuarded = enforceGradientGuard(values, geoCheckPresent)
+
 	logValidation(res)
 
 	out, err := json.Marshal(values)
@@ -215,7 +282,8 @@ func logValidation(res ValidationResult) {
 		"recovered", len(res.Recovered),
 		"data_gapped", len(res.DataGapped),
 		"deliberate_blanks", len(res.DeliberateBlanks),
-		"unknown_keys", len(res.UnknownKeys))
+		"unknown_keys", len(res.UnknownKeys),
+		"gradient_guarded", res.GradientGuarded)
 
 	// A deliberate blank is still a blank. It must be visible, or "intentional"
 	// is indistinguishable from "forgotten" -- which is the ambiguity that

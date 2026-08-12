@@ -698,6 +698,13 @@ demonstrated once.
   currently serves arbitrary paths with no auth.~~ DONE. See the HTTP layer
   notes above.
 - Gate or delete `analyzeBucketHandler`'s hardcoded-answers path.
+- **GeoCheck gradient as a structured parser field, plus a stated-direction
+  match check.** The gradient guard proves a GeoCheck gradient *was extracted*;
+  it cannot prove the model's stated direction *matches* it, because the
+  gradient arrives as prose. Making it a structured field would let the
+  validator compare the two and bracket a mismatch — strictly better, strictly
+  harder, and a parser-contract change that deserves its own review rather than
+  being folded into the guard.
 - **Owner extraction robustness.** On the 2026-08-12 comparison runs the same
   13 source files produced `Diane Pete & Brian J Pete` on one run and
   `[MEG DATAGAP: Current owner not identified in provided documents]` on

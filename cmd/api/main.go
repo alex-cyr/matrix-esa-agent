@@ -1165,8 +1165,14 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 	// than a blank region nobody notices. Never fails the request.
 	var validation ValidationResult
 	if canonicalTags != nil {
+		// Whether a bare flow direction is allowed depends on what the PARSER
+		// found, so the guard is told from the parser payload rather than from
+		// the compiler's own output — the compiler is the thing being checked.
+		geoCheck := GeoCheckGradientPresent(fullExtractedData)
+		slog.Info("GRADIENT SOURCE", "geocheck_gradient_present", geoCheck)
+
 		finalPayload, validation = validateAndRepair(ctx, finalPayload,
-			canonicalTags, makeReprompt(pipeline, finalPayload))
+			canonicalTags, makeReprompt(pipeline, finalPayload), geoCheck)
 	}
 
 	// No brace-hunting: the compiler runs with ResponseMIMEType
@@ -1218,6 +1224,7 @@ func generateReportHandler(w http.ResponseWriter, r *http.Request) {
 			"slots_auto_filled": validation.SlotsAutoFilled,
 			"data_gapped":       validation.DataGapped,
 			"deliberate_blanks": validation.DeliberateBlankCount(),
+			"gradient_guarded":  validation.GradientGuarded,
 			"reprompt_ran":      validation.RepromptRan,
 		},
 		"file_name":       finalFilename,

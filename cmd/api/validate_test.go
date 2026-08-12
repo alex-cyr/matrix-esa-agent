@@ -51,7 +51,7 @@ func TestValidatorAutoFillsSlotKeys(t *testing.T) {
 		func(context.Context, []string) (map[string]string, error) {
 			reprompted = true
 			return nil, nil
-		})
+		}, true)
 
 	got := decode(t, out)
 	if got["Up7_Name"] != "" || got["Down3_Address"] != "" {
@@ -79,7 +79,7 @@ func TestValidatorRepromptsThenBracketsMandatoryKey(t *testing.T) {
 		func(_ context.Context, missing []string) (map[string]string, error) {
 			asked = missing
 			return map[string]string{}, nil // model recovers nothing
-		})
+		}, true)
 
 	if len(asked) != 1 || asked[0] != "Sec9_Item3_Wetlands" {
 		t.Fatalf("re-prompt asked for %v, want [Sec9_Item3_Wetlands]", asked)
@@ -102,7 +102,7 @@ func TestValidatorRecoversFromReprompt(t *testing.T) {
 	out, res := validateAndRepair(context.Background(), `{}`, inv,
 		func(_ context.Context, missing []string) (map[string]string, error) {
 			return map[string]string{"Sec9_Item3_Wetlands": "No wetlands were mapped."}, nil
-		})
+		}, true)
 
 	if got := decode(t, out)["Sec9_Item3_Wetlands"]; got != "No wetlands were mapped." {
 		t.Errorf("recovered value not applied: %v", got)
@@ -120,7 +120,7 @@ func TestValidatorBracketsEmptyRepromptAnswerForMandatoryKey(t *testing.T) {
 	out, _ := validateAndRepair(context.Background(), `{}`, inv,
 		func(context.Context, []string) (map[string]string, error) {
 			return map[string]string{"DataGaps_Text": ""}, nil
-		})
+		}, true)
 
 	if got := decode(t, out)["DataGaps_Text"]; got != "[MEG DATAGAP: DataGaps_Text]" {
 		t.Errorf("empty honest answer must become a bracket, got %v", got)
@@ -134,7 +134,7 @@ func TestValidatorEmptyStringSemantics(t *testing.T) {
 
 	out, res := validateAndRepair(context.Background(),
 		`{"DataGaps_Text":"","Sanborn_Summary":""}`, inv,
-		func(context.Context, []string) (map[string]string, error) { return nil, nil })
+		func(context.Context, []string) (map[string]string, error) { return nil, nil }, true)
 
 	got := decode(t, out)
 	if got["DataGaps_Text"] != "[MEG DATAGAP: DataGaps_Text]" {
@@ -162,7 +162,7 @@ func TestValidatorIgnoresGoSuppliedKeys(t *testing.T) {
 		func(_ context.Context, missing []string) (map[string]string, error) {
 			asked = missing
 			return nil, nil
-		})
+		}, true)
 
 	if len(asked) != 0 {
 		t.Errorf("Go-supplied keys were re-prompted: %v", asked)
@@ -208,7 +208,7 @@ func TestValidatorNormalizesBracedKeys(t *testing.T) {
 		func(context.Context, []string) (map[string]string, error) {
 			t.Error("a braced key is present, not missing")
 			return nil, nil
-		})
+		}, true)
 
 	if got := decode(t, out)["SiteAcres"]; got != "1.7 Acres" {
 		t.Errorf("braced key not normalized: %v", got)
@@ -222,7 +222,7 @@ func TestValidatorRecordsUnknownKeys(t *testing.T) {
 	inv := testInventory(t, "OwnerName")
 
 	_, res := validateAndRepair(context.Background(),
-		`{"OwnerName":"Acme","InventedByModel":"x"}`, inv, nil)
+		`{"OwnerName":"Acme","InventedByModel":"x"}`, inv, nil, true)
 
 	if len(res.UnknownKeys) != 1 || res.UnknownKeys[0] != "InventedByModel" {
 		t.Errorf("UnknownKeys = %v, want [InventedByModel]", res.UnknownKeys)
@@ -236,7 +236,7 @@ func TestValidatorSurvivesRepromptFailure(t *testing.T) {
 	out, res := validateAndRepair(context.Background(), `{}`, inv,
 		func(context.Context, []string) (map[string]string, error) {
 			return nil, errors.New("429 quota exhausted")
-		})
+		}, true)
 
 	if res.RepromptErr == "" {
 		t.Error("re-prompt error not recorded")
@@ -249,7 +249,7 @@ func TestValidatorSurvivesRepromptFailure(t *testing.T) {
 // Unparseable input passes through rather than being destroyed.
 func TestValidatorPassesThroughUnparseablePayload(t *testing.T) {
 	inv := testInventory(t, "OwnerName")
-	out, _ := validateAndRepair(context.Background(), `not json at all`, inv, nil)
+	out, _ := validateAndRepair(context.Background(), `not json at all`, inv, nil, true)
 	if out != `not json at all` {
 		t.Errorf("payload was altered: %q", out)
 	}
@@ -332,6 +332,85 @@ func TestSubstantiveMandatoryKeysExistInTemplate(t *testing.T) {
 		if !inv.Has(key) {
 			t.Errorf("substantiveMandatory names %q, which is not a template tag — "+
 				"it would be bracketed on every run and never render", key)
+		}
+	}
+}
+
+// --- gradient guard -------------------------------------------------------------
+//
+// The geospatial rule makes GeoCheck the primary source and requires low
+// confidence to be flagged. The model gambled past that rule in both
+// directions on live runs: it fabricated "south/southwesterly" for a parcel the
+// EP has established drains east, then stated the correct direction on the next
+// run — unflagged and unsourced both times. Right-by-luck is what this guard
+// removes.
+
+func TestGradientGuardBracketsBareDirectionWithoutGeoCheck(t *testing.T) {
+	inv := testInventory(t, "GWFlowDir")
+
+	out, res := validateAndRepair(context.Background(),
+		`{"GWFlowDir":"easterly"}`, inv, nil, false)
+
+	got := decode(t, out)["GWFlowDir"]
+	if got != gradientNoSourceBracket {
+		t.Errorf("bare direction with no GeoCheck source survived: %v", got)
+	}
+	if !res.GradientGuarded {
+		t.Error("GradientGuarded not recorded")
+	}
+}
+
+func TestGradientGuardAllowsBareDirectionWithGeoCheck(t *testing.T) {
+	inv := testInventory(t, "GWFlowDir")
+
+	out, res := validateAndRepair(context.Background(),
+		`{"GWFlowDir":"easterly"}`, inv, nil, true)
+
+	if got := decode(t, out)["GWFlowDir"]; got != "easterly" {
+		t.Errorf("a GeoCheck-sourced direction was altered: %v", got)
+	}
+	if res.GradientGuarded {
+		t.Error("GradientGuarded set when a source existed")
+	}
+}
+
+// An existing flag is the rule already working. Never double-bracket it.
+func TestGradientGuardPassesExistingBracketThrough(t *testing.T) {
+	inv := testInventory(t, "GWFlowDir")
+	const flagged = "[EP VERIFY: groundwater flow direction]"
+
+	out, res := validateAndRepair(context.Background(),
+		`{"GWFlowDir":"`+flagged+`"}`, inv, nil, false)
+
+	if got := decode(t, out)["GWFlowDir"]; got != flagged {
+		t.Errorf("existing bracket was rewritten: %v", got)
+	}
+	if res.GradientGuarded {
+		t.Error("GradientGuarded set for a value that was already flagged")
+	}
+}
+
+func TestGeoCheckGradientDetection(t *testing.T) {
+	present := []string{
+		"GeoCheck Topographic Gradient: East",
+		"geocheck summary — general topographic slope is to the east",
+		"General Topographic Gradient: SW",
+	}
+	for _, s := range present {
+		if !GeoCheckGradientPresent(s) {
+			t.Errorf("GeoCheckGradientPresent(%q) = false, want true", s)
+		}
+	}
+
+	absent := []string{
+		"",
+		"no gradient information was located in the package",
+		// The parser's explicit marker must win over any incidental mention.
+		"GeoCheck Topographic Gradient discussion. [MEG DATAGAP: NO GEOCHECK GRADIENT — EP TO VERIFY GROUNDWATER FLOW DIRECTION]",
+	}
+	for _, s := range absent {
+		if GeoCheckGradientPresent(s) {
+			t.Errorf("GeoCheckGradientPresent(%q) = true, want false", s)
 		}
 	}
 }
