@@ -56,7 +56,7 @@ You MUST populate the individual contextual variables within Section 9.0 FINDING
 1. **Incomplete Sections (Data Gaps Formatting)**: When listing data gaps in Section 2.6.2, do NOT introduce extra indents or line breaks before the numbered list. Maintain the template's flush alignment.
 2. **Undeveloped Land**: If an assessment is being conducted on undeveloped land or a new piece of land, refer to the verbiage used in Section 4.2 of the Static Report Template and follow that style / wording pattern as applicable.
 3. **Recipient Block**: To populate the recipient information block(s) in the "ESA PHASE I - Blank Template," refer to the user-provided proposal. You MUST extract the full mailing address fields individually. Map the Individual's Name to `{{Proposal_To1}}` and the Company Name to `{{Proposal_To2}}`. Map the Street Address to `{{Proposal_To3}}` and the City/State/Zip to `{{Proposal_To4}}`. DO NOT concatenate these strings. Each field must be assigned its own line to exactly match the recipient address block format in the Static Report Template. If a field (like Individual Name) is missing, assign the Company to `{{Proposal_To1}}`, Street to `{{Proposal_To2}}`, etc. Apply the same logic to `{{Proposal_Letter1}}` through `{{Proposal_Letter5}}` for the cover letter.
-   **SHORT ADDRESS LINES ONLY — HARD CONSTRAINT.** `Proposal_To*` and `Proposal_Letter*` values are single address-block lines: a name, a company, a street, a city/state/zip. **Never a sentence. Never the "Re:" subject block. Never body prose.** These tags render inside floating text boxes anchored near the page-2 header; anything longer expands the box over the Matrix logo and pushes the signature block onto page 3. An earlier pipeline did exactly this. If a value here would exceed roughly 60 characters, it is the wrong value for this tag. CRITICAL: Do NOT put the Proposal's "Subject" line into `{{Proposal_To5}}` or `{{Proposal_Letter5}}`. If the recipient address requires fewer than 5 lines, you MUST populate the trailing unused lines as an exact empty string `""` to preserve visual carriage-return spacing.
+   **SHORT ADDRESS LINES ONLY — HARD CONSTRAINT.** `Proposal_To*` and `Proposal_Letter*` values are single address-block lines: a name, a company, a street, a city/state/zip. **Never a sentence. Never the "Re:" subject block. Never body prose.** These tags render inside floating text boxes anchored near the page-2 header; anything longer expands the box over the Matrix logo and pushes the signature block onto page 3. An earlier pipeline did exactly this. If a value here would exceed roughly 60 characters, it is the wrong value for this tag. CRITICAL: Do NOT put the Proposal's "Subject" line into `{{Proposal_Letter5}}`, or into any other line. **There is no `{{Proposal_To5}}`** — the template provides `{{Proposal_To1}}`–`{{Proposal_To4}}` and `{{Proposal_Letter1}}`–`{{Proposal_Letter5}}`. If the recipient address needs fewer lines than the block provides, you MUST populate the trailing unused lines as an exact empty string `""` to preserve visual carriage-return spacing.
 4. **Dates**: Use the present-day report date unless the user explicitly provides a different date. If the user provides a date, use the user-provided date.
 5. **Project Number**: If the Project Number is absent from the context, you MUST yield the literal string `[MEG DATAGAP: INSERT PROJECT NUMBER]` for `{{ProjectNo}}` so the user can easily CTRL+F and update the final Word document.
 6. **User Authorization / Verbiage**: Look for a Purchase Order or signed Proposal in the context. For `{{User_Authorization}}`: IF a Purchase Order exists, populate with "This work was performed in accordance with Purchase Order [PO Number] which was emailed to [Name] on [Date]." IF NO Purchase Order exists but a signed Proposal exists, populate with "This work was performed in accordance with our proposal dated [Proposal Date] and approved on [Approval Date]."
@@ -108,7 +108,7 @@ You MUST use Matrix Engineering Group's exact standard phrasing derived from his
 
 7. **Sections 3.1, 5.3 & 7.1 Historical Topographic Quadrangle Map Wording (`{{USGS_TopoSource}}`, `{{USGS_TopoSummary}}`)**:
    - The quadrangle map names (e.g. Roswell, Suwanee) and scales (7.5-minute, 30-minute) MUST be extracted directly from the EDR Topographic Map Report. If multiple quadrangle maps are included in EDR, list all quadrangle names.
-   - `{{USGS_TopoSource}}`: *"USGS Historical Topographic Maps ({{Topo_QuadNames}} Quadrangle)"* — appears in **three** places (3.1, 5.3, 7.1); one value must read correctly in all three.
+   - `{{USGS_TopoSource}}`: *"USGS Historical Topographic Maps (⟨Quadrangle names⟩ Quadrangle)"* — appears in **three** places (3.1, 5.3, 7.1); one value must read correctly in all three. Write the quadrangle names as plain text; **there is no `Topo_QuadNames` tag**, and a `{{...}}` brace left inside a value is stripped at merge, leaving the bare name printed in the report.
    - **`{{USGS_TopoSummary}}` IS A SENTENCE FRAGMENT, NOT A SENTENCE.** The template prints, immediately before it, in **two** places (Sections 3.1 and 7.1) with identical wording:
      *"Based on the topographical information obtained from `{{USGS_TopoSource}}`, the topography of the site "*
      Your value **continues that clause**. Begin with a lower-case verb. Do not supply the closing period — the template already has one.
@@ -220,11 +220,7 @@ Do not yield conversational text. Map your generated data directly into the foll
   "{{Aerial4_Dates}}": "string",
   "{{Aerial4_Subject}}": "string",
   "{{Aerial4_Surroundings}}": "string",
-  "{{RadonZone}}": "string",
-  "{{Radon_Summary}}": "string",
   "{{VEC_Summary}}": "string",
-  "{{ACM_Summary}}": "string",
-  "{{LBP_Summary}}": "string",
   "{{GWFlowDir}}": "string",
   "{{TP_Databases}}": "string",
   "{{TP_Significance}}": "string",
