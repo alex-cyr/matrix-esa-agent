@@ -129,6 +129,42 @@ Template resolution order: `knowledge/ESA_PHASE_I_Template.docx`, falling back t
 
 Env: `GOOGLE_CLOUD_PROJECT` (default `matrix-esa-production`), `VERTEX_LOCATION` (`us-central1`), `ESA_INPUT_BUCKET` (`matrix-esa-production-vault`), `PORT`. The CLI reads `.env` via godotenv and `GCP_PROJECT`. Auth is Application Default Credentials.
 
+### Deploys are image-based, never source-based
+
+**Service:** `matrix-esa-agent-git` · **region:** `europe-west1` · **project:**
+`matrix-esa-production`. Env vars on the service: `VERTEX_LOCATION=global`,
+`VERTEX_TOKENS_PER_MINUTE=5000000`.
+
+**The Cloud Build trigger is DISABLED, deliberately** (`fb05d786-…`, fired on
+push to `vertex-api-migration`). It source-deployed from GitHub, and
+`historical/` is gitignored client material — so every triggered build produced
+a container with **no baselines**, which the strict preflight correctly refused
+to start: `STARTUP ABORTED … baseline="0/0"`. Revisions 00019–00028 are that
+failure repeating on every push. Re-enabling the trigger re-breaks the service.
+
+Deploy procedure:
+
+```powershell
+$env:CLOUDSDK_PYTHON="$env:LOCALAPPDATA\Google\Cloud SDK\google-cloud-sdk\platform\bundledpython\python.exe"
+gcloud builds submit --project matrix-esa-production --region europe-west1 `
+  --tag europe-west1-docker.pkg.dev/matrix-esa-production/cloud-run-source-deploy/matrix-esa-agent-baked:<sha> .
+gcloud run deploy matrix-esa-agent-git --project matrix-esa-production --region europe-west1 `
+  --image <same tag> --set-env-vars "VERTEX_LOCATION=global,VERTEX_TOKENS_PER_MINUTE=5000000"
+```
+
+`CLOUDSDK_PYTHON` is required on this machine — the Windows Store Python alias
+shadows the interpreter gcloud needs.
+
+**Two ignore files, both load-bearing, for different reasons.** `.dockerignore`
+governs the Docker build; **`.gcloudignore` governs what is uploaded at all**,
+and without it `gcloud builds submit` falls back to `.gitignore` — which
+excludes `historical/*`. That produced a clean build of an image with an empty
+`historical/`, and a revision that aborted at boot exactly like the trigger's.
+Both files must let `historical/` through.
+
+Rollback is routing traffic back to the previous revision; old revisions are
+left in place.
+
 ### Vertex quota — the binding limit is per-minute, per-region
 
 **Region is `us-central1`.** `VERTEX_LOCATION` is unset in `.env`, the Dockerfile and every yaml, so the hardcoded default applies. A quota increase is filed against that region's row. *(If the deployed Cloud Run service sets `VERTEX_LOCATION` in its own service config, confirm there too — the repo cannot see it.)*
