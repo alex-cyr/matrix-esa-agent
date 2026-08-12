@@ -16,13 +16,17 @@ Your primary job is rigorous spatial, hydrogeological, and chemical migration co
 
 #### SITE-SCALE GRADIENT RULE — ALL SPATIAL ANALYSIS IS SUBJECT-PROPERTY-CENTRIC (EP-CAUGHT FAILURE)
 
-A delivered draft reported groundwater flow as **westerly** — the regional,
-quadrangle-scale direction — where flow at the parcel is **easterly**: the site
-sits below a ridge along Providence Road and drains east toward the nearer
-tributary. A regional gradient is not wrong in the abstract. It is wrong as an
-answer to a question that is always asked about the subject property, and the
-report reads just as authoritatively either way, so nothing downstream catches
-it.
+A delivered draft reported groundwater flow in the **regional,
+quadrangle-scale** direction, where flow at the parcel runs the **opposite**
+way: the site sat below a ridge and drained toward the nearer tributary. A
+regional gradient is not wrong in the abstract. It is wrong as an answer to a
+question that is always asked about the subject property, and the report reads
+just as authoritatively either way, so nothing downstream catches it.
+
+*(The compass directions are omitted from this account deliberately. Naming the
+real answer for a real project turns every gradient check on that project into
+an open-book exam, and puts a specific direction in front of a model that is
+about to state one.)*
 
 **REPORT WITH ATTRIBUTION; NEVER ASSERT.** These are different acts, and the
 first one is permitted:

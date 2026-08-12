@@ -1,7 +1,7 @@
 # Phase 5 — Style Digest
 
-**Status: APPROVED WITH RULINGS** (2026-08-12). All five questions answered and
-one addition required; see §7. Nothing built yet beyond Stage A.
+**Status: DONE** (2026-08-12). Closed on scope; see §11. All five questions answered and
+one addition required; see §7.
 
 Author: Claude Code · Repo state: `2e2dc11`
 
@@ -369,3 +369,68 @@ minute row is unlimited, and the regional cap simply does not apply there.
   `OK in 1.479s`.
 
 `VERTEX_LOCATION=global` needs no code change; the knob already existed.
+
+---
+
+## 11. Close-out — Phase 5 DONE
+
+Closed on scope 2026-08-12. Every claim the phase owns is proven; the two open
+items are model nondeterminism that predates and outlives the digests, and they
+have deterministic homes rather than more runs.
+
+### Proven
+
+| | |
+|---|---|
+| Per-run pipeline input | **712,959 → 76,955 est. tokens (89%)** |
+| ASTM Synthesizer system prompt | 1,328,362 → 62,320 chars |
+| Template Compiler system prompt | 1,353,061 → 74,680 chars |
+| Validator outcome | `data_gapped=2`, **same two keys across all three runs** |
+| Unreplaced tags / fractured survivors | 0 / 0 |
+| Parser completeness | 13/13, zero failures |
+
+**Better than baseline, and it held across both digest runs:** Sections 9 and 10
+name **all three parcels** (272 Lantern Ridge Court, 12725 and 12735 Providence
+Road) where the baseline named only 12725 — the multi-parcel rule working.
+
+**The masking fix is verified live.** The fabricated `south/southwesterly` is
+gone; the re-run produced `easterly`, which matches the EP's established
+parcel-scale finding.
+
+### Nondeterminism, recorded honestly
+
+Three runs on **identical inputs**:
+
+- `deliberate_blanks` came out **1, then 4, then 3** — a different key set each
+  time (`Aerial4_*` in one, `TP_ListedStatus`/`TP_Significance` in another).
+- **Owner naming varied**: `Diane Pete & Brian J Pete` on one run,
+  `[MEG DATAGAP: Current owner not identified…]` on another, same 13 files.
+- **Gradient varied**: a fabricated direction, then a correct one — both
+  unflagged.
+
+Two runs is not statistics, and none of this is claimed as proof in either
+direction. It is recorded because the variance is wide enough that no single
+run should be read as evidence about the digests.
+
+### Handed on rather than closed here
+
+1. **Gradient guard** — commissioned as a Phase-4-family addendum. A bare
+   directional value in `{{GWFlowDir}}` is permitted only when the parser's
+   GeoCheck gradient field is non-empty; otherwise the validator substitutes
+   `[EP VERIFY: groundwater flow direction — stated without GeoCheck source]`.
+   This converts right-by-luck into right-by-construction: the gradient rule's
+   source precedence, enforced in Go where the model cannot gamble past it.
+2. **Owner extraction robustness** → backlog (parser emphasis on tax-record /
+   title owner).
+3. **`"a easterly"`** → backlog, next deliberate template revision.
+
+### Testing note for whoever picks up gradient work
+
+The geospatial-evaluator's failure narrative no longer names the compass
+directions. Naming Providence's real answer made every gradient check on that
+project an open-book exam, and put a specific direction in front of a model
+about to state one.
+
+**Gradient-discipline testing needs a non-Providence project.** Providence is
+now the site whose correct answer is recorded in the repo, in CLAUDE.md, and in
+this document — it cannot be a blind test of anything gradient-related again.
