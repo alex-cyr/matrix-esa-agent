@@ -1,0 +1,32 @@
+# Build-context upload rules for `gcloud builds submit`.
+#
+# THIS FILE EXISTS BECAUSE OF A SILENT FAILURE. Without a .gcloudignore, gcloud
+# falls back to .gitignore — which excludes `historical/*` as client material.
+# The warm transcript cache therefore never reached Cloud Build, the image was
+# built with an empty historical/, and the revision aborted at boot with
+# `baseline="0/0"`. The image looked fine; the container could not start.
+#
+# .dockerignore governs the Docker build. This file governs what is uploaded in
+# the first place. Both must allow historical/ through, for different reasons.
+
+# Secrets — must never reach a build context.
+.env
+.env.*
+*-service-account*.json
+
+# Client material the runtime does not read.
+tmp/
+edr_source/
+output/
+historical_excluded/
+
+# Local build and scratch artifacts.
+.git
+.gitignore
+*.exe
+*.exe~
+scratch/
+docs/
+
+# historical/ is deliberately absent from this list. It carries the warm cache
+# the image is built around, and boot refuses to start without it.
