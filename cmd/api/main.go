@@ -784,7 +784,28 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	questions := []PreScreenQuestion{
+	questions := prescreenQuestions()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(PreScreenResponse{
+		Status:        "success",
+		Project:       req.ProjectName,
+		Questions:     questions,
+		DetectedFiles: catFiles,
+	})
+}
+
+// prescreenQuestions is the pre-screen form.
+//
+// NO ANSWER MAY BE PRE-FILLED. These values are written to real template tags
+// by the deterministic path, so a form default is a fact nobody typed appearing
+// in a signed report -- which is how "Parcel ID 10-123-456" reached the
+// delivered Providence draft. TestPrescreenFormShipsNoPrefilledAnswers enforces
+// this.
+//
+// Still hardcoded as a fixed list; the dynamic-prescreen rework is Phase 6.
+func prescreenQuestions() []PreScreenQuestion {
+	return []PreScreenQuestion{
 		{
 			ID:         "parcel_id",
 			Category:   "Client & Project Information",
@@ -792,7 +813,7 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 			Context:    "The site address was extracted, but standard tax parcel numbers were blank or fragmented in the source files.",
 			Type:       "text",
 			IsRequired: true,
-			Answer:     "10-123-456",
+			Answer:     "", // never pre-fill: a form default becomes a fact in a signed report
 		},
 		{
 			ID:         "site_acreage",
@@ -801,17 +822,20 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 			Context:    "Ensure site acreage is accurate to compute density and historical land use ratios.",
 			Type:       "text",
 			IsRequired: true,
-			Answer:     "1.7 Acres",
+			Answer:     "", // never pre-fill
 		},
 		{
 			ID:         "client_spelling",
 			Category:   "Client & Project Information",
 			Question:   "Which client entity name should be printed on the recipient block?",
 			Context:    "Confirm exact client corporate entity name.",
-			Type:       "select",
-			Options:    []string{"Arkan Homes, LLC", "Arkan Development Group, LLC", "Other (Custom)"},
+			// Free text, not a select. The options here were two named Arkan
+			// entities, which pinned the question itself to one client: on any
+			// other project the EP's only choices were the wrong company or
+			// "Other".
+			Type:       "text",
 			IsRequired: true,
-			Answer:     "Arkan Homes, LLC",
+			Answer:     "", // never pre-fill
 		},
 		{
 			ID:         "site_recon_ast_ust",
@@ -821,17 +845,9 @@ func prescreenHandler(w http.ResponseWriter, r *http.Request) {
 			Type:       "select",
 			Options:    []string{"No ASTs or USTs observed", "Active AST observed with secondary containment", "Historical UST fill port observed (Requires REC Evaluation)", "Not Inspected / Data Gap"},
 			IsRequired: true,
-			Answer:     "No ASTs or USTs observed",
+			Answer:     "", // never pre-fill: this one pre-answers a FIELD OBSERVATION
 		},
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(PreScreenResponse{
-		Status:        "success",
-		Project:       req.ProjectName,
-		Questions:     questions,
-		DetectedFiles: catFiles,
-	})
 }
 
 func cleanBracketsAndPunctuation(s string) string {
@@ -884,12 +900,13 @@ func injectFieldDefaults(payloadJSON string, answers map[string]string, draftNot
 	// spellings were dead and the EP's typed answer never reached the document
 	// at all, leaving {{SiteAcres}} unfilled on every run. Caught by
 	// TestGoSuppliedKeysExistInTemplate the first time it ran.
-	if pID, ok := answers["parcel_id"]; ok && pID != "" {
-		m["ParcelID"] = cleanBracketsAndPunctuation(pID)
-	}
-	if acreage, ok := answers["site_acreage"]; ok && acreage != "" {
-		m["SiteAcres"] = cleanBracketsAndPunctuation(acreage)
-	}
+	//
+	// Both are written unconditionally. A key listed in goSuppliedKeys is
+	// skipped by the validator, so if Go declines to write it nothing else
+	// will -- the contract is that Go-supplied means Go guarantees a value,
+	// even when that value is a bracket.
+	m["ParcelID"] = prescreenValue(answers["parcel_id"], "parcel ID", stripParcelLabel)
+	m["SiteAcres"] = prescreenValue(answers["site_acreage"], "site acreage", stripAcreUnit)
 
 	// RETIRED: this blanked Proposal_Letter1-5 unconditionally as a layout hack.
 	//
@@ -1365,11 +1382,13 @@ func analyzeBucketHandler(w http.ResponseWriter, r *http.Request) {
 
 	genReq := GenerateReportRequest{
 		ProjectName: projName,
-		Answers: map[string]string{
-			"parcel_id":       "10-123-456",
-			"site_acreage":    "1.7 Acres",
-			"client_spelling": "Arkan Homes, LLC",
-		},
+		// No answers. This path used to inject the same demo placeholders the
+		// pre-screen form shipped -- parcel 10-123-456, 1.7 Acres, a named
+		// client -- straight into a generate. With the deterministic path now
+		// writing pre-screen answers to real tags, that would stamp one
+		// client's demo data onto whatever bucket was analyzed. Absent answers
+		// become visible [MEG DATAGAP] brackets instead.
+		Answers: map[string]string{},
 	}
 
 	bodyBytes, _ := json.Marshal(genReq)

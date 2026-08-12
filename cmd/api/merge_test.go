@@ -159,7 +159,9 @@ func TestInjectFieldDefaultsAppliesEPAnswers(t *testing.T) {
 	// SiteAcres, not SiteAcreage: {{SiteAcres}} is the tag the template actually
 	// contains, and the old spelling matched nothing at merge, so the EP's typed
 	// acreage never reached the document.
-	for _, want := range []string{`"ProjectNo":"302858"`, `"ParcelID":"11-0022-33"`, `"SiteAcres":"4.2 Acres"`} {
+	// "4.2 Acres" in, "4.2" out: the template already supplies the unit, so the
+	// fragment contract strips it. See TestPrescreenFragmentContracts.
+	for _, want := range []string{`"ProjectNo":"302858"`, `"ParcelID":"11-0022-33"`, `"SiteAcres":"4.2"`} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %s in %s", want, out)
 		}
