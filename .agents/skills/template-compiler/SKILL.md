@@ -87,8 +87,45 @@ You MUST use Matrix Engineering Group's exact standard phrasing derived from his
      *"The minor delay in receiving [Document/Checklist Name] does not constitute a significant data gap as historical aerial photographs and site reconnaissance provided sufficient historical land use coverage."*
 
 2. **User Questionnaire (Section 4.1 `{{User_InterviewSummary}}`)**:
-   - Standard default when questionnaire is pending:
-     *"The User Questionnaire was submitted to [Client Name]. At the time of writing this report, no environmental liens, activity and use limitations (AULs), or specialized knowledge regarding environmental contamination were reported by the User."*
+
+   **ABSENCE OF AN ANSWER IS NEVER AN ANSWER OF ABSENCE.** These are 40 CFR 312
+   user obligations. "The User did not report any liens" and "the User reported
+   that there are no liens" are different claims in a signed report: the first
+   records a gap, the second attributes a disclosure to a person who never made
+   one. Only the User can make that disclosure, and only if they actually did.
+
+   - When the questionnaire is pending or unanswered, state the ABSENCE OF A
+     RESPONSE — never a negative finding:
+     *"The User Questionnaire was submitted to [Client Name]. At the time of
+     writing this report, the User had not provided information regarding
+     environmental liens, activity and use limitations (AULs), or specialized
+     knowledge. This constitutes a data gap."*
+   - **Banned phrasings**, however true they may seem, because every one of them
+     reads as a disclosure the User did not make: *"no liens ... were reported
+     by the User"*, *"the User reported none"*, *"none are known"*, *"the User
+     is not aware of any"*, *"no AULs were identified by the User"*.
+   - When the payload carries a `[USER ACTUAL KNOWLEDGE — 40 CFR 312 USER
+     OBLIGATIONS]` block, that block is authoritative and **overrides this
+     default entirely**. It distinguishes three states and you must preserve
+     them: `NOT ANSWERED` → the data-gap wording above; *user reports none
+     known* → the User genuinely answered "none", so it may be stated as their
+     answer and attributed to them; `YES` → report the disclosure, attributed
+     to the User, or carry the bracket it supplies.
+   - Anything derived from that block is **the User's statement, not a Matrix
+     finding**. Attribute it: *"The User, [Client Name], communicated ..."*.
+   - **Scope: this governs USER DISCLOSURES only.** A completed EDR
+     Environmental Lien / AUL title search is documentary evidence, and its
+     actual result is reported normally — *"No environmental liens or other
+     activity use limitations were found for the subject site"* is correct when
+     a search was performed and found none. The rule removes disclosures nobody
+     made; it does not suppress findings a document actually supports.
+
+   *(The wording above replaced a prescribed default reading "no environmental
+   liens, activity and use limitations (AULs), or specialized knowledge ... were
+   reported by the User." It shipped verbatim into an acceptance run where the
+   User had answered nothing at all — the skill's own example became a
+   fabricated legal disclosure, which is exactly the exemplar failure mode
+   recorded in CLAUDE.md.)*
 
 3. **Section 9.0 Findings — EIGHT NUMBERED SLOTS, EXACT NAMES**:
    - **There is no `ExecutiveSummary_Text` tag.** This rule used to name one, so the model had no valid target and guessed: a real run emitted `Sec9_Item1_Intro`, `Sec9_Item2_SiteInfo`, `Sec9_Item3_Topography`, `Sec9_Item4_WetlandsFlood`, `Sec9_Item6_RECs`, `Sec9_Item7_HRECsCRECs` and `Sec9_Item9_DeMinimis` — **seven invented names, none of which exist**, and Section 9.0 would have shipped blank.

@@ -362,6 +362,16 @@ conventions, so anything not pinned deterministically in Go will drift back.
   normalizer when they don't), and **model context** (no deterministic path at
   all).
 
+  **`ProjectNo` is Go-guaranteed, and that was a correction.** It sat in
+  `goSuppliedKeys` while quietly falling back to the model's value, which the
+  Phase 6 empty-intake acceptance run exposed: it printed `303315`, read out of
+  the uploaded proposal. Right by luck — and the same class of defect as the
+  `'MEG-' + Math.random()` generator the kill commit removed, a plausible
+  identifier nobody assigned printed on every page of a sealed report. The
+  number is EP-assigned law and required at project creation, so absent now
+  yields `[MEG DATAGAP: project number]`. **Being listed in `goSuppliedKeys` is
+  not the same as behaving that way; check the code, not the map.**
+
 - **Verifiers must be built from independent assumptions.** A check that shares
   its assumptions with the thing it checks **confirms that thing instead of
   testing it**, and reports success while the defect sits in the output. Build
@@ -384,6 +394,29 @@ conventions, so anything not pinned deterministically in Go will drift back.
 
   The general form: **do not let the thing that produces an answer also decide
   whether the answer is right.**
+
+- **Absence of an answer is never an answer of absence.** A question the user
+  never answered and a question they answered "none" are different facts, and
+  collapsing them attributes a disclosure to someone who never made one. This
+  bites hardest on the 40 CFR 312 user obligations, where the fabricated version
+  is a legal statement in a signed report.
+
+  The distinction is now carried at four layers, and it took a defect at each to
+  learn that three is not enough: `Knowledge.Known` is a **pointer** in the
+  intake schema (nil / false / true); `userKnowledgeBlock` emits nothing for a
+  request with no intake but `NOT ANSWERED` for a supplied intake left blank;
+  the web form's selects lead with `— not answered —` so an untouched control
+  submits null rather than its first option; and template-compiler rule 2 bans
+  the negative phrasings outright.
+
+  That last one is the reason the rule is written here. The Phase 6 acceptance
+  run rendered *"no environmental liens, activity and use limitations (AULs), or
+  specialized knowledge ... were reported by the User"* against a user who had
+  answered nothing — **and the skill had prescribed that sentence as its
+  pending-questionnaire default.** The type system, the request gate and the
+  form control all held; the defect entered at the only layer Go does not own.
+  The rule governs USER DISCLOSURES only: a completed EDR Environmental Lien /
+  AUL search still reports its actual result.
 
 - **Skill exemplars are fabrication vectors.** Template-compiler rule 7 once
   gave `{{USGS_TopoSummary}}` the example wording *"gently slopes to the south
@@ -660,6 +693,26 @@ demonstrated once.
   composes from the mined tables, never from the raw corpus.
 
 **PHASE 6 — backlog (each needs its own go-ahead).**
+- **Compiler prose cleanup — splices that are still shipping.** Found on both
+  Phase 6 acceptance runs and unchanged by that work, so they are compiler
+  wording, not plumbing. The Section 10 opener renders *"...and the limitations
+  discussed herein, This assessment has revealed evidence of..."*; four literal
+  doubled periods appear in the body; and `TP_Databases` renders *"the target
+  property was Not applicable. in The subject property was not identified ...
+  searched.. Not applicable."* The splice detector flags all of them and is
+  detection-only by design — **every signal was verified against the rendered
+  text, not trusted from the log**, and all were real.
+- **Bracket provenance — the validator cannot tell its own brackets from the
+  model's.** Acceptance run 1 rendered `[MEG DATAGAP: INSERT OWNER NAME]`: a
+  fill-in-the-blank instruction to a typist, wearing data-gap vocabulary the
+  model has learned to imitate. Visible, so not dangerous today, but it means a
+  bracket count no longer distinguishes "Go recorded a gap" from "the model
+  wrote something bracket-shaped". Tag validator-emitted brackets distinctly, or
+  reject model-composed ones.
+- **Owner-name robustness — one more evidence entry.** The same run produced
+  that `INSERT OWNER NAME` bracket where earlier runs on identical inputs
+  produced `Diane Pete & Brian J Pete`. The owner is in the material; the
+  extraction depends on luck. See the existing backlog item below.
 - **Report title/descriptor in header line 2.** The stamped format is
   `[Site Address] - [Project Descriptor]`, but the template has no descriptor
   tag and nothing sources one, so the line is address-only today — which is the
@@ -670,7 +723,30 @@ demonstrated once.
   blank**. Do not add the template tag before the plumbing — a tag with no
   source is a mechanism that can only ever resolve to the fallback, which looks
   like a feature and behaves like nothing.
-- **Dynamic prescreen.** Replace the hardcoded 4 questions with real data-gap
+- **Dynamic prescreen. DONE 2026-08-13** — accepted on two runs; full record in
+  [docs/phase6-prescreen-plan.md](docs/phase6-prescreen-plan.md) §7.
+
+  What shipped: the **intake contract** (`cmd/api/intake.go`, integer
+  additive-only `schema_version`, unknown versions refused loudly), a static
+  core of questions no document can answer, **absence-triggered** site-visit
+  questions with an EP category override, `User_Authorization` composed in Go,
+  and the labelled 40 CFR 312 user-knowledge block. Per-run evidence:
+  authorization rendered as a composed sentence with a filled intake and as
+  `[MEG DATAGAP: authorization]` with an empty one **while the proposal sat
+  parsed in the uploads** — non-inference, demonstrated rather than asserted.
+
+  Content-level gap analysis was deliberately **deferred, behind the same
+  schema**, because a second model surface that can hallucinate a gap list into
+  confidently wrong questions is a new fabrication surface. The deferral is
+  evidence-gated on two logged signals, and the case file is plan §8. **The
+  first signal has already been observed:** run 1 bracketed `SV_AccessFrom` and
+  `SV_AccessVia` while the recon checklist was present, parsed and correctly
+  suppressing those very questions — the one shape absence-detection cannot
+  catch.
+
+  Original spec retained below.
+
+  Replace the hardcoded 4 questions with real data-gap
   questions derived from parsing uploads at prescreen time; cache those parse
   results and reuse in `/generate` so parsing isn't paid twice. Remove the
   pre-filled fake answers — parcel `10-123-456` must never be a default. Add a

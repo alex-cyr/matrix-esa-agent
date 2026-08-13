@@ -1193,13 +1193,24 @@ func injectFieldDefaults(payloadJSON string, answers map[string]string, draftNot
 		m = make(map[string]interface{})
 	}
 
+	// {{ProjectNo}} is STRICTLY Go-supplied: the EP's number or a bracket, never
+	// the model's.
+	//
+	// The project number is EP-assigned law and is required at project creation,
+	// so by generate time it exists or something upstream is wrong. There used
+	// to be a fallback to the model's own value here; on the empty-intake
+	// acceptance run it produced 303315, read out of the uploaded proposal --
+	// correct by luck, and the same class of defect as the random 'MEG-' + rand
+	// generator the kill commit removed: a plausible identifier nobody assigned,
+	// printed on every page of a sealed report.
+	//
 	// The template already prints a "MEG" prefix; strip a duplicated one.
-	if pNum, ok := answers["project_number"]; ok && pNum != "" {
+	if pNum := strings.TrimSpace(answers["project_number"]); pNum != "" {
 		cleanNum := strings.TrimPrefix(pNum, "MEG-")
 		cleanNum = strings.TrimPrefix(cleanNum, "MEG ")
-		m["ProjectNo"] = cleanNum
-	} else if str, ok := m["ProjectNo"].(string); ok {
-		m["ProjectNo"] = strings.TrimPrefix(strings.TrimPrefix(str, "MEG-"), "MEG ")
+		m["ProjectNo"] = strings.TrimSpace(cleanNum)
+	} else {
+		m["ProjectNo"] = "[MEG DATAGAP: project number]"
 	}
 
 	// EP pre-screen answers outrank the model: a human typed these.

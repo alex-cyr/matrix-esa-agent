@@ -168,11 +168,11 @@ func TestComposeAuthorizationShapes(t *testing.T) {
 func TestUnansweredAuthorizationIsADataGapNeverAnInference(t *testing.T) {
 	gaps := []Authorization{
 		{},
-		{Basis: "signed_proposal"},                    // no date
+		{Basis: "signed_proposal"}, // no date
 		{Basis: "signed_proposal", ProposalDate: "??"}, // unparseable date
-		{Basis: "purchase_order"},                     // no number
-		{Basis: "other"},                              // no description
-		{Basis: "carrier pigeon"},                     // unknown basis
+		{Basis: "purchase_order"},                      // no number
+		{Basis: "other"},                               // no description
+		{Basis: "carrier pigeon"},                      // unknown basis
 	}
 	for _, a := range gaps {
 		if got := composeAuthorization(a); got != authorizationDataGap {
@@ -393,6 +393,44 @@ func TestIntakeKeysMatchTheQuestionIDs(t *testing.T) {
 		if _, ok := emitted[id]; !ok && !readsAnswer[id] {
 			t.Errorf("question %q has no consumer: nothing in intakeToAnswers emits it "+
 				"and it is not declared as client-assembled", id)
+		}
+	}
+}
+
+// --- project number is strictly Go-supplied ---------------------------------------
+
+// The project number is EP-assigned law. A model-extracted value is a plausible
+// identifier nobody assigned, printed on every page of a sealed report -- the
+// same class as the random 'MEG-' generator the kill commit removed. On the
+// empty-intake acceptance run the old fallback produced 303315 out of the
+// uploaded proposal: right by luck.
+func TestProjectNoNeverComesFromTheModel(t *testing.T) {
+	var got map[string]interface{}
+	out := injectFieldDefaults(`{"ProjectNo":"303315"}`, nil, "")
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["ProjectNo"] != "[MEG DATAGAP: project number]" {
+		t.Errorf("ProjectNo = %v; a model-supplied project number must not survive", got["ProjectNo"])
+	}
+}
+
+func TestProjectNoKeepsTheEPValueVerbatimLessTheDuplicatePrefix(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"303315", "303315"},
+		{"MEG-303315", "303315"}, // the template prints the prefix itself
+		{"MEG 303315", "303315"},
+		{"303315.01", "303315.01"}, // retired convention, but printed verbatim if typed
+		{"  303315  ", "303315"},
+	}
+	for _, tc := range cases {
+		var got map[string]interface{}
+		out := injectFieldDefaults(`{}`, map[string]string{"project_number": tc.in}, "")
+		if err := json.Unmarshal([]byte(out), &got); err != nil {
+			t.Fatal(err)
+		}
+		if got["ProjectNo"] != tc.want {
+			t.Errorf("project_number %q -> ProjectNo %v, want %q", tc.in, got["ProjectNo"], tc.want)
 		}
 	}
 }

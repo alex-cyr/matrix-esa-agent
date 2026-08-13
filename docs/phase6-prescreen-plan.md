@@ -1,5 +1,7 @@
 # Phase 6 — Dynamic Prescreen
 
+**DONE — accepted 2026-08-13 on two acceptance runs. See §7.**
+
 **Reviewed. All six §6 questions ruled — see the `[RULED]` annotations.**
 Rulings are authoritative; where the analysis above them differs, the ruling
 wins.
@@ -373,3 +375,104 @@ The kill was **extended** at review to include the free-text scraping heuristic
 (`index.html:860-869`): anything that can silently overwrite a correct EP-typed
 value is placeholder-law-adjacent and dies with the seeds and the fallbacks.
 Shipped as `7a06e22`.
+
+---
+
+## 7. Acceptance — 2026-08-13, ACCEPTED
+
+Two runs on `Properties_at_Providence_Road` (13 files, checklist present),
+baselines 19/19, Vertex `global`. Run on port 8099 because an `api.exe` built
+the previous afternoon held 8080 — **acceptance must never be run against a
+binary older than the change under test.**
+
+### Pre-flight — question set, no model calls
+
+| check | result |
+|---|---|
+| Checklist present → site-visit questions | **0** (16 static-core only) |
+| Checklist re-tagged to "Other Document" → questions | **5 appear** (21 total) |
+| Every dynamic question states its trigger and the fix | yes |
+| Category vocabulary served by the API | 9, all categorizer outputs |
+
+### Run 1 — filled intake · `..._20260813_170112.docx`
+
+`data_gapped=[SV_AccessFrom SV_AccessVia] · deliberate_blanks=4 · recovered=3 ·
+unknown_keys=0 · 0 unreplaced tags`
+
+- `User_Authorization` composed: *"This work was performed in accordance with
+  our proposal dated July 6, 2026."* — both occurrences, no bracket, no doubled
+  period, no restated lead-in. **The splice defect of EP-caught errors 2 and 5
+  is closed on this field.**
+- `SiteCounty` from intake, no doubled "County". Parcel ID and acreage from
+  intake.
+- §4 carried the disclosure **with attribution**: *"The user, Arkan Homes, LLC,
+  communicated specialized knowledge regarding the property, stating that a
+  prior owner operated a small engine repair shop in a rear shed."* The
+  attribution survived downstream into Section 10, which framed the resulting
+  REC as *"Based on user-provided actual knowledge"*. (That disclosure was
+  synthetic test input and did not leak into run 2.)
+
+### Run 2 — empty intake · `..._20260813_171323.docx`
+
+`data_gapped=0 · deliberate_blanks=4 · recovered=5 · 0 unreplaced tags`
+
+- `[MEG DATAGAP: authorization]` ×2 **while the proposal PDF was in the uploads
+  and had been parsed** — the bracket is the proof of non-inference, which is
+  the entire reason the field exists.
+- Parcel ID and acreage bracketed. Zero old placeholders (`10-123-456`,
+  `1.7 Acres`, `Beavers_Road`: all absent).
+- Client mailing address appeared only in the recipient block; the subject
+  property stayed Providence Road. EP-caught error 4 did not recur.
+
+### Findings and their disposition
+
+1. **A §4 sentence still read as a negative disclosure** — *"no environmental
+   liens, activity and use limitations (AULs), or specialized knowledge ... were
+   reported by the User"* — with all three obligations `NOT ANSWERED`. Root
+   cause was not a model slip: **template-compiler rule 2 prescribed that exact
+   sentence as the pending-questionnaire default.** The skill's own example
+   became a fabricated legal disclosure, the exemplar failure mode already
+   recorded in CLAUDE.md. **Fixed in the close-out commit**: absence of an answer
+   is never an answer of absence, with the banned phrasings enumerated, the
+   user-knowledge block declared authoritative over the default, and an explicit
+   carve-out so a real EDR lien-search result is still reportable.
+2. **`SV_AccessFrom`/`SV_AccessVia` bracketed in run 1 with the checklist
+   present** — see §8.
+3. **`ProjectNo` was classified Go-supplied but behaved as an override.** With
+   an empty intake it fell through to the model's value and produced `303315`,
+   read out of the uploaded proposal — correct by luck, and the same class as
+   the random `MEG-` generator the kill commit removed. **Ruled and fixed**:
+   strictly Go-supplied, model fallback removed, absent →
+   `[MEG DATAGAP: project number]`.
+
+### Out of scope, still live (backlog)
+
+The splice detector fired 5× and every signal was verified against the rendered
+text rather than trusted from the log. Four are real doubled periods; Section 10
+opens *"...and the limitations discussed herein, This assessment has revealed
+evidence of..."*, and `TP_Databases` renders *"the target property was Not
+applicable. in The subject property was not identified ... searched.. Not
+applicable."* Pre-existing, present in both runs, unchanged by Phase 6.
+
+Run 1 also rendered `[MEG DATAGAP: INSERT OWNER NAME]` — a fill-in-the-blank
+instruction wearing a data-gap bracket, composed by the model rather than the
+validator.
+
+## 8. Q1 instrumentation — case file for the deferred gap analysis
+
+Q1 deferred content-level gap analysis **with instrumentation**: the deferral
+ends when the evidence says absence-detection is insufficient. This is the first
+entry.
+
+**Signal type: DATAGAP despite the relevant document being present.**
+Acceptance run 1, 2026-08-13. `Site_Recon_Checklist_Providence Road
+Properties.pdf` was uploaded, categorised correctly, parsed, and suppressed all
+five site-visit questions as designed — and `SV_AccessFrom` and `SV_AccessVia`
+were still bracketed as data gaps in the document.
+
+This is exactly the case the absence trigger **cannot** catch: the document is
+present, so no question is asked, and the field is missing from it anyway. It is
+the shape that argues for the two-step flow, and it appeared on the first
+observed run. One data point is not a decision — but this is the file it belongs
+in, and the second signal type (an EP-filled field conflicting with parsed
+content) has not yet been observed.
